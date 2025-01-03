@@ -1,0 +1,43 @@
+add_rules('mode.debug', 'mode.release', 'mode.coverage')
+
+-- https://github.com/xmake-io/xmake/issues/5769
+if is_mode('coverage') then
+    set_policy('build.ccache', false)
+end
+
+set_languages('c++17')
+set_warnings('all', 'extra', 'pedantic', 'error')
+
+-- Don't be annoying when actively writing code
+if not is_mode('release') then
+    add_cxxflags('gcc::-Wno-unused-parameter')
+    add_cxxflags('gcc::-Wno-unused-variable')
+    add_cxxflags('gcc::-Wno-unused-but-set-variable')
+    add_cxxflags('gcc::-Wno-unused-local-typedefs')
+end
+
+add_requires('gtest >= 1.14.0')
+
+target("glug")
+    set_kind("binary")
+    add_files("src/*.cpp")
+    add_includedirs('include')
+
+target("glug_test")
+    set_kind("binary")
+    add_files("test/*.cpp")
+    add_includedirs('include')
+    add_defines('TEST_ROOT_DIR=\"$(projectdir)/test\"')
+    add_packages('gtest')
+    add_tests('default')
+
+task('coverage')
+    on_run(function (target)
+        os.rm('**/*.gcda')
+        os.exec('xmake config --mode=coverage')
+        os.exec('xmake build -v glug_test')
+        os.exec('xmake test -v')
+        os.exec('gcovr')
+    end)
+    set_menu {}
+

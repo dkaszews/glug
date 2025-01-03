@@ -1,0 +1,4 @@
+{
+  "command": "xmake build -v && xmake run glug"
+}
+

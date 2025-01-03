@@ -1,0 +1,14 @@
+{
+  "configurations": {
+    "Launch glug": {
+      "adapter": "CodeLLDB",
+      "configuration": {
+        "request": "launch",
+        "stopAtEntry": true,
+        "program": "${workspaceRoot}/build/linux/x86_64/debug/glug",
+        "sourceLanguages": [ "cpp" ]
+      }
+    }
+  }
+}
+

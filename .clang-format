@@ -16,9 +16,12 @@ Cpp11BracedListStyle: false
 FixNamespaceComments: true
 IndentCaseLabels: true
 IndentWidth: 4
+InsertNewlineAtEOF: true
 InsertTrailingCommas: Wrapped
+KeepEmptyLinesAtEOF: true
 Language: Cpp
 NamespaceIndentation: None
+PackConstructorInitializers: Never
 PointerAlignment: Left
 SpacesBeforeTrailingComments: 2
 

@@ -1,4 +1,5 @@
 .xmake/
 build/
 compile_commands.json
+coverage_report.html
 

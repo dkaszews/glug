@@ -5,9 +5,50 @@
 
 using namespace std::string_literals;
 
-namespace glug {
+namespace glug::glob {
 
-static const auto atom = "[^/]"s;
+static constexpr bool has_suffix(std::string_view s, std::string_view suffix) {
+    return s.size() >= suffix.size()
+            && s.substr(s.size() - suffix.size()) == suffix;
+};
+
+decomposition decompose(std::string_view glob) noexcept {
+    if (glob.empty() || glob.front() == '#') {
+        return {};
+    }
+
+    const bool is_negative = glob.front() == '!';
+    glob.remove_prefix(glob.front() == '\\');
+    glob.remove_prefix(is_negative);
+
+    while (has_suffix(glob, " ") && !has_suffix(glob, "\\ ")) {
+        glob.remove_suffix(1);
+    }
+
+    if (glob.empty()) {
+        return {};
+    }
+
+    const bool is_anchored = glob.find('/') < glob.size() - 1;
+    const bool is_directory = glob.back() == '/';
+    glob.remove_suffix(is_directory);
+
+    return { glob, is_negative, is_anchored, is_directory };
+}
+
+bool decomposed_pattern_fixup_required(std::string_view pattern) noexcept {
+    return !pattern.empty() && pattern.back() == ' ';
+}
+
+std::string decomposed_pattern_fixup(std::string_view pattern) noexcept {
+    auto s = std::string{ pattern };
+    auto trail = size_t{ 0 };
+    while (has_suffix(s, "\\ ")) {
+        s.resize(s.size() - 2);
+        trail++;
+    }
+    return s + std::string(trail, ' ');
+}
 
 static auto regex_meta(char c, bool hyphen = true) noexcept {
     switch (c) {
@@ -75,7 +116,7 @@ static skip star_to_regex(std::string_view glob, size_t i) noexcept {
     }
 
     const auto quantifier = bound_left && bound_right ? '+' : '*';
-    return { atom + quantifier, count };
+    return { "[^/]"s + quantifier, count };
 }
 
 static std::string range_to_regex(std::string_view s) noexcept {
@@ -124,13 +165,13 @@ static skip set_to_regex(std::string_view glob, size_t i) noexcept {
 
 // Only possible exceptions are allocation errors, which are neither
 // plausible, nor reasonable to handle, so mark as noexcept
-std::string glob_to_regex(std::string_view glob) noexcept {
+std::string to_regex(std::string_view glob) noexcept {
     auto s = std::string{};
     for (size_t i = 0; i < glob.size(); i++) {
         auto c = glob[i];
         switch (c) {
             case '?':
-                s += atom;
+                s += "[^/]"s;
                 break;
             case '*':
                 apply_skip(std::tie(s, i), star_to_regex(glob, i));
@@ -146,5 +187,5 @@ std::string glob_to_regex(std::string_view glob) noexcept {
     return s;
 }
 
-}  // namespace glug
+}  // namespace glug::glob
 

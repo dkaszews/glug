@@ -1,11 +1,12 @@
 {
   "configurations": {
-    "Launch glug": {
+    "Launch glug test": {
       "adapter": "CodeLLDB",
       "configuration": {
         "request": "launch",
         "stopAtEntry": true,
-        "program": "${workspaceRoot}/build/linux/x86_64/debug/glug",
+        "program": "${workspaceRoot}/build/linux/x86_64/debug/glug_test",
+        "args": [ "--gtest_filter=${filter:*}" ],
         "sourceLanguages": [ "cpp" ]
       }
     }

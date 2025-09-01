@@ -106,8 +106,8 @@ static skip star_to_regex(std::string_view glob, size_t i) noexcept {
             = std::min(glob.find_first_not_of('*', i + 1), glob.size()) - i;
     const auto first = i == 0;
     const auto last = i + count >= glob.size();
-    const auto dir_left = glob[i - 1] == '/';
-    const auto dir_right = glob[i + count] == '/';
+    const auto dir_left = !first && glob[i - 1] == '/';
+    const auto dir_right = !last && glob[i + count] == '/';
     const auto bound_left = first || dir_left;
     const auto bound_right = last || dir_right;
 

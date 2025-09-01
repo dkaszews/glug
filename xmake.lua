@@ -1,6 +1,6 @@
 add_rules('mode.debug', 'mode.release', 'mode.coverage')
 
-add_requires('gtest >= 1.14.0')
+add_requires('gtest >= 1.17.0')
 
 -- https://github.com/xmake-io/xmake/issues/5769
 if is_mode('coverage') then
@@ -22,15 +22,15 @@ if not is_mode('release') then
     )
 end
 
-target("glug")
-    set_kind("binary")
-    add_files("src/**.cpp")
+target('glug')
+    set_kind('binary')
+    add_files('src/**.cpp')
     add_includedirs('include')
     add_packages('tl_expected')
 
-target("glug_test")
-    set_kind("binary")
-    add_files("src/**.cpp|main.cpp", "test/**.cpp")
+target('glug_test')
+    set_kind('binary')
+    add_files('src/**.cpp|main.cpp', 'test/**.cpp')
     add_includedirs('include')
     add_defines('TEST_ROOT_DIR=\"$(projectdir)/test\"')
     add_packages('gtest', 'tl_expected')

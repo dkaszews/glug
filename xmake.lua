@@ -32,7 +32,7 @@ target('glug_test')
     set_kind('binary')
     add_files('src/**.cpp|main.cpp', 'test/**.cpp')
     add_includedirs('include')
-    add_defines('TEST_ROOT_DIR=\"$(projectdir)/test\"')
+    add_defines('UNIT_TEST', 'TEST_ROOT_DIR=\"$(projectdir)/test\"')
     add_packages('gtest', 'tl_expected')
     add_tests('default')
 

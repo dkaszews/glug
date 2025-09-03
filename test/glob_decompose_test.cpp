@@ -44,13 +44,16 @@ INSTANTIATE_TEST_SUITE_P(
         empty,
         decompose_test,
         values_in<decompose_param>({
-                { "", "", false, false, false },
-                { "#", "", false, false, false },
-                { "#a", "", false, false, false },
-                { "#/", "", false, false, false },
-                { "#a/b", "", false, false, false },
-                { "#a/b", "", false, false, false },
-                { "#!a/b", "", false, false, false },
+            { "", "", false, false, false },
+            { "#", "", false, false, false },
+            { "#a", "", false, false, false },
+            { "#/", "", false, false, false },
+            { "#a/b", "", false, false, false },
+            { "#a/b", "", false, false, false },
+            { "#!a/b", "", false, false, false },
+            { "/", "", false, false, false },
+            { "//", "", false, false, false },
+            { "///", "", false, false, false },
         })
 );
 
@@ -58,12 +61,12 @@ INSTANTIATE_TEST_SUITE_P(
         simple,
         decompose_test,
         values_in<decompose_param>({
-                { "a", "a", false, false, false },
-                { "abc", "abc", false, false, false },
-                { "\\#abc", "#abc", false, false, false },
-                { "\\##abc", "##abc", false, false, false },
-                { "\\!abc", "!abc", false, false, false },
-                { "\\!!abc", "!!abc", false, false, false },
+            { "a", "a", false, false, false },
+            { "abc", "abc", false, false, false },
+            { "\\#abc", "#abc", false, false, false },
+            { "\\##abc", "##abc", false, false, false },
+            { "\\!abc", "!abc", false, false, false },
+            { "\\!!abc", "!!abc", false, false, false },
         })
 );
 
@@ -71,11 +74,11 @@ INSTANTIATE_TEST_SUITE_P(
         trailing_whitespace,
         decompose_test,
         values_in<decompose_param>({
-                { " ", "", false, false, false },
-                { "a ", "a", false, false, false },
-                { "a  ", "a", false, false, false },
-                { "a\\ ", "a\\ ", false, false, false },
-                { "a \\ ", "a \\ ", false, false, false },
+            { " ", "", false, false, false },
+            { "a ", "a", false, false, false },
+            { "a  ", "a", false, false, false },
+            { "a\\ ", "a\\ ", false, false, false },
+            { "a \\ ", "a \\ ", false, false, false },
         })
 );
 
@@ -83,9 +86,9 @@ INSTANTIATE_TEST_SUITE_P(
         negative,
         decompose_test,
         values_in<decompose_param>({
-                { "!a", "a", true, false, false },
-                { "!!a", "!a", true, false, false },
-                { "!#a", "#a", true, false, false },
+            { "!a", "a", true, false, false },
+            { "!!a", "!a", true, false, false },
+            { "!#a", "#a", true, false, false },
         })
 );
 
@@ -93,9 +96,11 @@ INSTANTIATE_TEST_SUITE_P(
         anchored,
         decompose_test,
         values_in<decompose_param>({
-                { "/abc", "/abc", false, true, false },
-                { "a/bc", "a/bc", false, true, false },
-                { "/a/bc", "/a/bc", false, true, false },
+            { "/abc", "abc", false, true, false },
+            { "//abc", "abc", false, true, false },
+            { "///abc", "abc", false, true, false },
+            { "a/bc", "a/bc", false, true, false },
+            { "/a/bc", "a/bc", false, true, false },
         })
 );
 
@@ -103,9 +108,9 @@ INSTANTIATE_TEST_SUITE_P(
         negative_anchored,
         decompose_test,
         values_in<decompose_param>({
-                { "!/abc", "/abc", true, true, false },
-                { "!a/bc", "a/bc", true, true, false },
-                { "!/a/bc", "/a/bc", true, true, false },
+            { "!/abc", "abc", true, true, false },
+            { "!a/bc", "a/bc", true, true, false },
+            { "!/a/bc", "a/bc", true, true, false },
         })
 );
 
@@ -113,10 +118,10 @@ INSTANTIATE_TEST_SUITE_P(
         directory,
         decompose_test,
         values_in<decompose_param>({
-                { "a/", "a", false, false, true },
-                { "abc/", "abc", false, false, true },
-                { "\\#a/", "#a", false, false, true },
-                { "\\!a/", "!a", false, false, true },
+            { "a/", "a", false, false, true },
+            { "abc/", "abc", false, false, true },
+            { "\\#a/", "#a", false, false, true },
+            { "\\!a/", "!a", false, false, true },
         })
 );
 
@@ -124,8 +129,8 @@ INSTANTIATE_TEST_SUITE_P(
         negative_directory,
         decompose_test,
         values_in<decompose_param>({
-                { "!a/", "a", true, false, true },
-                { "!!a/", "!a", true, false, true },
+            { "!a/", "a", true, false, true },
+            { "!!a/", "!a", true, false, true },
         })
 );
 
@@ -133,9 +138,9 @@ INSTANTIATE_TEST_SUITE_P(
         anchored_directory,
         decompose_test,
         values_in<decompose_param>({
-                { "/a/", "/a", false, true, true },
-                { "/abc/", "/abc", false, true, true },
-                { "/!a/b/c/", "/!a/b/c", false, true, true },
+            { "/a/", "a", false, true, true },
+            { "/abc/", "abc", false, true, true },
+            { "/!a/b/c/", "!a/b/c", false, true, true },
         })
 );
 
@@ -143,9 +148,9 @@ INSTANTIATE_TEST_SUITE_P(
         negative_anchored_directory,
         decompose_test,
         values_in<decompose_param>({
-                { "!/a/", "/a", true, true, true },
-                { "!/abc/", "/abc", true, true, true },
-                { "!/a/b/c/", "/a/b/c", true, true, true },
+            { "!/a/", "a", true, true, true },
+            { "!/abc/", "abc", true, true, true },
+            { "!/a/b/c/", "a/b/c", true, true, true },
         })
 );
 
@@ -168,12 +173,12 @@ INSTANTIATE_TEST_SUITE_P(
         fixup_test,
         fixup_test,
         values_in<fixup_param>({
-                { "", std::nullopt },
-                { "abc", std::nullopt },
-                { "ab c", std::nullopt },
-                { "abc\\ ", "abc " },
-                { "abc\\ \\ ", "abc  " },
-                { "ab c\\ ", "ab c " },
+            { "", std::nullopt },
+            { "abc", std::nullopt },
+            { "ab c", std::nullopt },
+            { "abc\\ ", "abc " },
+            { "abc\\ \\ ", "abc  " },
+            { "ab c\\ ", "ab c " },
         })
 );
 

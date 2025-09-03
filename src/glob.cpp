@@ -33,6 +33,14 @@ decomposition decompose(std::string_view glob) noexcept {
     const bool is_directory = glob.back() == '/';
     glob.remove_suffix(is_directory);
 
+    while (!glob.empty() && glob.front() == '/') {
+        glob.remove_prefix(1);
+    }
+
+    if (glob.empty()) {
+        return {};
+    }
+
     return { glob, is_negative, is_anchored, is_directory };
 }
 
@@ -82,7 +90,7 @@ static auto regex_escape(char c, bool hyphen = true) noexcept {
     return regex_meta(c, hyphen) ? "\\"s + c : std::string{ c };
 }
 
-static auto regex_escape(std::string_view s, bool hyphen = true) noexcept {
+std::string regex_escape(std::string_view s, bool hyphen) noexcept {
     auto result = std::string{};
     result.reserve(s.size() * 2);
     for (const auto c : s) {

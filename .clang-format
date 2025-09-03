@@ -5,6 +5,7 @@ AlignTrailingComments: false
 AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: false
 BinPackParameters: false
+BracedInitializerIndentWidth: 4
 BreakBeforeBinaryOperators: All
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
@@ -22,6 +23,7 @@ KeepEmptyLinesAtEOF: true
 Language: Cpp
 NamespaceIndentation: None
 PackConstructorInitializers: Never
+PenaltyBreakScopeResolution: 1000
 PointerAlignment: Left
 SpacesBeforeTrailingComments: 2
 

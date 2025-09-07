@@ -7,6 +7,13 @@ if is_mode('coverage') then
     set_policy('build.ccache', false)
 end
 
+-- Not enabled in coverage as they generate extra branches
+if is_mode('debug') then
+    for _, sanitizer in ipairs({ 'address', 'undefined', 'leak' }) do
+        set_policy('build.sanitizer.' .. sanitizer, true)
+    end
+end
+
 set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 

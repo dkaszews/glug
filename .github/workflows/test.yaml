@@ -1,0 +1,53 @@
+name: Run tests
+on:
+  workflow_dispatch:
+  push: { branches: main }
+  pull_request:
+
+jobs:
+  Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        toolchain: [ gcc, clang ]
+        mode: [ debug ]
+        include:
+          - { os: windows-latest, toolchain: msvc, mode: debug }
+          - { os: ubuntu-latest, toolchain: gcc, mode: coverage }
+        exclude:
+          # Linker failure, debug flags mismatch
+          - { os: windows-latest, toolchain: clang }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
+          project-path: glug
+      - name: Configure
+        run: xmake config -vy --toolchain=${{ matrix.toolchain }} --mode=${{ matrix.mode }}
+      - name: Build
+        run: xmake build -v
+      - name: Test
+        run: xmake test -v
+      - uses: threeal/gcovr-action@v1.1.0
+        if: matrix.mode == 'coverage'
+        with:
+          html-out: coverage_report.html
+          html-details: true
+          json-out: coverage_report.json
+          json-pretty: true
+          print-summary: true
+          # `mockable<T>` seems to generate unused functions when running in CI
+          fail-under-function: 0
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.mode == 'coverage'
+        with:
+          name: coverage
+          path: coverage_report.html
+

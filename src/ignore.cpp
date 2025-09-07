@@ -1,8 +1,20 @@
 #include "glug/ignore.hpp"
 
+#include <sstream>
+
 namespace glug::ignore {
 
-std::ostream& operator<<(std::ostream& os, decision value) {
+// Windows likes to make life complicated for no good reason
+static auto make_file_regex(const std::string& s) noexcept {
+    if constexpr (std::is_same_v<std::filesystem::path::value_type, char>) {
+        return std::basic_regex<char>{ s };
+    } else {
+        const auto widened = (std::wstringstream{} << s.c_str()).str();
+        return std::basic_regex<wchar_t>{ widened };
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     switch (value) {  // GCOVR_EXCL_LINE: enum out of range is UB
         case decision::undecided:
             return os << "undecided";
@@ -39,7 +51,7 @@ filter::filter(
                     glob.is_anchored,
                     glob.is_directory,
                     // CTAD seems to be broken?
-                    std::basic_regex<char>{ glob::to_regex(s) },
+                    make_file_regex(glob::to_regex(s)),
                 }
         );
     }

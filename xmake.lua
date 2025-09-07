@@ -1,6 +1,9 @@
-add_rules('mode.debug', 'mode.release', 'mode.coverage')
+set_version('3.0.1')
 
+add_rules('mode.debug', 'mode.release', 'mode.coverage')
 add_requires('gtest >= 1.17.0')
+set_languages('c++17')
+set_warnings('all', 'extra', 'pedantic', 'error')
 
 -- https://github.com/xmake-io/xmake/issues/5769
 if is_mode('coverage') then
@@ -8,17 +11,14 @@ if is_mode('coverage') then
 end
 
 -- Not enabled in coverage as they generate extra branches
-if is_mode('debug') then
+if is_mode('debug') and is_os('linux') then
     for _, sanitizer in ipairs({ 'address', 'undefined', 'leak' }) do
         set_policy('build.sanitizer.' .. sanitizer, true)
     end
 end
 
-set_languages('c++17')
-set_warnings('all', 'extra', 'pedantic', 'error')
-
 -- Don't be annoying when actively writing code
-if not is_mode('release') then
+if not is_mode('release') and not getenv('CI') then
     add_cxxflags(
         '-Wno-unused-function',
         '-Wno-unused-parameter',

@@ -1,7 +1,13 @@
 #pragma once
 
+#include <deque>
 #include <filesystem>
 #include <type_traits>
+#include <vector>
+
+#ifdef UNIT_TEST
+#include <gmock/gmock.h>
+#endif
 
 class unmocked {};
 
@@ -17,6 +23,8 @@ using mockable = std::conditional_t<
         T,
         mocked<T>>;
 
+// TODO: Move to test/testing/
+// TODO: Separate define to enable real fs testing
 #ifdef UNIT_TEST
 template <>
 class mocked<std::filesystem::directory_entry> {
@@ -57,5 +65,59 @@ inline mocked<std::filesystem::directory_entry>
 operator""_d(const char* path, size_t) {
     return { in_mock, std::filesystem::path{ path }, true };
 }
+
+namespace glug::filesystem {
+class access;
+};
+
+// TODO: Separate singleton class
+class access_mock {
+    public:
+    access_mock() {
+        EXPECT_EQ(std::exchange(p, this), nullptr)
+                << "Multiple singletons for " << typeid(this).name();
+    }
+    ~access_mock() { EXPECT_EQ(std::exchange(p, nullptr), this); }
+    access_mock(const access_mock&) = delete;
+    access_mock(access_mock&&) = delete;
+    access_mock& operator=(const access_mock&) = delete;
+    access_mock& operator=(access_mock&&) = delete;
+
+    static access_mock& instance() {
+        EXPECT_NE(p, nullptr) << "No singleton for " << typeid(p).name();
+        return *p;
+    }
+
+    MOCK_METHOD(
+            std::deque<mocked<std::filesystem::directory_entry>>,
+            list_directory,
+            (const std::filesystem::path& path),
+            (const)
+    );
+
+    MOCK_METHOD(
+            std::vector<std::string>,
+            read_lines,
+            (const std::filesystem::path& path),
+            (const)
+    );
+
+    private:
+    inline static access_mock* p = nullptr;
+};
+
+template <>
+class mocked<glug::filesystem::access> {
+    public:
+    std::deque<mocked<std::filesystem::directory_entry>>
+    list_directory(const std::filesystem::path& path) const {
+        return access_mock::instance().list_directory(path);
+    }
+
+    std::vector<std::string>
+    read_lines(const std::filesystem::path& path) const {
+        return access_mock::instance().read_lines(path);
+    }
+};
 #endif
 

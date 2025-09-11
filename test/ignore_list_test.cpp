@@ -1,6 +1,6 @@
 #include "glug/ignore.hpp"
 
-#include "testing.hpp"
+#include "testing/parametrized.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

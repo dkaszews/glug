@@ -41,6 +41,8 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept;
  */
 class filter {
     public:
+    filter() noexcept = default;
+
     filter(const std::vector<glob::decomposition>& globs,
            const std::filesystem::path& source = "") noexcept;
 
@@ -56,13 +58,11 @@ class filter {
     ) const noexcept;
 
     private:
-    using file_regex = std::basic_regex<std::filesystem::path::value_type>;
-
     struct ignore_item {
         bool is_negative{};
         bool is_anchored{};
         bool is_directory{};
-        file_regex regex{};
+        std::regex regex{};
     };
 
     std::vector<ignore_item> items{};

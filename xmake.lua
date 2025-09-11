@@ -1,7 +1,7 @@
 set_version('3.0.1')
 
 add_rules('mode.debug', 'mode.release', 'mode.coverage')
-add_requires('gtest >= 1.17.0')
+add_requires('gtest >= 1.16.0')
 set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
@@ -29,16 +29,16 @@ if not is_mode('release') and not getenv('CI') then
     )
 end
 
-target('glug')
-    set_kind('binary')
-    add_files('src/**.cpp')
-    add_includedirs('include')
-    add_packages('tl_expected')
+-- target('glug')
+--     set_kind('binary')
+--     add_files('src/**.cpp')
+--     add_includedirs('include')
+--     add_packages('tl_expected')
 
 target('glug_test')
     set_kind('binary')
     add_files('src/**.cpp|main.cpp', 'test/**.cpp')
-    add_includedirs('include')
+    add_includedirs('include', 'test')
     add_defines('UNIT_TEST', 'TEST_ROOT_DIR=\"$(projectdir)/test\"')
     add_packages('gtest', 'tl_expected')
     add_tests('default')

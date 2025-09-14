@@ -16,34 +16,34 @@ class access;
 
 namespace glug::unit_test {
 
-class access_mock : public singleton<access_mock> {
-    public:
-    MOCK_METHOD(
-            std::deque<mocked<std::filesystem::directory_entry>>,
-            list_directory,
-            (const std::filesystem::path& path),
-            (const)
-    );
-
-    MOCK_METHOD(
-            std::vector<std::string>,
-            read_lines,
-            (const std::filesystem::path& path),
-            (const)
-    );
-};
-
 template <>
 class mocked<glug::filesystem::access> {
     public:
+    class mock : public singleton<mock> {
+        public:
+        MOCK_METHOD(
+                std::deque<mocked<std::filesystem::directory_entry>>,
+                list_directory,
+                (const std::filesystem::path& path),
+                (const)
+        );
+
+        MOCK_METHOD(
+                std::vector<std::string>,
+                read_lines,
+                (const std::filesystem::path& path),
+                (const)
+        );
+    };
+
     std::deque<mocked<std::filesystem::directory_entry>>
     list_directory(const std::filesystem::path& path) const {
-        return access_mock::instance().list_directory(path);
+        return mock::instance().list_directory(path);
     }
 
     std::vector<std::string>
     read_lines(const std::filesystem::path& path) const {
-        return access_mock::instance().read_lines(path);
+        return mock::instance().read_lines(path);
     }
 };
 

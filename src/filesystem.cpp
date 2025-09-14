@@ -6,8 +6,6 @@
 
 namespace glug::filesystem {
 
-// TODO: Run tests with real filesystem
-// GCOVR_EXCL_START
 std::deque<std::filesystem::directory_entry>
 access::list_directory(const std::filesystem::path& path) const {
     return {
@@ -19,10 +17,6 @@ access::list_directory(const std::filesystem::path& path) const {
 std::vector<std::string>
 access::read_lines(const std::filesystem::path& path) const {
     auto file = std::ifstream{ path };
-    if (!file) {
-        return {};
-    }
-
     auto result = std::vector<std::string>{};
     result.emplace_back();
     while (std::getline(file, result.back())) {
@@ -32,7 +26,6 @@ access::read_lines(const std::filesystem::path& path) const {
 
     return result;
 }
-// GCOVR_EXCL_STOP
 
 class explorer_impl {
     public:

@@ -1,7 +1,9 @@
 #include "glug/filesystem.hpp"
 
+#include "glug/detail/mockable/access.hpp"
 #include "glug/test/filesystem.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <variant>
@@ -12,13 +14,13 @@ using namespace glug::unit_test;
 namespace glug::filesystem::unit_test {
 
 struct explorer_param {
-    test_fs tree;
-    test_fs expected;
+    tree setup;
+    tree expected;
 };
 
 static std::ostream& operator<<(std::ostream& os, const explorer_param& param) {
     os << "{ ";
-    for (const auto& entry : param.tree.unwind()) {
+    for (const auto& entry : param.setup.unwind()) {
         os << entry << ", ";
     }
     os << "}";
@@ -27,12 +29,18 @@ static std::ostream& operator<<(std::ostream& os, const explorer_param& param) {
 
 class explorer_test : public testing::TestWithParam<explorer_param> {
     public:
-    testing::StrictMock<access_mock> mock{};
+#ifdef MOCK_FS
+    std::filesystem::path prefix = "";
+    testing::StrictMock<mockable<access>::mock> mock{};
+#else
+    std::filesystem::path prefix = create_temp_dir();
+    ~explorer_test() { std::filesystem::remove_all(prefix); }
+#endif
 };
 
 TEST_F(explorer_test, iterators) {
-    ("/"_d / test_fs::files{ "README.md"_f }).create(mock);
-    auto exp = explorer{ "/" };
+    ("iterators/" & tree::files{ "README.md" }).create(prefix);
+    auto exp = explorer{ prefix / "iterators" };
 
     EXPECT_EQ(exp.begin(), exp);
     EXPECT_NE(exp.begin(), explorer{});
@@ -41,96 +49,97 @@ TEST_F(explorer_test, iterators) {
 }
 
 TEST_F(explorer_test, dereference) {
-    ("/"_d / test_fs::files{ "README.md"_f, "LICENCE.txt"_f }).create(mock);
-    auto exp = explorer{ "/" };
+    ("deref/" & tree::files{ "README.md", "LICENCE.txt" }).create(prefix);
+    auto exp = explorer{ prefix / "deref" };
 
-    EXPECT_EQ((*exp).path(), "/LICENCE.txt");
-    EXPECT_EQ(exp->path(), "/LICENCE.txt");
-    EXPECT_EQ((exp++)->path(), "/LICENCE.txt");
-    EXPECT_EQ(exp->path(), "/README.md");
+    EXPECT_EQ((*exp).path(), prefix / "deref/LICENCE.txt");
+    EXPECT_EQ(exp->path(), prefix / "deref/LICENCE.txt");
+    EXPECT_EQ((exp++)->path(), prefix / "deref/LICENCE.txt");
+    EXPECT_EQ(exp->path(), prefix / "deref/README.md");
 }
 
 TEST_P(explorer_test, test) {
-    const auto& [tree, expected] = GetParam();
-    tree.create(mock);
+    const auto& [setup, expected] = GetParam();
+    setup.create(prefix);
 
-    auto exp = explorer{ tree.entry.path() };
+    // `parent_path` to get rid of trailing `/` we use to mark directories
+    auto exp = explorer{ prefix / setup.path.parent_path() };
     const auto contents = std::vector(exp, exp.end());
-    EXPECT_THAT(contents, testing::ElementsAreArray(expected.unwind()));
+    EXPECT_THAT(contents, testing::ElementsAreArray(expected.unwind(prefix)));
 }
 
 // Clang format seems confused by operator overloading, need to format manually
 static const auto explorer_cases = std::vector<explorer_param>{
     {
-        "simple"_d / test_fs::files{ "README.md"_f },
-        "simple"_d / test_fs::files{ "README.md"_f },
+        "simple/" & tree::files{ "README.md" },
+        "simple/" & tree::files{ "README.md" },
     },
     {
-        "with_gitignore"_d / test_fs::files{
-            "README.md"_f,
-            "build.log"_f,
-            ".gitignore"_f / test_fs::lines{ "# no logs", "*.log" },
+        "with_gitignore/" & tree::files{
+            "README.md",
+            "build.log",
+            ".gitignore" & tree::lines{ "# no logs", "*.log" },
         },
-        "with_gitignore"_d / test_fs::files{
-            ".gitignore"_f,
-            "README.md"_f,
+        "with_gitignore/" & tree::files{
+            ".gitignore",
+            "README.md",
         },
     },
     {
-        "nested"_d / test_fs::files{
-            "README.md"_f ,
-            ".gitignore"_f / test_fs::lines{ "*.log", ".cache/" },
-            "src"_d / test_fs::files{
-                "main.c"_f,
-                ".gitignore"_f / test_fs::lines{ "*.generated.*" },
-                "main.generated.c"_f,
-                "generated.log"_f,
+        "nested/" & tree::files{
+            "README.md" ,
+            ".gitignore" & tree::lines{ "*.log", ".cache/" },
+            "src/" & tree::files{
+                "main.c",
+                ".gitignore" & tree::lines{ "*.generated.*" },
+                "main.generated.c",
+                "generated.log",
             },
-            "build.log"_f,
-            ".cache"_d,
+            "build.log",
+            ".cache/",
         },
-        "nested"_d / test_fs::files{
-            ".gitignore"_f,
-            "README.md"_f ,
-            "src"_d / test_fs::files{
-                ".gitignore"_f,
-                "main.c"_f,
-            },
-        },
-    },
-    {
-        "empty_subdir"_d / test_fs::files{
-            "empty_dir"_d / test_fs::files{}
-        },
-        test_fs{ ""_d },
-    },
-    {
-        "negate_ignore"_d / test_fs::files{
-            ".gitignore"_f / test_fs::lines{ "*.zip" },
-            "result.zip"_f,
-            "test/"_d / test_fs::files{
-                ".gitignore"_f / test_fs::lines{ "!data.zip" },
-                "data.zip"_f,
-            },
-        },
-        "negate_ignore"_d / test_fs::files{
-            ".gitignore"_f,
-            "test/"_d / test_fs::files{
-                ".gitignore"_f,
-                "data.zip"_f,
+        "nested/" & tree::files{
+            ".gitignore",
+            "README.md" ,
+            "src/" & tree::files{
+                ".gitignore",
+                "main.c",
             },
         },
     },
     {
-        "all_ignored"_d / test_fs::files{
-            ".gitignore"_f / test_fs::lines{ "generated/*.h" },
-            "generated"_d / test_fs::files{
-                "foo.h"_f,
-                "bar.h"_f,
+        "empty_subdir/" & tree::files{
+            "empty_dir/" & tree::files{}
+        },
+        tree{ "/" },
+    },
+    {
+        "negate_ignore/" & tree::files{
+            ".gitignore" & tree::lines{ "*.zip" },
+            "result.zip",
+            "test/" & tree::files{
+                ".gitignore" & tree::lines{ "!data.zip" },
+                "data.zip",
             },
         },
-        "all_ignored"_d / test_fs::files{
-            ".gitignore"_f,
+        "negate_ignore/" & tree::files{
+            ".gitignore",
+            "test/" & tree::files{
+                ".gitignore",
+                "data.zip",
+            },
+        },
+    },
+    {
+        "all_ignored/" & tree::files{
+            ".gitignore" & tree::lines{ "generated/*.h" },
+            "generated/" & tree::files{
+                "foo.h",
+                "bar.h",
+            },
+        },
+        "all_ignored/" & tree::files{
+            ".gitignore",
         },
     },
 };
@@ -139,7 +148,9 @@ INSTANTIATE_TEST_SUITE_P(
         explorer_test,
         explorer_test,
         testing::ValuesIn(explorer_cases),
-        [](const auto& info) { return info.param.tree.entry.path().string(); }
+        [](const auto& info) {
+            return info.param.setup.path.parent_path().string();
+        }
 );
 
 }  // namespace glug::filesystem::unit_test

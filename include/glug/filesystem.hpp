@@ -24,7 +24,7 @@ class access {
     list_directory(const std::filesystem::path& path) const;
 
     /**
-     * Returns file contents as container of strings, empty if does not exist.
+     * Returns file contents as container of strings.
      */
     std::vector<std::string>
     read_lines(const std::filesystem::path& path) const;

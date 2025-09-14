@@ -20,6 +20,7 @@ end
 -- Don't be annoying when actively writing code
 if not is_mode('release') and not getenv('CI') then
     add_cxxflags(
+        '-Wfatal-errors',
         '-Wno-unused-function',
         '-Wno-unused-parameter',
         '-Wno-unused-variable',
@@ -42,11 +43,19 @@ target('glug_test')
     add_packages('gtest')
     add_tests('default')
 
+target('glug_test_fs')
+    set_kind('binary')
+    add_files('src/**.cpp|main.cpp', 'test/src/*.cpp', 'test/src/filesystem/**.cpp')
+    add_includedirs('include', 'test/include')
+    add_defines('UNIT_TEST=1')
+    add_packages('gtest')
+    add_tests('default')
+
 task('coverage')
     on_run(function (target)
         os.rm('**/*.gcda')
         os.exec('xmake config --mode=coverage')
-        os.exec('xmake build -v glug_test')
+        os.exec('xmake build -v')
         os.exec('xmake test -v')
         os.execv('gcovr', {}, { try = true })
         os.exec('gcovr --html-details --html-single-page --output coverage_report.html')

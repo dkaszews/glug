@@ -3,6 +3,7 @@
 #include "glug/detail/mockable/directory_entry.hpp"
 #include "glug/glob.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <regex>
 #include <vector>

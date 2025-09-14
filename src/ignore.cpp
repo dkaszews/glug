@@ -16,14 +16,35 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     return os;  // GCOVR_EXCL_LINE
 }
 
+static decltype(auto) fix_path_separator(const std::filesystem::path& path) {
+    if constexpr (std::filesystem::path::preferred_separator == '/'
+                  && std::is_same_v<std::filesystem::path::value_type, char>) {
+        return path;
+    } else {
+        auto s = path.native();
+        std::replace(
+                s.begin(),
+                s.end(),
+                std::filesystem::path::preferred_separator,
+                static_cast<std::filesystem::path::value_type>('/')
+        );
+        return std::filesystem::path{ s };
+    }
+}
+
 filter::filter(
         const std::vector<glob::decomposition>& globs,
         const std::filesystem::path& source
 ) noexcept {
     // PERF: Lazy
-    const auto anchor = source.has_parent_path()
-            ? glob::regex_escape(source.parent_path().string()) + "/"
+    auto anchor = source.has_parent_path()
+            ? glob::regex_escape(
+                      fix_path_separator(source.parent_path()).string()
+              ) + "/"
             : "";
+
+    std::cout << "[DEBUG] source: " << source << "\n";
+    std::cout << "[DEBUG] anchor: " << anchor << "\n";
 
     items.reserve(globs.size());
     for (const auto& glob : globs) {
@@ -35,6 +56,9 @@ filter::filter(
         if (glob.is_anchored) {
             s = anchor + std::string{ s };
         }
+        // DKASZEWS: debug
+        std::cout << "[DEBUG] glob: " << s << "\n";
+        std::cout << "[DEBUG] regex: " << glob::to_regex(s) << "\n";
         items.push_back(
                 ignore_item{
                     glob.is_negative,
@@ -65,6 +89,7 @@ filter::filter(
         }(),
         source,
     } {}
+
 decision filter::is_ignored(
         const mockable<std::filesystem::directory_entry>& entry
 ) const noexcept {
@@ -80,10 +105,11 @@ decision filter::is_ignored(
 
     if constexpr (std::filesystem::path::preferred_separator == '/'
                   && std::is_same_v<std::filesystem::path::value_type, char>) {
-        const auto match = [&entry](const auto& item) noexcept {
-            // PERF: Avoid recalculating `filename()`
-            const auto& path
-                    = item.is_anchored ? entry.path() : entry.path().filename();
+        const auto& full = entry.path();
+        const auto& file = full.filename();
+
+        const auto match = [&entry, &full, &file](const auto& item) noexcept {
+            const auto& path = item.is_anchored ? full : file;
             return item.is_directory && !entry.is_directory()
                     ? false
                     : std::regex_match(path.c_str(), item.regex);
@@ -92,11 +118,12 @@ decision filter::is_ignored(
     } else {
         // PERF: Move to caller to deduplicate calculations with multi-level
         // ignore
-        static constexpr auto sep
-                = static_cast<char>(std::filesystem::path::preferred_separator);
-        auto full = entry.path().string();
-        std::replace(full.begin(), full.end(), sep, '/');
+        const auto full = fix_path_separator(entry.path()).string();
         const auto file = entry.path().filename().string();
+
+        // DKASZEWS: debug
+        std::cout << "[DEBUG] full: " << full << "\n";
+        std::cout << "[DEBUG] file: " << file << "\n";
 
         const auto match = [&entry, &full, &file](const auto& item) noexcept {
             const auto& path = item.is_anchored ? full : file;

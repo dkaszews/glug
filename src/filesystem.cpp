@@ -1,5 +1,7 @@
 #include "glug/filesystem.hpp"
 
+#include "glug/detail/mockable/access.hpp"
+
 #include <fstream>
 
 namespace glug::filesystem {

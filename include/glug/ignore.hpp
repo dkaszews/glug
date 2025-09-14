@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glug/detail/mockable_fs.hpp"
+#include "glug/detail/mockable/directory_entry.hpp"
 #include "glug/glob.hpp"
 
 #include <iostream>

@@ -2,7 +2,7 @@
 
 #include "glug/ignore.hpp"
 
-#include "glug/detail/mockable_fs.hpp"
+#include "glug/detail/mockable/directory_entry.hpp"
 
 #include <deque>
 #include <filesystem>
@@ -11,18 +11,31 @@
 
 namespace glug::filesystem {
 
-// TODO: Document
+/**
+ * Class-based wrapper for file listing and reading, to enable mocking in UT.
+ */
 class access {
+    // PERF: Consider switching to iterator-based functions, to limit heap use
     public:
-    // TODO: Consider switching to iterator-based functions, to limit heap use
+    /**
+     * Lists target directory, returns empty container if does not exist.
+     */
     std::deque<std::filesystem::directory_entry>
     list_directory(const std::filesystem::path& path) const;
 
+    /**
+     * Returns file contents as container of strings, empty if does not exist.
+     */
     std::vector<std::string>
     read_lines(const std::filesystem::path& path) const;
 };
 
-// TODO: Document
+/**
+ * Recursively lists directory contents, respecting .gitignore rules.
+ *
+ * Interface roughly matches `std::filesystem::directory_iterator`
+ * and the results should be exactly the same as `git ls-files` command.
+ */
 class explorer {
     struct level;
 

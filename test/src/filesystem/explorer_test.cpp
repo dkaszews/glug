@@ -1,6 +1,6 @@
 #include "glug/filesystem.hpp"
 
-#include "testing/filesystem.hpp"
+#include "glug/test/filesystem.hpp"
 
 #include <gtest/gtest.h>
 

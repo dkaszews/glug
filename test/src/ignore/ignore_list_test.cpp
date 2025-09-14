@@ -1,6 +1,6 @@
 #include "glug/ignore.hpp"
 
-#include "testing/parametrized.hpp"
+#include "glug/test/parametrized.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -12,7 +12,9 @@
 
 namespace glug::ignore::unit_test {
 
-using directory_entry = mocked<std::filesystem::directory_entry>;
+using directory_entry = mockable<std::filesystem::directory_entry>;
+using glug::unit_test::operator""_f;
+using glug::unit_test::operator""_d;
 
 struct filter_param {
     std::string source{};

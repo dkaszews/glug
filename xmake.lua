@@ -33,14 +33,13 @@ end
 --     set_kind('binary')
 --     add_files('src/**.cpp')
 --     add_includedirs('include')
---     add_packages('tl_expected')
 
 target('glug_test')
     set_kind('binary')
-    add_files('src/**.cpp|main.cpp', 'test/**.cpp')
-    add_includedirs('include', 'test')
-    add_defines('UNIT_TEST', 'TEST_ROOT_DIR=\"$(projectdir)/test\"')
-    add_packages('gtest', 'tl_expected')
+    add_files('src/**.cpp|main.cpp', 'test/src/**.cpp')
+    add_includedirs('include', 'test/include')
+    add_defines('UNIT_TEST=1', 'MOCK_FS=1')
+    add_packages('gtest')
     add_tests('default')
 
 task('coverage')

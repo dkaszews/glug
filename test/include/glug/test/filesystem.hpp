@@ -1,8 +1,10 @@
 #pragma once
 
-#include "glug/detail/mockable_fs.hpp"
+#include "glug/detail/mockable/access.hpp"
+#include "glug/detail/mockable/directory_entry.hpp"
 
 #include <deque>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -12,7 +14,7 @@ namespace glug::unit_test {
 // Use mocks instead of tmpdir to assert which files are listed and read.
 // TODO: Rerun with actual tmpdir to verify more real usage.
 struct test_fs {
-    using directory_entry = mocked<std::filesystem::directory_entry>;
+    using directory_entry = mockable<std::filesystem::directory_entry>;
     using files = std::vector<test_fs>;
     using lines = std::vector<std::string>;
 

@@ -40,7 +40,6 @@ filter::filter(
                     glob.is_negative,
                     glob.is_anchored,
                     glob.is_directory,
-                    // CTAD seems to be broken?
                     std::regex{ glob::to_regex(s) },
                 }
         );

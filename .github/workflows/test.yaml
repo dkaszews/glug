@@ -38,8 +38,8 @@ jobs:
       - name: Test
         timeout-minutes: 5
         run: xmake test -v
+      # https://github.com/threeal/gcovr-action/issues/705
       - uses: threeal/gcovr-action@acc4b570fe5fe5bf333ef489a0d320e783ed281e
-        # https://github.com/threeal/gcovr-action/issues/705
         if: matrix.mode == 'coverage'
         with:
           html-out: coverage_report.html

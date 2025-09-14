@@ -1,6 +1,6 @@
 #include "glug/glob.hpp"
 
-#include "testing/parametrized.hpp"
+#include "glug/test/parametrized.hpp"
 
 #include <gtest/gtest.h>
 

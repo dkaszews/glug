@@ -1,4 +1,4 @@
-name: Run tests
+name: Verify
 on:
   workflow_dispatch:
   push: { branches: main }
@@ -6,7 +6,8 @@ on:
 
 # TODO: clang-format, clang-tidy
 jobs:
-  Test:
+  unit-test:
+    name: UT
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +39,6 @@ jobs:
       - name: Test
         timeout-minutes: 5
         run: xmake test -v
-      # https://github.com/threeal/gcovr-action/issues/705
       - uses: threeal/gcovr-action@v1.2.0
         if: matrix.mode == 'coverage'
         with:
@@ -52,4 +52,14 @@ jobs:
         with:
           name: coverage_${{ matrix.os }}
           path: coverage_report.html
+  clang-format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-format style check for C/C++/Protobuf programs.
+        uses: jidicula/clang-format-action@v4.15.0
+        with:
+          clang-format-version: 20
 

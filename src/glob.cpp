@@ -90,7 +90,8 @@ static auto regex_escape(char c, bool hyphen = true) noexcept {
     return regex_meta(c, hyphen) ? "\\"s + c : std::string{ c };
 }
 
-std::string regex_escape(std::string_view s, bool hyphen) noexcept {
+static std::string
+regex_escape(std::string_view s, bool hyphen = true) noexcept {
     auto result = std::string{};
     result.reserve(s.size() * 2);
     for (const auto c : s) {
@@ -178,6 +179,10 @@ std::string to_regex(std::string_view glob) noexcept {
     for (size_t i = 0; i < glob.size(); i++) {
         auto c = glob[i];
         switch (c) {
+            case '\\':
+                s += '\\';
+                s += i < glob.size() - 1 ? glob[++i] : '\\';
+                break;
             case '?':
                 s += "[^/]"s;
                 break;
@@ -193,6 +198,24 @@ std::string to_regex(std::string_view glob) noexcept {
         }
     }
     return s;
+}
+
+std::string glob_escape(std::string_view s) noexcept {
+    auto result = std::string{};
+    result.reserve(s.size() * 2);
+    for (const auto c : s) {
+        switch (c) {
+            case '?':
+            case '*':
+            case '[':
+                result += '\\';
+                break;
+            default:
+                break;
+        }
+        result += c;
+    }
+    return result;
 }
 
 }  // namespace glug::glob

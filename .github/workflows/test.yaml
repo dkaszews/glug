@@ -47,8 +47,6 @@ jobs:
           json-out: coverage_report.json
           json-pretty: true
           print-summary: true
-          # `mockable<T>` seems to generate unused functions when running in CI
-          fail-under-function: 0
       - uses: actions/upload-artifact@v4
         if: always() && matrix.mode == 'coverage'
         with:

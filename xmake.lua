@@ -1,6 +1,7 @@
 set_version('3.0.1')
 
 add_rules('mode.debug', 'mode.release', 'mode.coverage')
+set_allowedmodes('release', 'debug', 'coverage')
 add_requires('gtest >= 1.16.0')
 set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')

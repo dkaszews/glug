@@ -72,9 +72,9 @@ std::string decomposed_pattern_fixup(std::string_view pattern) noexcept;
 std::string to_regex(std::string_view glob) noexcept;
 
 /**
- * Escapes a string literal into a valid regex expression.
+ * Escapes a string literal into a glob expression matching only the literal.
  */
-std::string regex_escape(std::string_view s, bool hyphen = true) noexcept;
+std::string glob_escape(std::string_view s) noexcept;
 
 }  // namespace glug::glob
 

@@ -142,6 +142,45 @@ static const auto explorer_cases = std::vector<explorer_param>{
             ".gitignore",
         },
     },
+    {
+        "anchored_tilde/" & tree::files{
+            "weird~/" & tree::files{
+                ".gitignore" & tree::lines{ "/ignore.txt" },
+                "ignore.txt",
+                "include.txt",
+            }
+        },
+        "anchored_tilde/" & tree::files{
+            "weird~/" & tree::files{
+                ".gitignore",
+                "include.txt",
+            }
+        },
+    },
+    {
+        "anchored_brackets/" & tree::files{
+            ".gitignore" & tree::lines{ "[weird]" },
+            "[weird]/" & tree::files{
+                ".gitignore" & tree::lines{ "/ignore.txt" },
+                "ignore.txt",
+                "include.txt",
+            },
+            "w",
+            "e",
+            "i",
+            "r",
+            "d",
+            "o",
+        },
+        "anchored_brackets/" & tree::files{
+            ".gitignore",
+            "o",
+            "[weird]/" & tree::files{
+                ".gitignore",
+                "include.txt",
+            }
+        },
+    },
 };
 
 INSTANTIATE_TEST_SUITE_P(

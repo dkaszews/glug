@@ -21,14 +21,9 @@ static decltype(auto) fix_path_separator(const std::filesystem::path& path) {
                   && std::is_same_v<std::filesystem::path::value_type, char>) {
         return path;
     } else {
-        auto s = path.native();
-        std::replace(
-                s.begin(),
-                s.end(),
-                std::filesystem::path::preferred_separator,
-                static_cast<std::filesystem::path::value_type>('/')
-        );
-        return std::filesystem::path{ s };
+        return std::filesystem::path{
+            path.generic_string<std::filesystem::path::value_type>()
+        };
     }
 }
 
@@ -38,13 +33,10 @@ filter::filter(
 ) noexcept {
     // PERF: Lazy
     auto anchor = source.has_parent_path()
-            ? glob::regex_escape(
+            ? glob::glob_escape(
                       fix_path_separator(source.parent_path()).string()
               ) + "/"
             : "";
-
-    std::cout << "[DEBUG] source: " << source << "\n";
-    std::cout << "[DEBUG] anchor: " << anchor << "\n";
 
     items.reserve(globs.size());
     for (const auto& glob : globs) {
@@ -56,9 +48,6 @@ filter::filter(
         if (glob.is_anchored) {
             s = anchor + std::string{ s };
         }
-        // DKASZEWS: debug
-        std::cout << "[DEBUG] glob: " << s << "\n";
-        std::cout << "[DEBUG] regex: " << glob::to_regex(s) << "\n";
         items.push_back(
                 ignore_item{
                     glob.is_negative,
@@ -120,10 +109,6 @@ decision filter::is_ignored(
         // ignore
         const auto full = fix_path_separator(entry.path()).string();
         const auto file = entry.path().filename().string();
-
-        // DKASZEWS: debug
-        std::cout << "[DEBUG] full: " << full << "\n";
-        std::cout << "[DEBUG] file: " << file << "\n";
 
         const auto match = [&entry, &full, &file](const auto& item) noexcept {
             const auto& path = item.is_anchored ? full : file;

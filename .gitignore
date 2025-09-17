@@ -1,5 +1,7 @@
 .xmake/
 build/
-compile_commands.json
-coverage_report.html
+*.json
+*.log
+*.html
+callgrind.out.*
 

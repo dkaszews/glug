@@ -1,7 +1,10 @@
 name: Verify
 on:
   workflow_dispatch:
-  push: { branches: main }
+  push:
+    branches:
+      - main
+      - ci/**
   pull_request:
 
 jobs:

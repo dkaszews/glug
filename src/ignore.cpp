@@ -1,5 +1,6 @@
 #include "glug/ignore.hpp"
 
+#include <algorithm>
 #include <sstream>
 
 namespace glug::ignore {
@@ -53,7 +54,7 @@ filter::filter(
                     glob.is_negative,
                     glob.is_anchored,
                     glob.is_directory,
-                    std::regex{ glob::to_regex(s) },
+                    regex::engine{ glob::to_regex(s) },
                 }
         );
     }
@@ -101,7 +102,7 @@ decision filter::is_ignored(
             const auto& path = item.is_anchored ? full : file;
             return item.is_directory && !entry.is_directory()
                     ? false
-                    : std::regex_match(path.c_str(), item.regex);
+                    : item.regex(path.c_str());
         };
         return make_decision(std::find_if(items.rbegin(), items.rend(), match));
     } else {
@@ -114,7 +115,7 @@ decision filter::is_ignored(
             const auto& path = item.is_anchored ? full : file;
             return item.is_directory && !entry.is_directory()
                     ? false
-                    : std::regex_match(path, item.regex);
+                    : item.regex(path);
         };
         return make_decision(std::find_if(items.rbegin(), items.rend(), match));
     }

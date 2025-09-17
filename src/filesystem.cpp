@@ -2,6 +2,7 @@
 
 #include "glug/detail/mockable/access.hpp"
 
+#include <algorithm>
 #include <fstream>
 
 namespace glug::filesystem {
@@ -79,6 +80,11 @@ void explorer_impl::filter_and_sort(storage& stack) {
     auto& entries = stack.back().entries;
     const auto predicate = [&stack](const auto& entry) {
         for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
+            // TODO: Better place to put it?
+            if (entry.path().filename() == ".git") {
+                return true;
+            }
+
             switch (it->filter.is_ignored(entry)) {  // GCOVR_EXCL_LINE: no def
                 case ignore::decision::ignored:
                     return true;

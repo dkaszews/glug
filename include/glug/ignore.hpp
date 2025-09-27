@@ -1,6 +1,5 @@
 #pragma once
 
-#include "glug/detail/mockable/directory_entry.hpp"
 #include "glug/glob.hpp"
 #include "glug/regex.hpp"
 
@@ -54,9 +53,8 @@ class filter {
      * Check a file or directory against the list of globs.
      * @see decision
      */
-    decision is_ignored(
-            const mockable<std::filesystem::directory_entry>& entry
-    ) const noexcept;
+    decision
+    is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
 
     private:
     struct ignore_item {

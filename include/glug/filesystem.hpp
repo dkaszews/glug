@@ -2,8 +2,6 @@
 
 #include "glug/ignore.hpp"
 
-#include "glug/detail/mockable/directory_entry.hpp"
-
 #include <deque>
 #include <filesystem>
 #include <string>
@@ -41,7 +39,7 @@ class explorer {
 
     public:
     using difference_type = std::ptrdiff_t;
-    using value_type = mockable<std::filesystem::directory_entry>;
+    using value_type = std::filesystem::directory_entry;
     using pointer = const value_type*;
     using reference = const value_type&;
     using iterator_category = std::input_iterator_tag;
@@ -66,7 +64,7 @@ class explorer {
     struct level {
         ignore::filter filter{};
         // PERF: Try using just iterator, without sorting whole directory
-        std::deque<mockable<std::filesystem::directory_entry>> entries{};
+        std::deque<std::filesystem::directory_entry> entries{};
 
         friend bool operator==(const level& lhs, const level& rhs) {
             // Don't compare filters as they are transient cache.

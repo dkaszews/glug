@@ -81,7 +81,7 @@ filter::filter(
     } {}
 
 decision filter::is_ignored(
-        const mockable<std::filesystem::directory_entry>& entry
+        const std::filesystem::directory_entry& entry
 ) const noexcept {
     const auto make_decision = [this](auto it) {
         if (it == items.rend()) {

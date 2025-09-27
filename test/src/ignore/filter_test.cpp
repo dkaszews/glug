@@ -1,5 +1,6 @@
 #include "glug/ignore.hpp"
 
+#include "glug/test/node.hpp"
 #include "glug/test/parametrized.hpp"
 
 #include <gmock/gmock.h>
@@ -12,21 +13,23 @@
 
 namespace glug::ignore::unit_test {
 
-using directory_entry = mockable<std::filesystem::directory_entry>;
-using glug::unit_test::operator""_f;
-using glug::unit_test::operator""_d;
+using glug::unit_test::node;
 
 struct filter_param {
     std::string source{};
     std::vector<std::string> globs{};
-    std::map<directory_entry, decision> cases{};
+    std::map<node, decision> cases{};
 
     friend void PrintTo(const filter_param& param, std::ostream* os) {
         std::ignore = std::tie(param, os);
     }
 };
 
-class filter_test : public testing::TestWithParam<filter_param> {};
+class filter_test : public testing::TestWithParam<filter_param> {
+    public:
+    filter_test() { std::filesystem::remove_all(node::temp_dir()); }
+    ~filter_test() { std::filesystem::remove_all(node::temp_dir()); }
+};
 
 TEST_P(filter_test, test) {
     const auto& param = GetParam();
@@ -34,10 +37,11 @@ TEST_P(filter_test, test) {
         param.globs.begin(),
         param.globs.end(),
     };
-    const auto list = filter{ globs, param.source };
+    const auto list = filter{ globs, node::temp_dir() / param.source };
     auto actual = param.cases;
-    for (auto& [entry, ignored] : actual) {
-        ignored = list.is_ignored(entry);
+    for (auto& [descriptor, ignored] : actual) {
+        ignored = list.is_ignored(descriptor.create());
+        descriptor.remove();
     }
     EXPECT_THAT(actual, testing::ElementsAreArray(param.cases));
 }
@@ -47,73 +51,73 @@ static const auto filter_cases = std::vector<filter_param>{
         ".gitignore",
         { "dir_only/" },
         {
-            { "dir_only"_f, decision::undecided },
-            { "dir_only"_d, decision::ignored },
-            { "dir/dir_only"_f, decision::undecided },
-            { "dir/dir_only"_d, decision::ignored },
+            { "dir_only", decision::undecided },
+            { "dir_only/", decision::ignored },
+            { "dir/dir_only", decision::undecided },
+            { "dir/dir_only/", decision::ignored },
             // Files in ignored directories are not ignored explicitly,
             // but are ignored implicitly as they will not be enumerated.
-            { "dir_only/file"_f, decision::undecided },
+            { "dir_only/file", decision::undecided },
         },
     },
     {
         ".gitignore",
         { "nofixup ", "fixup\\ " },
         {
-            { "nofixup"_f, decision::ignored },
-            { "nofixup "_f, decision::undecided },
-            { "fixup"_f, decision::undecided },
-            { "fixup "_f, decision::ignored },
+            { "nofixup", decision::ignored },
+            { "nofixup ", decision::undecided },
+            { "fixup", decision::undecided },
+            { "fixup ", decision::ignored },
         },
     },
     {
         ".gitignore",
         { "file_only", "!file_only/" },
         {
-            { "file_only"_f, decision::ignored },
-            { "file_only"_d, decision::included },
-            { "dir/file_only"_f, decision::ignored },
-            { "dir/file_only"_d, decision::included },
+            { "file_only", decision::ignored },
+            { "file_only/", decision::included },
+            { "dir/file_only", decision::ignored },
+            { "dir/file_only/", decision::included },
         },
     },
     {
         ".gitignore",
         { "anchored/exact" },
         {
-            { "anchored/exact"_f, decision::ignored },
-            { "sub/anchored/exact"_f, decision::undecided },
+            { "anchored/exact", decision::ignored },
+            { "sub/anchored/exact", decision::undecided },
         },
     },
     {
         "sub/.gitignore",
         { "/anchored", "unanchored" },
         {
-            { "sub/anchored"_f, decision::ignored },
-            { "sub/deeper/anchored"_f, decision::undecided },
-            { "sub/unanchored"_f, decision::ignored },
-            { "sub/deeper/unanchored"_f, decision::ignored },
+            { "sub/anchored", decision::ignored },
+            { "sub/deeper/anchored", decision::undecided },
+            { "sub/unanchored", decision::ignored },
+            { "sub/deeper/unanchored", decision::ignored },
         },
     },
     {
         ".gitignore",
         { "test_*", "!*.[ch]pp", "_*" },
         {
-            { "README.md"_f, decision::undecided },
-            { "test_data.txt"_f, decision::ignored },
-            { "test_logic.cpp"_f, decision::included },
-            { "test_logic.hpp"_f, decision::included },
-            { "_test_data.generated.hpp"_f, decision::ignored },
+            { "README.md", decision::undecided },
+            { "test_data.txt", decision::ignored },
+            { "test_logic.cpp", decision::included },
+            { "test_logic.hpp", decision::included },
+            { "_test_data.generated.hpp", decision::ignored },
         },
     },
     {
         ".gitignore",
         { "*.[1-9]" },
         {
-            { "a.0"_f, decision::undecided },
-            { "a.1"_f, decision::ignored },
-            { "a.2"_f, decision::ignored },
-            { "a.8"_f, decision::ignored },
-            { "a.9"_f, decision::ignored },
+            { "a.0", decision::undecided },
+            { "a.1", decision::ignored },
+            { "a.2", decision::ignored },
+            { "a.8", decision::ignored },
+            { "a.9", decision::ignored },
         },
     },
     {
@@ -121,8 +125,8 @@ static const auto filter_cases = std::vector<filter_param>{
         ".gitignore",
         { "a[%-0]c" },
         {
-            { "a.c"_f, decision::ignored },
-            { "a/c"_f, decision::undecided },
+            { "a.c", decision::ignored },
+            { "a/c", decision::undecided },
         },
     },
 };

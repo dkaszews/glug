@@ -1,9 +1,9 @@
 #include "glug/filesystem.hpp"
 
-#include "glug/detail/mockable/access.hpp"
-
 #include <algorithm>
 #include <fstream>
+
+// TODO: Remove this file
 
 namespace glug::filesystem {
 
@@ -44,7 +44,7 @@ explorer::reference explorer_impl::front(const storage& stack) noexcept {
 }
 
 static ignore::filter make_filter(const std::filesystem::path& path) {
-    const auto lines = mockable<access>{}.read_lines(path);
+    const auto lines = access{}.read_lines(path);
     std::vector<glob::decomposition> globs{};
     for (const auto& line : lines) {
         globs.emplace_back(glob::decompose(line));
@@ -58,7 +58,7 @@ static ignore::filter make_filter(const std::filesystem::path& path) {
 void explorer_impl::populate(
         storage& stack, const std::filesystem::path& path
 ) {
-    auto entries = mockable<access>{}.list_directory(path);
+    auto entries = access{}.list_directory(path);
     if (entries.empty()) {
         return;
     }

@@ -5,32 +5,28 @@ set_allowedmodes('release', 'releasedbg', 'debug', 'coverage')
 set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
+local engines = {
+    re2 = '>= 2025.08.12',
+    pcre2 = '>= 10.44',
+    -- Requires openmpi to install, but only in debug (?!)
+    hyperscan = '>= 5.4.2',
+}
+
 option('engine')
     set_description('Choose regex engine')
     set_values('stl', 'pcre2', 're2', 'hyperscan')
     set_default('stl')
     set_showmenu(true)
+
+    after_check(function (option)
+        option:add('defines', 'ENGINE_' .. option:value():upper() .. '=1')
+    end)
 option_end()
 
--- TODO: Move to UT targets so it is not required to build main
-add_requires('gtest >= 1.16.0')
-
-local engines = {
-    re2 = { version = '>= 2025.08.12', define = 'ENGINE_RE2=1' },
-    pcre2 = { version = '>= 10.44', define = 'ENGINE_PCRE2=1' },
-    -- TODO: May (?) require openmpi to install, but only in debug (?!)
-    hyperscan = { version = '>= 5.4.2', define = 'ENGINE_HYPERSCAN=1' },
-}
-
-local add_engine = function() end
-for package, data in pairs(engines) do
-    if is_config('engine', package) then
-        add_requires(package .. ' ' .. data.version)
-        add_engine = function()
-            add_packages(package)
-            add_defines(data.define)
-        end
-    end
+add_requires('gtest >= 1.16.0', { configs = { main = true } })
+if engines[get_config('engine')] then
+    local engine = get_config('engine')
+    add_requires(engine .. ' ' .. engines[engine])
 end
 
 -- https://github.com/xmake-io/xmake/issues/5769
@@ -45,43 +41,23 @@ if is_mode('debug') and is_os('linux') then
     end
 end
 
--- Don't be annoying when actively writing code
-if is_mode('debug', 'coverage') and not getenv('CI') then
-    add_cxxflags(
-        '-Wfatal-errors',
-        '-Wno-unused-function',
-        '-Wno-unused-parameter',
-        '-Wno-unused-variable',
-        '-Wno-unused-but-set-variable',
-        '-Wno-unused-local-typedefs',
-        { tools = { 'gcc', 'clang' } }
-    )
-end
-
 target('glug')
     set_kind('binary')
     add_files('src/**.cpp')
     add_includedirs('include')
-    add_engine()
+    add_packages(get_config('engine'))
+    add_options('engine')
+target_end()
 
 target('glug_test')
     set_kind('binary')
+    add_tests('default')
     add_files('src/**.cpp|main.cpp', 'test/src/**.cpp')
     add_includedirs('include', 'test/include')
-    add_defines('UNIT_TEST=1', 'MOCK_FS=1')
-    add_packages('gtest')
-    add_engine()
-    add_tests('default')
-
--- TODO: merge with above, add config option
-target('glug_test_fs')
-    set_kind('binary')
-    add_files('src/**.cpp|main.cpp', 'test/src/*.cpp', 'test/src/filesystem/**.cpp')
-    add_includedirs('include', 'test/include')
     add_defines('UNIT_TEST=1')
-    add_packages('gtest')
-    add_engine()
-    add_tests('default')
+    add_packages('gtest', get_config('engine'))
+    add_options('engine')
+target_end()
 
 task('coverage')
     on_run(function (target)
@@ -93,4 +69,5 @@ task('coverage')
         os.exec('gcovr --html-details --html-single-page --output coverage_report.html')
     end)
     set_menu {}
+task_end()
 

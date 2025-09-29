@@ -176,7 +176,7 @@ engine::engine(std::string_view pattern) :
     pimpl{ std::make_shared<detail::impl>(pattern) } {}
 
 bool engine::match(std::string_view s) const {
-    return pimpl && std::regex_match(s.begin(), s.end(), pimpl->re);
+    return std::regex_match(s.begin(), s.end(), pimpl->re);
 }
 
 #endif

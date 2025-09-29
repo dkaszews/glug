@@ -17,7 +17,8 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     return os;  // GCOVR_EXCL_LINE
 }
 
-static decltype(auto) fix_path_separator(const std::filesystem::path& path) {
+static decltype(auto)
+fix_path_separator(const std::filesystem::path& path) noexcept {
     if constexpr (std::filesystem::path::preferred_separator == '/'
                   && std::is_same_v<std::filesystem::path::value_type, char>) {
         return path;
@@ -33,11 +34,13 @@ filter::filter(
         const std::filesystem::path& source
 ) noexcept {
     // PERF: Lazy
+    // GCOVR_EXCL_START - Unknown exception paths
     auto anchor = source.has_parent_path()
             ? glob::glob_escape(
                       fix_path_separator(source.parent_path()).string()
               ) + "/"
             : "";
+    // GCOVR_EXCL_STOP
 
     items.reserve(globs.size());
     for (const auto& glob : globs) {

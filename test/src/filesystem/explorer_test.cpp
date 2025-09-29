@@ -236,6 +236,21 @@ static const auto explorer_cases = std::vector<explorer_param>{
             },
         },
     },
+    {
+        {
+            "git_dir",
+            {
+                "README.md",
+                {
+                    ".git",
+                    {
+                        "HEAD"_n,
+                    },
+                },
+            },
+        },
+        { "git_dir", { "README.md"_n } },
+    }
 };
 
 INSTANTIATE_TEST_SUITE_P(

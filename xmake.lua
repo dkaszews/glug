@@ -6,7 +6,7 @@ set_allowedmodes('release', 'releasedbg', 'debug', 'coverage')
 set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
-add_requires('gtest >= 1.16.0', { configs = { main = true } })
+add_requires('gtest >= 1.16.0')
 
 -- https://github.com/xmake-io/xmake/issues/5769
 if is_mode('coverage') then

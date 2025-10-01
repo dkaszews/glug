@@ -1,8 +1,8 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/filter.hpp"
 
-#include "node.hpp"
 #include "parametrized.hpp"
+#include "test_tree.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -14,12 +14,12 @@
 
 namespace glug::glob::unit_test {
 
-using glug::unit_test::node;
+using glug::unit_test::tree;
 
 struct filter_param {
     std::string source{};
     std::vector<std::string> globs{};
-    std::map<node, decision> cases{};
+    std::map<tree, decision> cases{};
 
     friend void PrintTo(const filter_param& param, std::ostream* os) {
         std::ignore = std::tie(param, os);
@@ -28,8 +28,8 @@ struct filter_param {
 
 class filter_test : public testing::TestWithParam<filter_param> {
     public:
-    filter_test() { std::filesystem::remove_all(node::temp_dir()); }
-    ~filter_test() { std::filesystem::remove_all(node::temp_dir()); }
+    filter_test() { std::filesystem::remove_all(tree::temp_dir()); }
+    ~filter_test() { std::filesystem::remove_all(tree::temp_dir()); }
 };
 
 TEST_P(filter_test, test) {
@@ -38,7 +38,7 @@ TEST_P(filter_test, test) {
         param.globs.begin(),
         param.globs.end(),
     };
-    const auto list = filter{ globs, node::temp_dir() / param.source };
+    const auto list = filter{ globs, tree::temp_dir() / param.source };
     auto actual = param.cases;
     for (auto& [descriptor, ignored] : actual) {
         ignored = list.is_ignored(descriptor.create());

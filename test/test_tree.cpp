@@ -1,5 +1,5 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-#include "node.hpp"
+#include "test_tree.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -8,30 +8,30 @@
 
 namespace glug::unit_test {
 
-node::node(const char* path) :
+tree::tree(const char* path) :
     path{ path } {
 
     if (auto s = this->path.string(); !s.empty() && s.back() == '/') {
         s.pop_back();
         this->path = s;
         is_dir = true;
-        inner = std::vector<node>{};
+        inner = std::vector<tree>{};
     }
 }
 
-node::node(const char* path, const char* contents) :
+tree::tree(const char* path, const char* contents) :
     path{ path },
     is_dir{ false },
     inner{ contents } {}
 
-node::node(const char* path, const std::vector<node>& children) :
+tree::tree(const char* path, const std::vector<tree>& children) :
     path{ path },
     is_dir{ true },
     inner{ children } {
 
-    const auto add_prefix = [](auto& f, const auto& s, auto& n) -> void {
-        if (n.is_dir) {
-            for (auto& child : std::get<std::vector<node>>(n.inner)) {
+    const auto add_prefix = [](auto& f, const auto& s, auto& t) -> void {
+        if (t.is_dir) {
+            for (auto& child : std::get<std::vector<tree>>(t.inner)) {
                 child.path = s / child.path;
                 f(f, s, child);
             }
@@ -40,7 +40,7 @@ node::node(const char* path, const std::vector<node>& children) :
     add_prefix(add_prefix, path, *this);
 }
 
-std::filesystem::path node::temp_dir() {
+std::filesystem::path tree::temp_dir() {
     static auto path = []() {
         auto i = size_t{ 0 };
         auto result = std::filesystem::path{};
@@ -53,11 +53,11 @@ std::filesystem::path node::temp_dir() {
     return path;
 }
 
-std::filesystem::directory_entry node::create() const {
+std::filesystem::directory_entry tree::create() const {
     const auto absolute = temp_dir() / path;
     if (is_dir) {
         std::filesystem::create_directories(absolute);
-        for (const auto& child : std::get<std::vector<node>>(inner)) {
+        for (const auto& child : std::get<std::vector<tree>>(inner)) {
             child.create();
         }
     } else {
@@ -67,15 +67,15 @@ std::filesystem::directory_entry node::create() const {
     return std::filesystem::directory_entry{ absolute };
 }
 
-void node::remove() const { std::filesystem::remove_all(temp_dir() / path); }
+void tree::remove() const { std::filesystem::remove_all(temp_dir() / path); }
 
-std::vector<std::filesystem::path> node::tree() const {
+std::vector<std::filesystem::path> tree::list() const {
     std::vector<std::filesystem::path> result{};
-    const auto fill = [&result](auto& f, const auto& n) -> void {
-        if (!n.is_dir) {
-            result.push_back(temp_dir() / n.path);
+    const auto fill = [&result](auto& f, const auto& t) -> void {
+        if (!t.is_dir) {
+            result.push_back(temp_dir() / t.path);
         } else {
-            for (const auto& child : std::get<std::vector<node>>(n.inner)) {
+            for (const auto& child : std::get<std::vector<tree>>(t.inner)) {
                 f(f, child);
             }
         }
@@ -84,15 +84,15 @@ std::vector<std::filesystem::path> node::tree() const {
     return result;
 }
 
-bool operator==(const node& lhs, const node& rhs) {
+bool operator==(const tree& lhs, const tree& rhs) {
     return std::tie(lhs.path, lhs.is_dir) == std::tie(rhs.path, rhs.is_dir);
 }
 
-bool operator<(const node& lhs, const node& rhs) {
+bool operator<(const tree& lhs, const tree& rhs) {
     return std::tie(lhs.path, lhs.is_dir) < std::tie(rhs.path, rhs.is_dir);
 }
 
-std::ostream& operator<<(std::ostream& os, const node& obj) {
+std::ostream& operator<<(std::ostream& os, const tree& obj) {
     return os << '"' << obj.path.string() << (obj.is_dir ? "/" : "");
 }
 

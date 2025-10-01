@@ -13,16 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         toolchain: [ gcc, clang ]
         mode: [ debug ]
         include:
-          - { os: ubuntu-latest, toolchain: gcc, mode: coverage }
           - { os: windows-latest, toolchain: msvc, mode: debug }
-          # Issues linking gtest
-          # - { os: windows-latest, toolchain: clang, mode: debug }
-          # - { os: windows-latest, toolchain: gcc, mode: debug }
-          # - { os: windows-latest, toolchain: gcc, mode: coverage }
+          - { os: windows-latest, toolchain: gcc, mode: coverage }
+          - { os: ubuntu-latest, toolchain: gcc, mode: coverage }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -35,7 +32,11 @@ jobs:
           package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
           project-path: glug
       - name: Configure
-        run: xmake config -vy --toolchain=${{ matrix.toolchain }} --mode=${{ matrix.mode }}
+        run: >
+          xmake config -vy
+          --toolchain=${{ matrix.toolchain }}
+          --mode=${{ matrix.mode }}
+          ${{ (contains(matrix.os, 'windows') && !contains(matrix.toolchain, 'msvc')) && '--plat=mingw' || '' }}
       - name: Build
         run: xmake build -v
       - name: Test

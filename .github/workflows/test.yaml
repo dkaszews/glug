@@ -20,6 +20,9 @@ jobs:
           - { os: windows-latest, toolchain: msvc, mode: debug }
           - { os: windows-latest, toolchain: gcc, mode: coverage }
           - { os: ubuntu-latest, toolchain: gcc, mode: coverage }
+        exclude:
+          # Linker failure, debug flags mismatch
+          - { os: windows-latest, toolchain: clang }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:

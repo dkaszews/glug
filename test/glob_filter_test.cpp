@@ -1,5 +1,5 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-#include "glug/ignore.hpp"
+#include "glug/filter.hpp"
 
 #include "node.hpp"
 #include "parametrized.hpp"
@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace glug::ignore::unit_test {
+namespace glug::glob::unit_test {
 
 using glug::unit_test::node;
 
@@ -143,5 +143,5 @@ TEST(decision, to_string) {
     EXPECT_EQ(str(decision::included), "included");
 }
 
-}  // namespace glug::ignore::unit_test
+}  // namespace glug::glob::unit_test
 

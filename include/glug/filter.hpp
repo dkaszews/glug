@@ -8,7 +8,7 @@
 #include <regex>
 #include <vector>
 
-namespace glug::ignore {
+namespace glug::glob {
 
 /**
  * Represents a filter decision about an entry (file or directory).
@@ -68,5 +68,5 @@ class filter {
     std::vector<ignore_item> items{};
 };
 
-}  // namespace glug::ignore
+}  // namespace glug::glob
 

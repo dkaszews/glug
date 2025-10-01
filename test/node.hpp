@@ -8,7 +8,6 @@
 
 namespace glug::unit_test {
 
-// TODO: Document
 class node {
     public:
     static std::filesystem::path temp_dir();

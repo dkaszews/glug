@@ -1,10 +1,10 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-#include "glug/ignore.hpp"
+#include "glug/filter.hpp"
 
 #include <algorithm>
 #include <sstream>
 
-namespace glug::ignore {
+namespace glug::glob {
 
 std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     switch (value) {  // GCOVR_EXCL_LINE: enum out of range is UB
@@ -125,5 +125,5 @@ decision filter::is_ignored(
     }
 }
 
-}  // namespace glug::ignore
+}  // namespace glug::glob
 

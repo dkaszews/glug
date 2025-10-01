@@ -3,5 +3,6 @@ build/
 *.json
 *.log
 *.html
+*.gcov.json.gz
 callgrind.out.*
 

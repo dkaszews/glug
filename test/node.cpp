@@ -43,12 +43,12 @@ node::node(const char* path, const std::vector<node>& children) :
 std::filesystem::path node::temp_dir() {
     static auto path = []() {
         auto i = size_t{ 0 };
-        auto path = std::filesystem::path{};
+        auto result = std::filesystem::path{};
         do {
-            path = std::filesystem::temp_directory_path()
+            result = std::filesystem::temp_directory_path()
                     / ("glug_test." + std::to_string(i++));
-        } while (!std::filesystem::create_directory(path));
-        return path;
+        } while (!std::filesystem::create_directory(result));
+        return result;
     }();
     return path;
 }

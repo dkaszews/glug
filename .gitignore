@@ -1,0 +1,7 @@
+.xmake/
+build/
+*.json
+*.log
+*.html
+callgrind.out.*
+

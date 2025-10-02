@@ -2,10 +2,10 @@
 #pragma once
 
 #include "glug/glob.hpp"
+#include "glug/regex.hpp"
 
 #include <filesystem>
 #include <iostream>
-#include <regex>
 #include <vector>
 
 namespace glug::glob {
@@ -62,7 +62,7 @@ class filter {
         bool is_negative{};
         bool is_anchored{};
         bool is_directory{};
-        std::regex regex{};
+        regex::engine regex{};
     };
 
     std::vector<ignore_item> items{};

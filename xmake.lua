@@ -1,4 +1,3 @@
--- Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 set_version('3.0.1')
 
 add_rules('mode.release', 'mode.releasedbg', 'mode.debug',  'mode.coverage')
@@ -6,7 +5,28 @@ set_allowedmodes('release', 'releasedbg', 'debug', 'coverage')
 set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
+local engines = {
+    re2 = '>= 2025.08.12',
+    pcre2 = '>= 10.44',
+    hyperscan = '>= 5.4.2',
+}
+
+option('engine')
+    set_description('Choose regex engine')
+    set_values('stl', 'pcre2', 're2', 'hyperscan')
+    set_default('stl')
+    set_showmenu(true)
+
+    after_check(function (option)
+        option:add('defines', 'ENGINE_' .. option:value():upper() .. '=1')
+    end)
+option_end()
+
 add_requires('gtest >= 1.16.0')
+if engines[get_config('engine')] then
+    local engine = get_config('engine')
+    add_requires(engine .. ' ' .. engines[engine])
+end
 
 -- https://github.com/xmake-io/xmake/issues/5769
 if is_mode('coverage') then
@@ -20,13 +40,22 @@ if is_mode('debug') and is_os('linux') then
     end
 end
 
+target('glug')
+    set_kind('binary')
+    add_files('src/**.cpp')
+    add_includedirs('include')
+    add_packages(get_config('engine'))
+    add_options('engine')
+target_end()
+
 target('glug_test')
     set_kind('binary')
     add_tests('default')
-    add_files('src/**.cpp', 'test/**.cpp')
+    add_files('src/**.cpp|main.cpp', 'test/**.cpp')
     add_includedirs('include', 'test')
     add_defines('UNIT_TEST=1')
-    add_packages('gtest')
+    add_packages('gtest', get_config('engine'))
+    add_options('engine')
 target_end()
 
 task('coverage')

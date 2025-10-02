@@ -53,11 +53,11 @@ void explorer_impl::populate(
         return;
     }
 
-    const auto gitignore = std::find_if(
-            entries.begin(), entries.end(), [](const auto& entry) {
-                return entry.path().filename() == ".gitignore";
-            }
-    );
+    const auto is_gitignore = [](const auto& entry) {
+        return entry.path().filename() == ".gitignore";
+    };
+    const auto gitignore
+            = std::find_if(entries.begin(), entries.end(), is_gitignore);
     auto filter = gitignore != entries.end() ? make_filter(gitignore->path())
                                              : glob::filter{};
     // GCOVR_EXCL_START: Move cannot throw

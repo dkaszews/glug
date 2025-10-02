@@ -262,7 +262,7 @@ INSTANTIATE_TEST_SUITE_P(
         explorer_test,
         explorer_test,
         testing::ValuesIn(explorer_cases),
-        [](const auto& info) { return info.param.setup.name(); }
+        [](const auto& info) { return info.param.setup.name().string(); }
 );
 
 }  // namespace glug::filesystem::unit_test

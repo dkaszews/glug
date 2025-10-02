@@ -1,3 +1,4 @@
+// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #pragma once
 
 #include "glug/filter.hpp"

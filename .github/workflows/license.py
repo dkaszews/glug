@@ -5,10 +5,14 @@ License checker script, checks source files for up-to-date license header.
 '''
 
 from datetime import datetime
-import logging
 import os
 import subprocess
 import sys
+
+
+def _error(*args, **kwargs) -> bool:
+    print(*args, **kwargs, file=sys.stderr)
+    return False
 
 
 def _list_directory(directory: str, recurse: bool = False) -> list[str]:
@@ -70,17 +74,14 @@ def _check_file(path: str, fix: bool = False) -> bool:
 
     filetype = os.path.splitext(path)[1] or os.path.split(path)[1]
     if filetype not in comments:
-        logging.error(f'Unexpected filetype or filetype: {path}')
-        return False
+        return _error(f'Unexpected filetype or filetype: {path}')
 
     comment = comments[filetype]
     if comment is None:
         return True
 
-    (created, modified) = _get_date_range(path)
-    logging.debug(f'{path}: {created.date()} - {modified.date()}')
-
     f = 'Provided as part of glug under MIT license, (c) {} Dominik Kaszewski'
+    (created, modified) = _get_date_range(path)
     (c, m) = (created.year, modified.year)
     expected = comment + ' ' + f.format(f'{c}-{m}' if c != m else f'{c}')
 
@@ -89,19 +90,16 @@ def _check_file(path: str, fix: bool = False) -> bool:
 
     has_shebang = lines[0].startswith('#!')
     actual = lines[has_shebang]
-    has_license = f.split(',')[0] in actual
-    logging.debug(f'has shebang: {has_shebang}, has license: {has_license}')
-
     if expected == actual:
         return True
 
     if not fix:
-        logging.error(f'Copyright header missing or invalid: {path}')
-        logging.error(f'Expected: {expected}')
-        logging.error(f'Actual:   {actual}')
+        _error(f'Copyright header missing or invalid: {path}')
+        _error(f'Expected: {expected}')
+        _error(f'Actual:   {actual}')
         return False
 
-    if has_license:
+    if f.split(',')[0] in actual:
         lines[has_shebang] = expected
     else:
         lines.insert(has_shebang, expected)
@@ -114,11 +112,9 @@ def _check_file(path: str, fix: bool = False) -> bool:
 
 def run(targets: list[str], recurse: bool = False, fix: bool = False) -> bool:
     if missing := [target for target in targets if not os.path.exists(target)]:
-        logging.error(f'Targets do not exist: {missing}')
-        return False
+        return _error(f'Targets do not exist: {missing}')
 
     if directories := [target for target in targets if os.path.isdir(target)]:
-        logging.debug(f'Directories: {directories}')
         targets = list(set(targets) - set(directories))
         targets += [
             file
@@ -126,7 +122,6 @@ def run(targets: list[str], recurse: bool = False, fix: bool = False) -> bool:
             for file in _list_directory(directory, recurse)
             if not _is_ignored(file)
         ]
-        logging.debug(f'Resolved targets: {targets}')
 
     # Don't short-circuit with `all` to print all errors at once
     return sum(_check_file(target, fix) for target in targets) == len(targets)
@@ -152,21 +147,6 @@ if __name__ == '__main__':
         action='store_true',
         help='Automatically fix any errors'
     )
-    parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Include verbose logs'
-    )
 
-    args = vars(parser.parse_args())
-    verbose = args.pop('verbose')
-    logging.basicConfig(
-        format=(
-            '%(filename)s:%(funcName)s:%(lineno)d: %(message)s'
-            if verbose else '%(message)s'
-        ),
-        level=(logging.DEBUG if verbose else logging.INFO)
-    )
-
-    success = run(**args)
+    success = run(**vars(parser.parse_args()))
     sys.exit(0 if success else 1)

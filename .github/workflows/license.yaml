@@ -1,3 +1,4 @@
+name: License
 on:
   workflow_dispatch:
   push:

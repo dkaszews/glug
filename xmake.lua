@@ -1,3 +1,4 @@
+-- Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 set_version('3.0.1')
 
 add_rules('mode.release', 'mode.releasedbg', 'mode.debug',  'mode.coverage')

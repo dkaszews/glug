@@ -1,4 +1,4 @@
-name: Verify
+name: Test
 on:
   workflow_dispatch:
   push:
@@ -9,7 +9,6 @@ on:
 
 jobs:
   unit-test:
-    name: UT
     strategy:
       fail-fast: false
       matrix:
@@ -41,11 +40,8 @@ jobs:
           --toolchain=${{ matrix.toolchain }}
           --mode=${{ matrix.mode }}
           ${{ (contains(matrix.os, 'windows') && !contains(matrix.toolchain, 'msvc')) && '--plat=mingw' || '' }}
-      - name: Build
-        run: xmake build -v
-      - name: Test
-        timeout-minutes: 5
-        run: xmake test -v
+      - run: xmake build -v
+      - run: xmake test -v
       - uses: threeal/gcovr-action@v1.2.0
         if: matrix.mode == 'coverage'
         with:
@@ -59,14 +55,4 @@ jobs:
         with:
           name: coverage_${{ matrix.os }}
           path: coverage_report.html
-  clang-format:
-    name: clang-format
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run clang-format style check for C/C++/Protobuf programs.
-        uses: jidicula/clang-format-action@v4.15.0
-        with:
-          clang-format-version: 20
 

@@ -6,13 +6,131 @@ License checker script, checks source files for up-to-date license header.
 
 from datetime import datetime
 import os
+import re
 import subprocess
 import sys
 
 
-def _error(*args, **kwargs) -> bool:
-    print(*args, **kwargs, file=sys.stderr)
-    return False
+class license_checker:
+    PREAMBLE = 'Provided as part of glug under MIT license, (c)'
+    AUTHOR = 'Dominik Kaszewski'
+    REGEX = re.compile(
+        re.escape(PREAMBLE)
+        + ' (?P<from>\\d{4})(?:-(?P<to>\\d{4}))? '
+        + re.escape(AUTHOR)
+    )
+    FILETYPES = {
+        '.cfg': None,
+        '.clang-format': None,
+        '.gitignore': None,
+        '.json': None,
+        '.md': None,
+        '.yaml': None,
+        '.py': '#',
+        '.lua': '--',
+        '.cpp': '//',
+        '.hpp': '//',
+    }
+
+    def __init__(self, path: str):
+        self.path = path
+        with open(path) as file:
+            self._lines = file.read().splitlines()
+
+        (self.commit_from, self.commit_to) = self._get_commit_history(path)
+        self.license_line = self._get_license(self._lines)
+        (self.license_from, self.license_to) = (
+            self._get_license_history(self.license_line)
+        )
+
+    def expected_license(self) -> str:
+        from_ = self.commit_from.year
+        to = self.commit_to.year
+        if self.license_from and self.license_from.year < from_:
+            from_ = self.license_from.year
+        from_to = f'{from_}-{to}' if from_ != to else f'{from_}'
+
+        return (
+            f'{self.get_filetype(self.path)} '
+            f'{self.PREAMBLE} {from_to} {self.AUTHOR}'
+        )
+
+    def fix(self) -> None:
+        lines = self._lines[:]
+        has_shebang = lines[0].startswith('#!')
+        if self.license_line is not None:
+            lines[has_shebang] = self.expected_license()
+        else:
+            lines.insert(has_shebang, self.expected_license())
+
+        with open(self.path, 'w') as file:
+            for line in lines:
+                file.write(f'{line}\n')
+
+    @classmethod
+    def get_filetype(cls, path: str) -> str | None:
+        return cls.FILETYPES.get(
+            os.path.splitext(path)[1] or os.path.split(path)[1],
+            None
+        )
+
+    @classmethod
+    def is_licenseable(cls, path: str) -> bool:
+        if '/.git/' in os.path.realpath(path):
+            return False
+
+        args = ['git', 'check-ignore', path]
+        result = subprocess.run(args, capture_output=True)
+        if result.returncode == 0:
+            return False
+
+        return cls.get_filetype(path) is not None
+
+    @classmethod
+    def _get_commit_history(cls, path: str) -> (
+        tuple[datetime, datetime]
+    ):
+        args = ['git', 'log', '--follow', '--format=%ci', path]
+        result = subprocess.run(args, capture_output=True)
+        if not result.stdout:
+            return (
+                datetime.fromtimestamp(os.path.getctime(path)),
+                datetime.fromtimestamp(os.path.getmtime(path)),
+            )
+
+        logs = result.stdout.decode().splitlines()
+        return (
+            datetime.fromisoformat(logs[-1]),
+            datetime.fromisoformat(logs[0]),
+        )
+
+    @classmethod
+    def _get_license(cls, lines: list[str]) -> str | None:
+        if not lines:
+            return None
+
+        has_shebang = lines[0].startswith('#!')
+        if has_shebang and len(lines) < 2:
+            return None
+
+        license_line = lines[has_shebang]
+        return license_line if cls.REGEX.search(license_line) else None
+
+    @classmethod
+    def _get_license_history(cls, license_line: str | None) -> (
+        tuple[datetime | None, datetime | None]
+    ):
+        none = (None, None)
+        if not license_line:
+            return none
+
+        if match := cls.REGEX.search(license_line):
+            return (
+                datetime.strptime(match['from'], '%Y'),
+                datetime.strptime(match['to'] or match['from'], '%Y')
+            )
+
+        return none
 
 
 def _list_directory(directory: str, recurse: bool = False) -> list[str]:
@@ -30,101 +148,40 @@ def _list_directory(directory: str, recurse: bool = False) -> list[str]:
     ]
 
 
-def _is_ignored(path: str) -> bool:
-    if '/.git/' in os.path.realpath(path):
-        return True
-
-    result = subprocess.run(['git', 'check-ignore', path], capture_output=True)
-    return result.returncode == 0
-
-
-def _get_date_range(path: str) -> tuple[datetime, datetime]:
-    args = ['git', 'log', '--follow', '--format=%ci', path]
-    result = subprocess.run(args, capture_output=True)
-    if not result.stdout:
-        return (
-            datetime.fromtimestamp(os.path.getctime(path)),
-            datetime.fromtimestamp(os.path.getmtime(path)),
-        )
-
-    def parse_date(s: str) -> datetime:
-        return datetime.fromisoformat(s)
-
-    lines = result.stdout.decode().splitlines()
-    return (
-        datetime.fromisoformat(lines[0]),
-        datetime.fromisoformat(lines[-1]),
-    )
-
-
-def _check_file(path: str, fix: bool = False) -> bool:
-    comments = {
-        '.cfg': None,
-        '.clang-format': None,
-        '.gitignore': None,
-        '.json': None,
-        '.md': None,
-        '.yaml': None,
-        'LICENSE': None,
-        '.py': '#',
-        '.lua': '--',
-        '.cpp': '//',
-        '.hpp': '//',
-    }
-
-    filetype = os.path.splitext(path)[1] or os.path.split(path)[1]
-    if filetype not in comments:
-        return _error(f'Unexpected filetype or filetype: {path}')
-
-    comment = comments[filetype]
-    if comment is None:
-        return True
-
-    f = 'Provided as part of glug under MIT license, (c) {} Dominik Kaszewski'
-    (created, modified) = _get_date_range(path)
-    (c, m) = (created.year, modified.year)
-    expected = comment + ' ' + f.format(f'{c}-{m}' if c != m else f'{c}')
-
-    with open(path) as file:
-        lines = file.read().splitlines()
-
-    has_shebang = lines[0].startswith('#!')
-    actual = lines[has_shebang]
-    if expected == actual:
-        return True
-
-    if not fix:
-        _error(f'Copyright header missing or invalid: {path}')
-        _error(f'Expected: {expected}')
-        _error(f'Actual:   {actual}')
-        return False
-
-    if f.split(',')[0] in actual:
-        lines[has_shebang] = expected
-    else:
-        lines.insert(has_shebang, expected)
-
-    with open(path, 'w') as file:
-        file.write('\n'.join(lines) + '\n')
-
-    return True
-
-
-def run(targets: list[str], recurse: bool = False, fix: bool = False) -> bool:
-    if missing := [target for target in targets if not os.path.exists(target)]:
-        return _error(f'Targets do not exist: {missing}')
-
+def main(targets: list[str], recurse: bool = False, fix: bool = False):
     if directories := [target for target in targets if os.path.isdir(target)]:
         targets = list(set(targets) - set(directories))
         targets += [
             file
             for directory in directories
             for file in _list_directory(directory, recurse)
-            if not _is_ignored(file)
         ]
 
-    # Don't short-circuit with `all` to print all errors at once
-    return sum(_check_file(target, fix) for target in targets) == len(targets)
+    licenses = [
+        license_checker(target)
+        for target in targets
+        if license_checker.is_licenseable(target)
+    ]
+    invalid = [
+        license_
+        for license_ in licenses
+        if license_.license_line != license_.expected_license()
+    ]
+    if not invalid:
+        return True
+
+    output = sys.stdout if fix else sys.stderr
+    for license_ in invalid:
+        print(f'Invalid license for {license_.path}, ', file=output)
+        print(f'Expected: {license_.expected_license()}', file=output)
+        print(f'Actual:   {license_.license_line}', file=output)
+        if fix:
+            license_.fix()
+            print('Fixed', file=output)
+        else:
+            print(f'Run `license.py --fix {license_.path}`', file=output)
+
+    return fix
 
 
 if __name__ == '__main__':
@@ -148,5 +205,4 @@ if __name__ == '__main__':
         help='Automatically fix any errors'
     )
 
-    success = run(**vars(parser.parse_args()))
-    sys.exit(0 if success else 1)
+    sys.exit(0 if main(**vars(parser.parse_args())) else 1)

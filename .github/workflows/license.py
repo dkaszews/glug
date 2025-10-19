@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-'''
-License checker script, checks source files for up-to-date license header.
-'''
+"""Checks source files for up-to-date license header."""
 
-from datetime import datetime
 import os
 import re
 import subprocess
 import sys
+from datetime import datetime
 
 
-class license_checker:
+class LicenseChecker:
+    """Represents a file with its license header."""
+
     PREAMBLE = 'Provided as part of glug under MIT license, (c)'
     AUTHOR = 'Dominik Kaszewski'
     REGEX = re.compile(
@@ -33,6 +33,7 @@ class license_checker:
     }
 
     def __init__(self, path: str):
+        """Create LicenseChecker for file with given path."""
         self.path = path
         with open(path) as file:
             self._lines = file.read().splitlines()
@@ -44,6 +45,7 @@ class license_checker:
         )
 
     def expected_license(self) -> str:
+        """Generate expected license header with correct year range."""
         from_ = self.commit_from.year
         to = self.commit_to.year
         if self.license_from and self.license_from.year < from_:
@@ -56,6 +58,7 @@ class license_checker:
         )
 
     def fix(self) -> None:
+        """Prepend expected license to file or replace existing one."""
         lines = self._lines[:]
         has_shebang = lines[0].startswith('#!')
         if self.license_line is not None:
@@ -69,6 +72,7 @@ class license_checker:
 
     @classmethod
     def get_filetype(cls, path: str) -> str | None:
+        """Get filetype for file, i.e. extension or entire filename if none."""
         return cls.FILETYPES.get(
             os.path.splitext(path)[1] or os.path.split(path)[1],
             None
@@ -76,6 +80,11 @@ class license_checker:
 
     @classmethod
     def is_licenseable(cls, path: str) -> bool:
+        """
+        Check if file should contain license.
+
+        @return `True` for sources, `False` for configs, test data and ignored.
+        """
         if '/.git/' in os.path.realpath(path):
             return False
 
@@ -148,7 +157,8 @@ def _list_directory(directory: str, recurse: bool = False) -> list[str]:
     ]
 
 
-def main(targets: list[str], recurse: bool = False, fix: bool = False):
+def main(targets: list[str], recurse: bool = False, fix: bool = False) -> bool:
+    """Script entry."""
     if directories := [target for target in targets if os.path.isdir(target)]:
         targets = list(set(targets) - set(directories))
         targets += [
@@ -158,9 +168,9 @@ def main(targets: list[str], recurse: bool = False, fix: bool = False):
         ]
 
     licenses = [
-        license_checker(target)
+        LicenseChecker(target)
         for target in targets
-        if license_checker.is_licenseable(target)
+        if LicenseChecker.is_licenseable(target)
     ]
     invalid = [
         license_

@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - ci/**
   pull_request:
 
 jobs:
@@ -16,4 +15,13 @@ jobs:
       - uses: jidicula/clang-format-action@v4.15.0
         with:
           clang-format-version: 20
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+      - run: pip install -r requirements.txt
+      - run: flake8
+      - run: mypy
 

@@ -39,8 +39,8 @@ jobs:
           --toolchain=${{ matrix.toolchain }}
           --mode=${{ matrix.mode }}
           ${{ (contains(matrix.os, 'windows') && !contains(matrix.toolchain, 'msvc')) && '--plat=mingw' || '' }}
-      - run: xmake build -v
-      - run: xmake test -v
+      - run: xmake build -v unit_test
+      - run: xmake test -v unit_test/default
       - uses: threeal/gcovr-action@v1.2.0
         if: matrix.mode == 'coverage'
         with:
@@ -54,4 +54,12 @@ jobs:
         with:
           name: coverage_${{ matrix.os }}
           path: coverage_report.html
+  parity-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+      - run: pip install -r requirements.txt
+      - run: pytest -v test/parity
 

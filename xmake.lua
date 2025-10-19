@@ -49,14 +49,30 @@ target('glug')
     add_options('engine')
 target_end()
 
-target('glug_test')
+target('unit_test')
     set_kind('binary')
     add_tests('default')
-    add_files('src/**.cpp|main.cpp', 'test/**.cpp')
+    add_files('src/**.cpp|main.cpp', 'test/unit/**.cpp')
     add_includedirs('include', 'test')
     add_defines('UNIT_TEST=1')
     add_packages('gtest', get_config('engine'))
     add_options('engine')
+target_end()
+
+target('parity_test')
+    set_kind('phony')
+    add_tests('default')
+    on_test(function (target, opt)
+        -- TODO: How to check for `xmake test --verbose`?
+        local verbose = true
+        redir = {}
+        if not verbose then
+            -- TODO: Can you portably redirect to /dev/null instead?
+            redir['stdout'] = os.tmpfile()
+        end
+        os.execv('pytest', { '-v', 'test/parity' }, redir)
+        return true
+    end)
 target_end()
 
 task('coverage')

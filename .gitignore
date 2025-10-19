@@ -1,8 +1,14 @@
-.xmake/
+[._]*
 build/
+
 *.json
 *.log
 *.html
 *.gcov.json.gz
 callgrind.out.*
+
+!.github/
+!.gitignore
+!.clang-format
+!.vimspector.json
 

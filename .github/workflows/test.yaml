@@ -55,11 +55,28 @@ jobs:
           name: coverage_${{ matrix.os }}
           path: coverage_report.html
   parity-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v6
       - run: pip install -r requirements.txt
-      - run: pytest -v test/parity
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
+          project-path: glug
+      - run: xmake config -vy --mode=release
+      - run: xmake build -v parity_test
+      - run: xmake test -v parity_test/default
+        env:
+          GIT_AUTHOR_NAME: CI
+          GIT_AUTHOR_EMAIL: ci@example.com
+          GIT_COMMITTER_NAME: CI
+          GIT_COMMITTER_EMAIL: ci@example.com
 

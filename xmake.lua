@@ -62,15 +62,13 @@ target_end()
 target('parity_test')
     set_kind('phony')
     add_tests('default')
+    add_deps('glug')
     on_test(function (target, opt)
-        -- TODO: How to check for `xmake test --verbose`?
-        local verbose = true
-        redir = {}
-        if not verbose then
-            -- TODO: Can you portably redirect to /dev/null instead?
-            redir['stdout'] = os.tmpfile()
+        if import('core.base.option').get('verbose') then
+            os.execv('pytest', { 'test/parity', '-v' })
+        else
+            os.execv('pytest', { 'test/parity' }, { stdout = os.tmpfile() })
         end
-        os.execv('pytest', { '-v', 'test/parity' }, redir)
         return true
     end)
 target_end()

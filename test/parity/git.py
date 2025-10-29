@@ -98,7 +98,8 @@ def _clone_lean_locked(repo: str, branch: str, dest: str) -> None:
             pass
 
     logging.info('Removing git history')
-    shutil.rmtree(f'{dest}/.git')
+    # Windows has tendency to lock random index files
+    shutil.rmtree(f'{dest}/.git', ignore_errors=True)
     cmd(dest, ['init'])
     # Force-add ignored files which were tracked on remote.
     # This will not be picked up by glug, but maintains full repo shape.

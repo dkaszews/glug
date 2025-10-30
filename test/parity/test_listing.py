@@ -16,10 +16,13 @@ def list_git(path: str) -> set[str]:
 
 
 def list_glug(path: str) -> set[str]:
-    glug = sorted(
-        glob.glob(f'{PROJECT_ROOT}/build/*/*/*/glug'),
-        key=os.path.getmtime
-    )[-1]
+    glug = os.environ.get('GLUG_PARITY_EXE', None)
+    if not glug:
+        exe = 'glug.exe' if os.name == 'nt' else 'glug'
+        glug = sorted(
+            glob.glob(f'{PROJECT_ROOT}/build/*/*/*/{exe}'),
+            key=os.path.getmtime
+        )[-1]
     return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
 
 

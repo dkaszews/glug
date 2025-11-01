@@ -38,7 +38,8 @@ def list_glug(path: str) -> set[str]:
         # ('https://github.com/denoland/deno.git', 'v2.5.6'),
         ('https://github.com/fastapi/fastapi.git', '0.120.4'),
         ('https://github.com/godotengine/godot.git', '4.5-stable'),
-        ('https://github.com/microsoft/TypeScript.git', 'v5.9.3'),
+        # TODO: #35 Glug does not use .gitignore files in TypeScript repo
+        # ('https://github.com/microsoft/TypeScript.git', 'v5.9.3'),
         # TODO: #34 Glug treats directory in PowerShell repo as a file
         # ('https://github.com/PowerShell/PowerShell.git', 'v7.5.4'),
         ('https://github.com/vuejs/core.git', 'v3.5.22'),

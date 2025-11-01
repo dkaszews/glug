@@ -53,6 +53,11 @@ def ls_tracked_ignored(path: str) -> list[str]:
 def _parse_diff_index(line: str) -> tuple[str, bool]:
     (stat, path) = line.split('\t')
     is_symlink = stat[2] == '2'
+    if path[0] == '"' or path[-1] == '"':
+        path = (
+            path[1:-1].encode('utf-8').decode('unicode_escape')
+            .encode('latin1').decode('utf8')
+        )
     return (path, is_symlink)
 
 

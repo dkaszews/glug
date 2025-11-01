@@ -50,19 +50,6 @@ def ls_tracked_ignored(path: str) -> list[str]:
     return cmd(path, ['ls-files', '-ic', '--exclude-standard', '.'])
 
 
-def _supports_symlinks(path: str) -> bool:
-    if not os.path.isdir(path):
-        path = os.path.dirname(path)
-
-    name = f'{path}/__symlink_check'
-    try:
-        os.symlink(path, name)
-        os.remove(name)
-        return True
-    except OSError:
-        return False
-
-
 def _parse_diff_index(line: str) -> tuple[str, bool]:
     (stat, path) = line.split('\t')
     is_symlink = stat[2] == '2'
@@ -79,17 +66,13 @@ def _clone_lean_locked(repo: str, branch: str, dest: str) -> None:
     ]
     to_checkout = [
         path
-        for (path, _) in files
-        if os.path.basename(path) == '.gitignore'
+        for (path, is_symlink) in files
+        if is_symlink or os.path.basename(path) == '.gitignore'
     ]
-    symlinks = {path for (path, is_symlink) in files if is_symlink}
-    if _supports_symlinks(dest):
-        to_checkout += list(symlinks)
-
     logging.info(f'Restoring {len(to_checkout)} files')
     cmd(dest, ['restore', '-s', branch] + to_checkout)
 
-    to_touch = {path for (path, _) in files} - set(to_checkout) - set(symlinks)
+    to_touch = {path for (path, _) in files} - set(to_checkout)
     to_touch = {os.path.join(dest, path) for path in to_touch}
     logging.info(f'Creating {len(to_touch)} empty files')
     for file in to_touch:

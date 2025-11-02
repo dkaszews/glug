@@ -18,6 +18,5 @@ Result is a repository which looks normal according to `find` or `git ls-files`,
 ## Running
 
 Simply run `pytest -v test/parity` or `xmake test -v parity_test/default`, the later is recommended as it also makes sure that the `glug` executable is up-to-date.
-If env variable `$GLUG_PARITY_EXE` is not set, then the newest `glug` executable found in any of the `build` subdirectories is used for the testing, switching between them without modifying any source code might require manually touching the binary to refresh its last modified time.
 It is recommended to use optimized binaries by default (`xmake config --mode=release` or `releasedbg`) as the debug ones can be order of magnitude slower (minutes vs seconds).
 

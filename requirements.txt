@@ -1,5 +1,7 @@
 fasteners == 0.20
-pytest == 8.4.*
+luadata == 1.0.5
+
+pytest == 8.4.2
 
 flake8 == 7.3.*
 flake8-docstrings == 1.7.*

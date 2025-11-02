@@ -1,7 +1,7 @@
 # Parity tests
 
 Parity tests are designed to check functionality which is expected to result in comparable if not exactly the same output to other tools running on large established codebases.
-This is somewhat orthogonal to unit tests, which are test single functions or classes (units) against an artificial set of inputs and have explicit and exact expected outputs, parity tests aim to find edge cases in real-world scenarios that the unit tests did not consider.
+This is somewhat orthogonal to unit tests, which are testing single functions or classes (units) against an artificial set of inputs and have explicit and exact expected outputs, while parity tests aim to find edge cases in real-world scenarios that the unit tests did not consider.
 
 ## Examples
 
@@ -17,6 +17,6 @@ Result is a repository which looks normal according to `find` or `git ls-files`,
 
 ## Running
 
-Simply run `pytest -v test/parity` or `xmake test -v parity_test/default`, the later is recommended as it also makes sure that the `glug` executable is up-to-date.
+Simply run `pytest -v test/parity` or `xmake test -v parity_test/default`, the latter of which also makes sure that the `glug` executable is up-to-date.
 It is recommended to use optimized binaries by default (`xmake config --mode=release` or `releasedbg`) as the debug ones can be order of magnitude slower (minutes vs seconds).
 

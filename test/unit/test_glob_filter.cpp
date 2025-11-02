@@ -2,7 +2,7 @@
 #include "glug/filter.hpp"
 
 #include "parametrized.hpp"
-#include "test_tree.hpp"
+#include "tree.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

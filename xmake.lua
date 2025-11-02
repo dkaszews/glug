@@ -41,22 +41,44 @@ if is_mode('debug') and is_os('linux') then
     end
 end
 
+function copy_latest(target)
+    destination = 'build/latest/'
+    os.mkdir(destination)
+    os.cp(target:targetfile(), destination)
+end
+
 target('glug')
     set_kind('binary')
     add_files('src/**.cpp')
     add_includedirs('include')
     add_packages(get_config('engine'))
     add_options('engine')
+    after_build(copy_latest)
 target_end()
 
-target('glug_test')
+target('unit_test')
     set_kind('binary')
     add_tests('default')
-    add_files('src/**.cpp|main.cpp', 'test/**.cpp')
+    add_files('src/**.cpp|main.cpp', 'test/unit/**.cpp')
     add_includedirs('include', 'test')
     add_defines('UNIT_TEST=1')
     add_packages('gtest', get_config('engine'))
     add_options('engine')
+    after_build(copy_latest)
+target_end()
+
+target('parity_test')
+    set_kind('phony')
+    add_tests('default')
+    add_deps('glug')
+    on_test(function (target, opt)
+        if import('core.base.option').get('verbose') then
+            os.execv('pytest', { 'test/parity', '-v' })
+        else
+            os.execv('pytest', { 'test/parity' }, { stdout = os.tmpfile() })
+        end
+        return true
+    end)
 target_end()
 
 task('coverage')

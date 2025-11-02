@@ -39,8 +39,8 @@ jobs:
           --toolchain=${{ matrix.toolchain }}
           --mode=${{ matrix.mode }}
           ${{ (contains(matrix.os, 'windows') && !contains(matrix.toolchain, 'msvc')) && '--plat=mingw' || '' }}
-      - run: xmake build -v
-      - run: xmake test -v
+      - run: xmake build -v unit_test
+      - run: xmake test -v unit_test/default
       - uses: threeal/gcovr-action@v1.2.0
         if: matrix.mode == 'coverage'
         with:
@@ -54,4 +54,29 @@ jobs:
         with:
           name: coverage_${{ matrix.os }}
           path: coverage_report.html
+  parity-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+      - run: pip install -r requirements.txt
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
+          project-path: glug
+      - run: git config --global user.name CI
+      - run: git config --global user.email ci@github.com
+      - run: git config --system core.longpaths true
+        if: matrix.os == 'windows-latest'
+      - run: xmake config -vy --mode=release
+      - run: xmake build -v parity_test
+      - run: xmake test -v parity_test/default
 

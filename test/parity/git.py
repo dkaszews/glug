@@ -10,6 +10,9 @@ import subprocess
 from fasteners import InterProcessLock  # type: ignore
 
 
+logging.basicConfig()
+
+
 def cmd(workdir: str, args: list[str]) -> list[str]:
     """Run git command and return stdout as lines."""
     args = ['git'] + args
@@ -94,13 +97,3 @@ def _clone_lean_locked(repo: str, branch: str, dest: str) -> None:
     cmd(dest, ['add', '-f', '.'])
     cmd(dest, ['commit', '-m', f'Lean clone of {branch}'])
     logging.info('Done')
-
-
-def _main() -> None:
-    pass
-
-
-if __name__ == '__main__':
-    _main()
-else:
-    logging.basicConfig()

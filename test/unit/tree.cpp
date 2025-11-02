@@ -1,5 +1,5 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-#include "test_tree.hpp"
+#include "tree.hpp"
 
 #include <algorithm>
 #include <cassert>

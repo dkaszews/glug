@@ -1,11 +1,8 @@
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-import glob
 import os
 import subprocess
 
 import git
-
-import luadata  # type: ignore
 
 import pytest
 
@@ -18,17 +15,9 @@ def list_git(path: str) -> set[str]:
 
 
 def list_glug(path: str) -> set[str]:
-    # Cannot use `xmake run glug`, because might be in `xmake test` already
-    # And xmake does not allow recursive invocations due to `project.lock`
-    cfg = luadata.read(glob.glob(f'{PROJECT_ROOT}/.xmake/*/*/xmake.conf')[0])
-    glug = os.path.join(
-        PROJECT_ROOT,
-        'build',
-        cfg['plat'],
-        cfg['arch'],
-        cfg['mode'],
-        'glug.exe' if os.name == 'nt' else 'glug'
-    )
+    glug = f'{PROJECT_ROOT}/build/latest/glug'
+    if not os.path.isfile(glug):
+        glug += '.exe'
     return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
 
 

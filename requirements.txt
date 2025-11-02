@@ -1,5 +1,4 @@
 fasteners == 0.20
-luadata == 1.0.5
 
 pytest == 8.4.2
 

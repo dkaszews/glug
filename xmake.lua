@@ -41,12 +41,19 @@ if is_mode('debug') and is_os('linux') then
     end
 end
 
+function copy_latest(target)
+    destination = 'build/latest/'
+    os.mkdir(destination)
+    os.cp(target:targetfile(), destination)
+end
+
 target('glug')
     set_kind('binary')
     add_files('src/**.cpp')
     add_includedirs('include')
     add_packages(get_config('engine'))
     add_options('engine')
+    after_build(copy_latest)
 target_end()
 
 target('unit_test')
@@ -57,6 +64,7 @@ target('unit_test')
     add_defines('UNIT_TEST=1')
     add_packages('gtest', get_config('engine'))
     add_options('engine')
+    after_build(copy_latest)
 target_end()
 
 target('parity_test')

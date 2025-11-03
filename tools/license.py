@@ -8,11 +8,7 @@ import subprocess
 import sys
 from datetime import datetime
 
-PROJECT_ROOT = os.path.abspath(f'{os.path.dirname(__file__)}/../..')
-sys.path.append(f'{PROJECT_ROOT}/test/parity')
-
-
-import git  # noqa: E402
+import git
 
 
 class LicenseChecker:

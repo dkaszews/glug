@@ -12,5 +12,5 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: .github/workflows/license.py --recurse
+      - run: tools/license.py
 

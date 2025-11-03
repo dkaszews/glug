@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 """Utilities for interacting with git repositories."""
 import logging

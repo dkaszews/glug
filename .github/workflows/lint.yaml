@@ -1,4 +1,4 @@
-name: Lint
+name: Format
 on:
   workflow_dispatch:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  clang-format:
+  clang:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

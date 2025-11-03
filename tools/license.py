@@ -154,6 +154,7 @@ def main(path: str, fix: bool = False) -> bool:
         if license_.license_line != license_.expected_license()
     ]
     if not invalid:
+        print(f'Checked {len(targets)} files, {len(licenses)} licenseable')
         return True
 
     output = sys.stdout if fix else sys.stderr

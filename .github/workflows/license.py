@@ -8,6 +8,12 @@ import subprocess
 import sys
 from datetime import datetime
 
+PROJECT_ROOT = os.path.abspath(f'{os.path.dirname(__file__)}/../..')
+sys.path.append(f'{PROJECT_ROOT}/test/parity')
+
+
+import git  # noqa: E402
+
 
 class LicenseChecker:
     """Represents a file with its license header."""
@@ -83,16 +89,8 @@ class LicenseChecker:
         """
         Check if file should contain license.
 
-        @return `True` for sources, `False` for configs, test data and ignored.
+        @return `True` for sources, `False` for configs and test data.
         """
-        if '/.git/' in os.path.realpath(path):
-            return False
-
-        args = ['git', 'check-ignore', path]
-        result = subprocess.run(args, capture_output=True)
-        if result.returncode == 0:
-            return False
-
         return cls.get_filetype(path) is not None
 
     @classmethod
@@ -142,30 +140,12 @@ class LicenseChecker:
         return none
 
 
-def _list_directory(directory: str, recurse: bool = False) -> list[str]:
-    if not recurse:
-        return [
-            entry
-            for entry in os.listdir(directory)
-            if os.path.isfile(entry)
-        ]
-
-    return [
-        os.path.join(dirname, filename)
-        for (dirname, _, filenames) in os.walk(directory)
-        for filename in filenames
-    ]
-
-
-def main(targets: list[str], recurse: bool = False, fix: bool = False) -> bool:
+def main(path: str, fix: bool = False) -> bool:
     """Script entry."""
-    if directories := [target for target in targets if os.path.isdir(target)]:
-        targets = list(set(targets) - set(directories))
-        targets += [
-            file
-            for directory in directories
-            for file in _list_directory(directory, recurse)
-        ]
+    if os.path.isdir(path):
+        targets = git.ls_files(path, absolute=True)
+    else:
+        targets = [path]
 
     licenses = [
         LicenseChecker(target)
@@ -198,16 +178,10 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
-        'targets',
-        metavar='target',
-        nargs='*',
-        default=['.'],
-        help='Target file(s) or directory(-ies), defaults to current dir'
-    )
-    parser.add_argument(
-        '-r', '--recurse',
-        action='store_true',
-        help='recursely search target directory(-ies)'
+        'path',
+        nargs='?',
+        default='.',
+        help='Target file or directory, defaults to current dir'
     )
     parser.add_argument(
         '-f', '--fix',

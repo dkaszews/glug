@@ -43,14 +43,20 @@ def clone_lean(repo: str, branch: str, dest: str) -> str:
         return clone_dir
 
 
-def ls_files(path: str) -> list[str]:
+def _resolve_absolute(root: str, files: list[str]) -> list[str]:
+    return [os.path.abspath(f'{root}/{file}') for file in files]
+
+
+def ls_files(path: str, absolute: bool = False) -> list[str]:
     """List files tracked by git."""
-    return cmd(path, ['ls-files', '.'])
+    files = cmd(path, ['ls-files', '.'])
+    return _resolve_absolute(path, files) if absolute else files
 
 
-def ls_tracked_ignored(path: str) -> list[str]:
+def ls_tracked_ignored(path: str, absolute: bool = False) -> list[str]:
     """List files which have been ignored after committing or force-added."""
-    return cmd(path, ['ls-files', '-ic', '--exclude-standard', '.'])
+    files = cmd(path, ['ls-files', '-ic', '--exclude-standard', '.'])
+    return _resolve_absolute(path, files) if absolute else files
 
 
 def _parse_diff_index(line: str) -> tuple[str, bool]:

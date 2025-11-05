@@ -8,6 +8,8 @@
 
 namespace glug::unit_test {
 
+namespace old {
+
 tree::tree(const char* path) :
     path{ path } {
 
@@ -94,6 +96,68 @@ bool operator<(const tree& lhs, const tree& rhs) {
 
 std::ostream& operator<<(std::ostream& os, const tree& obj) {
     return os << '"' << obj.path.string() << (obj.is_dir ? "/" : "");
+}
+
+}  // namespace old
+
+// TODO: Move to outer scope
+static constexpr auto node_name = [](const auto& n) { return n.name; };
+
+static node shorthand(const std::filesystem::path& path) {
+    auto root = node{};
+    auto* leaf = static_cast<node*>(nullptr);
+
+    for (const auto& segment : path) {
+        // Trailing slash marks directory
+        if (segment == "") {
+            *leaf = dir{ std::visit(node_name, *leaf) };
+            break;
+        }
+
+        if (!leaf) {
+            root = file{ segment };
+            leaf = &root;
+        } else {
+            *leaf = dir{ std::visit(node_name, *leaf) };
+            leaf = &std::get<dir>(*leaf).content.emplace_back(file{ segment });
+        }
+    }
+
+    return root;
+}
+
+template <typename... Ts>
+struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+template <typename... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
+static void materialize(const node& node, const std::filesystem::path& path) {
+    const auto visitor = overloaded{
+        [&path](const file& file) {
+            std::ofstream{ path / file.name } << file.content;
+        },
+        [&path](const link& link) {
+            std::filesystem::create_symlink(link.target, path / link.name);
+        },
+        [&path](const dir& dir) {
+            std::filesystem::create_directory(path / dir.name);
+            for (const auto& child : dir.content) {
+                materialize(child, path / dir.name);
+            }
+        }
+    };
+    std::visit(visitor, node);
+}
+
+tree::tree(const std::filesystem::path& path) :
+    root{ shorthand(path) } {
+    materialize(root, temp_dir());
+}
+
+tree::~tree() {
+    std::filesystem::remove_all(temp_dir() / std::visit(node_name, root));
 }
 
 }  // namespace glug::unit_test

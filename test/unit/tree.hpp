@@ -8,6 +8,8 @@
 
 namespace glug::unit_test {
 
+namespace old {
+
 class tree {
     public:
     static std::filesystem::path temp_dir();
@@ -33,6 +35,58 @@ class tree {
 };
 
 inline tree operator""_t(const char* path, size_t) { return tree{ path }; }
+
+}  // namespace old
+
+struct file {
+    std::string name{};
+    std::string content{};
+};
+inline file operator""_f(const char* name, size_t) { return { name }; }
+inline bool operator==(const file& lhs, const file& rhs) {
+    return std::tie(lhs.name, lhs.content) == std::tie(rhs.name, rhs.content);
+}
+
+struct link {
+    std::string name{};
+    std::filesystem::path target{};
+};
+inline link operator""_l(const char* name, size_t) { return { name }; }
+inline bool operator==(const link& lhs, const link& rhs) {
+    return std::tie(lhs.name, lhs.target) == std::tie(rhs.name, rhs.target);
+}
+
+struct dir;
+using node = std::variant<file, link, dir>;
+
+struct dir {
+    std::string name{};
+    std::vector<node> content{};
+};
+inline dir operator""_d(const char* name, size_t) { return { name }; }
+inline bool operator==(const dir& lhs, const dir& rhs) {
+    return std::tie(lhs.name, lhs.content) == std::tie(rhs.name, rhs.content);
+}
+
+class tree {
+    public:
+    static std::filesystem::path temp_dir() { return old::tree::temp_dir(); }
+
+    explicit tree(const std::filesystem::path& path);
+    // TODO: Consider move-able
+    tree(const tree&) = delete;
+    tree(tree&&) = delete;
+    tree& operator=(const tree&) = delete;
+    tree& operator=(tree&&) = delete;
+    ~tree();
+
+    friend bool operator==(const tree& lhs, const tree& rhs) {
+        return lhs.root == rhs.root;
+    }
+
+    private:
+    node root{};
+};
 
 }  // namespace glug::unit_test
 

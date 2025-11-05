@@ -5,7 +5,7 @@
       "configuration": {
         "request": "launch",
         "stopAtEntry": true,
-        "program": "${workspaceRoot}/build/${plat:linux}/${arch:x86_64}/${mode:debug}/glug_test",
+        "program": "${workspaceRoot}/build/latest/unit_test",
         "args": [ "--gtest_filter=${filter:*}" ],
         "sourceLanguages": [ "cpp" ]
       }

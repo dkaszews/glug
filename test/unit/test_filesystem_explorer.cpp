@@ -9,9 +9,10 @@
 #include <variant>
 #include <vector>
 
-using namespace glug::unit_test;
-
 namespace glug::filesystem::unit_test {
+
+using glug::unit_test::old::operator""_t;
+using glug::unit_test::old::tree;
 
 struct explorer_param {
     tree setup;

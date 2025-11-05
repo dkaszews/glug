@@ -14,12 +14,12 @@
 
 namespace glug::glob::unit_test {
 
-using glug::unit_test::tree;
+using namespace glug::unit_test;
 
 struct filter_param {
     std::string source{};
     std::vector<std::string> globs{};
-    std::map<tree, decision> cases{};
+    std::map<std::filesystem::path, decision> cases{};
 
     friend void PrintTo(const filter_param& param, std::ostream* os) {
         std::ignore = std::tie(param, os);
@@ -28,7 +28,12 @@ struct filter_param {
 
 class filter_test : public testing::TestWithParam<filter_param> {
     public:
-    filter_test() { std::filesystem::remove_all(tree::temp_dir()); }
+    filter_test() {
+        // TODO: This is bad, should only delete contents.
+        // Deleting entire directory may cause others to use the same.
+        std::filesystem::remove_all(tree::temp_dir());
+        std::filesystem::create_directories(tree::temp_dir());
+    }
     ~filter_test() { std::filesystem::remove_all(tree::temp_dir()); }
 };
 
@@ -38,11 +43,21 @@ TEST_P(filter_test, test) {
         param.globs.begin(),
         param.globs.end(),
     };
-    const auto list = filter{ globs, tree::temp_dir() / param.source };
+
+    const auto temp = tree::temp_dir();
+    const auto list = filter{ globs, temp / param.source };
+
     auto actual = param.cases;
-    for (auto& [descriptor, ignored] : actual) {
-        ignored = list.is_ignored(descriptor.create());
-        descriptor.remove();
+    for (auto& [path, ignored] : actual) {
+        tree materialize{ path };
+        // TODO: Remove shorthand which causes such problems
+        auto path_no_slash = path.generic_string();
+        if (!path_no_slash.empty() && path_no_slash.back() == '/') {
+            path_no_slash.pop_back();
+        }
+        ignored = list.is_ignored(
+                std::filesystem::directory_entry{ temp / path_no_slash }
+        );
     }
     EXPECT_THAT(actual, testing::ElementsAreArray(param.cases));
 }

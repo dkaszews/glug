@@ -48,7 +48,7 @@ std::filesystem::path tree::temp_dir() {
         auto result = std::filesystem::path{};
         do {
             result = std::filesystem::temp_directory_path()
-                    / ("glug_test." + std::to_string(i++));
+                    / ("glug_test.old." + std::to_string(i++));
         } while (!std::filesystem::create_directory(result));
         return result;
     }();
@@ -100,65 +100,110 @@ std::ostream& operator<<(std::ostream& os, const tree& obj) {
 
 }  // namespace old
 
-// TODO: Move to outer scope
-static constexpr auto node_name = [](const auto& n) { return n.name; };
+node file::leaf() const { return *this; }
 
-static node shorthand(const std::filesystem::path& path) {
-    auto root = node{};
-    auto* leaf = static_cast<node*>(nullptr);
+void file::move(const std::filesystem::path& destination) {
+    path_ = destination / name();
+}
 
-    for (const auto& segment : path) {
-        // Trailing slash marks directory
-        if (segment == "") {
-            *leaf = dir{ std::visit(node_name, *leaf) };
-            break;
-        }
+void file::materialize(const temp_fs& temp) {
+    std::ofstream{ temp / path() } << contents();
+}
 
-        if (!leaf) {
-            root = file{ segment };
-            leaf = &root;
-        } else {
-            *leaf = dir{ std::visit(node_name, *leaf) };
-            leaf = &std::get<dir>(*leaf).content.emplace_back(file{ segment });
-        }
+std::string escape_literal(const std::string& s) {
+    // TODO: Implement
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& os, const file& file) {
+    os << "file{ " << file.name();
+    if (!file.contents().empty()) {
+        os << ", \"" << escape_literal(file.contents()) << "\"";
+    }
+    return os << " }";
+}
+
+dir::dir(const std::string& name, const std::vector<node>& contents) :
+    path_{ name },
+    contents_{ contents } {
+
+    for (auto& child : contents_) {
+        child.move(path());
+    }
+}
+
+node dir::leaf() const {
+    return !contents().empty() ? contents().front() : node{ *this };
+}
+
+void dir::move(const std::filesystem::path& destination) {
+    path_ = destination / name();
+    for (auto& child : contents_) {
+        child.move(path());
+    }
+}
+
+void dir::materialize(const temp_fs& temp) {
+    std::filesystem::create_directory(temp / path());
+}
+
+std::ostream& operator<<(std::ostream& os, const dir& dir) {
+    os << "dir{ " << dir.name();
+    if (dir.contents().empty()) {
+        return os << " }";
     }
 
-    return root;
+    os << ", { ";
+    for (const auto& child : dir.contents()) {
+        os << child << ", ";
+    }
+    return os << " } }";
 }
 
-template <typename... Ts>
-struct overloaded : Ts... {
-    using Ts::operator()...;
-};
-template <typename... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
-
-static void materialize(const node& node, const std::filesystem::path& path) {
-    const auto visitor = overloaded{
-        [&path](const file& file) {
-            std::ofstream{ path / file.name } << file.content;
-        },
-        [&path](const link& link) {
-            std::filesystem::create_symlink(link.target, path / link.name);
-        },
-        [&path](const dir& dir) {
-            std::filesystem::create_directory(path / dir.name);
-            for (const auto& child : dir.content) {
-                materialize(child, path / dir.name);
-            }
-        }
-    };
-    std::visit(visitor, node);
+const std::filesystem::path& node::path() const {
+    const auto visitor = [](auto& node) -> auto& { return node.path(); };
+    return std::visit(visitor, variant_);
 }
 
-tree::tree(const std::filesystem::path& path) :
-    root{ shorthand(path) } {
-    materialize(root, temp_dir());
+std::filesystem::path node::name() const {
+    const auto visitor = [](auto& node) { return node.name(); };
+    return std::visit(visitor, variant_);
 }
 
-tree::~tree() {
-    std::filesystem::remove_all(temp_dir() / std::visit(node_name, root));
+node node::leaf() const {
+    const auto visitor = [](auto& node) { return node.leaf(); };
+    return std::visit(visitor, variant_);
 }
+
+void node::move(const std::filesystem::path& destination) {
+    const auto visitor = [&destination](auto& node) { node.move(destination); };
+    std::visit(visitor, variant_);
+}
+
+void node::materialize(const temp_fs& temp) {
+    const auto visitor = [&temp](auto& node) { node.materialize(temp); };
+    std::visit(visitor, variant_);
+}
+
+std::ostream& operator<<(std::ostream& os, const node& node) {
+    const auto visitor = [&os](auto& node) -> auto& { return os << node; };
+    return std::visit(visitor, node.variant());
+}
+
+static std::filesystem::path make_temp_directory() {
+    auto i = size_t{ 0 };
+    auto path = std::filesystem::path{};
+    do {
+        path = std::filesystem::temp_directory_path()
+                / ("glug_test." + std::to_string(i++));
+    } while (!std::filesystem::create_directory(path));
+    return path;
+}
+
+temp_fs::temp_fs() :
+    path_{ make_temp_directory() } {}
+
+temp_fs::~temp_fs() { std::filesystem::remove_all(path()); }
 
 }  // namespace glug::unit_test
 

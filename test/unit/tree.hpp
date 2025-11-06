@@ -38,54 +38,104 @@ inline tree operator""_t(const char* path, size_t) { return tree{ path }; }
 
 }  // namespace old
 
-struct file {
-    std::string name{};
-    std::string content{};
-};
-inline file operator""_f(const char* name, size_t) { return { name }; }
-inline bool operator==(const file& lhs, const file& rhs) {
-    return std::tie(lhs.name, lhs.content) == std::tie(rhs.name, rhs.content);
-}
+class node;
+class temp_fs;
 
-struct link {
-    std::string name{};
-    std::filesystem::path target{};
-};
-inline link operator""_l(const char* name, size_t) { return { name }; }
-inline bool operator==(const link& lhs, const link& rhs) {
-    return std::tie(lhs.name, lhs.target) == std::tie(rhs.name, rhs.target);
-}
-
-struct dir;
-using node = std::variant<file, link, dir>;
-
-struct dir {
-    std::string name{};
-    std::vector<node> content{};
-};
-inline dir operator""_d(const char* name, size_t) { return { name }; }
-inline bool operator==(const dir& lhs, const dir& rhs) {
-    return std::tie(lhs.name, lhs.content) == std::tie(rhs.name, rhs.content);
-}
-
-class tree {
+class file {
     public:
-    static std::filesystem::path temp_dir() { return old::tree::temp_dir(); }
+    explicit file(const std::string& name) :
+        file{ name, {} } {}
+    file(const std::string& name, const std::string& contents) :
+        path_{ name },
+        contents_{ contents } {}
 
-    explicit tree(const std::filesystem::path& path);
-    // TODO: Consider move-able
-    tree(const tree&) = delete;
-    tree(tree&&) = delete;
-    tree& operator=(const tree&) = delete;
-    tree& operator=(tree&&) = delete;
-    ~tree();
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& contents() const { return contents_; }
+    node leaf() const;
 
-    friend bool operator==(const tree& lhs, const tree& rhs) {
-        return lhs.root == rhs.root;
-    }
+    void move(const std::filesystem::path& destination);
+    void materialize(const temp_fs& temp);
 
     private:
-    node root{};
+    std::filesystem::path path_{};
+    std::string contents_{};
+};
+inline file operator""_f(const char* name, size_t) { return file{ name }; }
+inline bool operator==(const file& lhs, const file& rhs) {
+    return std::tie(lhs.path(), lhs.contents())
+            == std::tie(rhs.path(), rhs.contents());
+}
+std::ostream& operator<<(std::ostream& os, const file& file);
+
+class dir {
+    public:
+    explicit dir(const std::string& name) :
+        dir{ name, {} } {}
+    dir(const std::string& name, const std::vector<node>& contents);
+
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& contents() const { return contents_; }
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    void materialize(const temp_fs& temp);
+
+    private:
+    std::filesystem::path path_{};
+    std::vector<node> contents_{};
+};
+inline dir operator""_d(const char* name, size_t) { return dir{ name }; }
+inline bool operator==(const dir& lhs, const dir& rhs) {
+    return std::tie(lhs.path(), lhs.contents())
+            == std::tie(rhs.path(), rhs.contents());
+}
+std::ostream& operator<<(std::ostream& os, const dir& dir);
+
+class node {
+    public:
+    node(const file& file) :
+        variant_{ file } {}
+    node(const dir& dir) :
+        variant_{ dir } {}
+
+    const auto& variant() const { return variant_; }
+    const std::filesystem::path& path() const;
+    std::filesystem::path name() const;
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    void materialize(const temp_fs& temp);
+
+    private:
+    std::variant<file, dir> variant_;
+};
+inline bool operator==(const node& lhs, const node& rhs) {
+    return lhs.variant() == rhs.variant();
+}
+std::ostream& operator<<(std::ostream& os, const node& node);
+inline dir operator/(const dir& dir, const node& node) {
+    return { dir.path().string(), { node } };
+}
+
+std::filesystem::path leaf(const node& node);
+
+class temp_fs {
+    public:
+    temp_fs();
+    // TODO: Consider moveable
+    temp_fs(const temp_fs&) = delete;
+    temp_fs(temp_fs&&) = delete;
+    temp_fs& operator=(const temp_fs&) = delete;
+    temp_fs& operator=(temp_fs&&) = delete;
+    ~temp_fs();
+
+    const auto& path() const { return path_; }
+    operator const std::filesystem::path&() const { return path(); }
+
+    private:
+    std::filesystem::path path_{};
 };
 
 }  // namespace glug::unit_test

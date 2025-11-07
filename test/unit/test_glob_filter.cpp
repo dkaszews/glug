@@ -54,8 +54,7 @@ static const auto filter_cases = std::vector<filter_param>{
             { "dir_only"_f, decision::undecided },
             { "dir_only"_d, decision::ignored },
             { "dir"_d / "dir_only"_f, decision::undecided },
-            // TODO: Debug
-            // { "dir"_d / "dir_only"_d, decision::ignored },
+            { "dir"_d / "dir_only"_d, decision::ignored },
             // // Files in ignored directories are not ignored explicitly,
             // // but are ignored implicitly as they will not be enumerated.
             { "dir_only"_d / "file"_f, decision::undecided },
@@ -78,8 +77,7 @@ static const auto filter_cases = std::vector<filter_param>{
             { "file_only"_f, decision::ignored },
             { "file_only"_d, decision::included },
             { "dir"_d / "file_only"_f, decision::ignored },
-            // TODO: Debug
-            // { "dir"_d / "file_only"_d, decision::included },
+            { "dir"_d / "file_only"_d, decision::included },
         },
     },
     {
@@ -95,10 +93,9 @@ static const auto filter_cases = std::vector<filter_param>{
         { "/anchored", "unanchored" },
         {
             { "sub"_d / "anchored"_f, decision::ignored },
-            // TODO: Debug
-            // { "sub"_d / "deeper"_d / "anchored"_f, decision::undecided },
+            { "sub"_d / ("deeper"_d / "anchored"_f), decision::undecided },
             { "sub"_d / "unanchored"_f, decision::ignored },
-            { "sub"_d / "deeper"_d / "unanchored"_f, decision::ignored },
+            { "sub"_d / ("deeper"_d / "unanchored"_f), decision::ignored },
         },
     },
     {

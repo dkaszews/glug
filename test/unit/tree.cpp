@@ -106,7 +106,7 @@ void file::move(const std::filesystem::path& destination) {
     path_ = destination / name();
 }
 
-void file::materialize(const temp_fs& temp) {
+void file::materialize(const temp_fs& temp) const {
     std::ofstream{ temp / path() } << contents();
 }
 
@@ -133,7 +133,7 @@ dir::dir(const std::string& name, const std::vector<node>& contents) :
 }
 
 node dir::leaf() const {
-    return !contents().empty() ? contents().front() : node{ *this };
+    return !contents().empty() ? contents().front().leaf() : node{ *this };
 }
 
 void dir::move(const std::filesystem::path& destination) {
@@ -143,8 +143,11 @@ void dir::move(const std::filesystem::path& destination) {
     }
 }
 
-void dir::materialize(const temp_fs& temp) {
+void dir::materialize(const temp_fs& temp) const {
     std::filesystem::create_directory(temp / path());
+    for (const auto& child : contents()) {
+        child.materialize(temp);
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const dir& dir) {
@@ -180,7 +183,7 @@ void node::move(const std::filesystem::path& destination) {
     std::visit(visitor, variant_);
 }
 
-void node::materialize(const temp_fs& temp) {
+void node::materialize(const temp_fs& temp) const {
     const auto visitor = [&temp](auto& node) { node.materialize(temp); };
     std::visit(visitor, variant_);
 }

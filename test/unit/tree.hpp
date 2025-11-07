@@ -55,7 +55,7 @@ class file {
     node leaf() const;
 
     void move(const std::filesystem::path& destination);
-    void materialize(const temp_fs& temp);
+    void materialize(const temp_fs& temp) const;
 
     private:
     std::filesystem::path path_{};
@@ -80,7 +80,7 @@ class dir {
     node leaf() const;
 
     void move(const std::filesystem::path& destination);
-    void materialize(const temp_fs& temp);
+    void materialize(const temp_fs& temp) const;
 
     private:
     std::filesystem::path path_{};
@@ -106,7 +106,7 @@ class node {
     node leaf() const;
 
     void move(const std::filesystem::path& destination);
-    void materialize(const temp_fs& temp);
+    void materialize(const temp_fs& temp) const;
 
     private:
     std::variant<file, dir> variant_;
@@ -115,6 +115,10 @@ inline bool operator==(const node& lhs, const node& rhs) {
     return lhs.variant() == rhs.variant();
 }
 std::ostream& operator<<(std::ostream& os, const node& node);
+
+// Warning: shorthand only works for single level, needs right-parenthesising
+// after that to ensure proper precedence. Fixing would require additional API
+// with `leaf()` returning a modifiable reference to add `node` to.
 inline dir operator/(const dir& dir, const node& node) {
     return { dir.path().string(), { node } };
 }

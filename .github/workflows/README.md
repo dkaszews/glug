@@ -19,3 +19,8 @@ If you cannot local reproduce a failure, perhaps because it only occurs on a dif
 1. Use given command to connect to the server, press `q` to exit welcome prompt and enter shell
 1. Test will finish when all clients disconnect
 
+# Known issues on Windows
+
+- `xmake` has issues building anything
+- `vim` completely hangs due to unconnected stdin and stdout, use `nano` instead
+

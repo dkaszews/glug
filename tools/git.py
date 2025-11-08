@@ -46,27 +46,37 @@ def _resolve_absolute(root: str, files: list[str]) -> list[str]:
     return [os.path.abspath(f'{root}/{file}') for file in files]
 
 
+def _decode_utf8_path(path: str) -> str:
+    if path[0] != '"':
+        return path
+
+    return (
+        path[1:-1].encode('utf-8').decode('unicode_escape')
+        .encode('latin1').decode('utf8')
+    )
+
+
+def _ls_cmd(path: str, args: list[str], absolute: bool = False) -> list[str]:
+    files = [_decode_utf8_path(path) for path in cmd(path, args)]
+    return _resolve_absolute(path, files) if absolute else files
+
+
 def ls_files(path: str, absolute: bool = False) -> list[str]:
     """List files tracked by git."""
-    files = cmd(path, ['ls-files', '.'])
-    return _resolve_absolute(path, files) if absolute else files
+    args = ['ls-files', '.']
+    return _ls_cmd(path, args, absolute)
 
 
 def ls_tracked_ignored(path: str, absolute: bool = False) -> list[str]:
     """List files which have been ignored after committing or force-added."""
-    files = cmd(path, ['ls-files', '-ic', '--exclude-standard', '.'])
-    return _resolve_absolute(path, files) if absolute else files
+    args = ['ls-files', '-ic', '--exclude-standard', '.']
+    return _ls_cmd(path, args, absolute)
 
 
 def _parse_diff_index(line: str) -> tuple[str, bool]:
     (stat, path) = line.split('\t')
     is_symlink = stat[2] == '2'
-    if path[0] == '"' or path[-1] == '"':
-        path = (
-            path[1:-1].encode('utf-8').decode('unicode_escape')
-            .encode('latin1').decode('utf8')
-        )
-    return (path, is_symlink)
+    return (_decode_utf8_path(path), is_symlink)
 
 
 def _clone_lean_locked(repo: str, branch: str, dest: str) -> None:

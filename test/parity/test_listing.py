@@ -1,4 +1,5 @@
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+import enum
 import os
 import subprocess
 
@@ -8,10 +9,12 @@ import pytest
 
 
 PROJECT_ROOT = os.path.abspath(f'{os.path.dirname(__file__)}/../..')
+REPO_LINUX = 'https://github.com/torvalds/linux.git'
 
 
 def list_git(path: str) -> set[str]:
-    return set(git.ls_files(path)) - set(git.ls_tracked_ignored(path))
+    tracked = set(git.ls_files(path)) - set(git.ls_tracked_ignored(path))
+    return {file for file in tracked if not os.path.islink(f'{path}/{file}')}
 
 
 def list_glug(path: str) -> set[str]:
@@ -21,31 +24,58 @@ def list_glug(path: str) -> set[str]:
     return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
 
 
+def supports_symlinks(path: str) -> bool:
+    symlink_name = 'symlink.check'
+    symlink_path = f'{path}/{symlink_name}'
+    if os.path.islink(symlink_path):
+        return True
+
+    try:
+        os.symlink(symlink_name, symlink_path)
+        return True
+    except OSError:
+        return False
+
+
+def supports_case_mix(path: str) -> bool:
+    first = f'{path}/SpOnGeBoB.check'
+    second = f'{path}/sPoNgEbOb.check'
+    with open(first, 'w'), open(second, 'w'):
+        return not os.path.samefile(first, second)
+
+
+class Needs(enum.IntFlag):
+    SYMLINKS = enum.auto()
+    CASE_MIX = enum.auto()
+
+
 @pytest.mark.parametrize(
-    'repo,branch',
+    'repo,branch,needs',
     [
-        ('https://github.com/torvalds/linux.git', 'v2.6.39'),
-        # TODO: #33 Glug should ignore directory symlinks by default
-        # ('https://github.com/torvalds/linux.git', 'v3.19'),
-        # ('https://github.com/torvalds/linux.git', 'v4.20'),
-        # ('https://github.com/torvalds/linux.git', 'v5.19'),
-        # ('https://github.com/torvalds/linux.git', 'v6.17'),
-        # ('https://github.com/denoland/deno.git', 'v2.5.6'),
-        ('https://github.com/fastapi/fastapi.git', '0.120.4'),
-        ('https://github.com/godotengine/godot.git', '4.5-stable'),
-        # TODO: #35 Glug does not use .gitignore files in TypeScript repo
-        # ('https://github.com/microsoft/TypeScript.git', 'v5.9.3'),
         # TODO: #34 Glug treats directory in PowerShell repo as a file
-        # ('https://github.com/PowerShell/PowerShell.git', 'v7.5.4'),
-        ('https://github.com/vuejs/core.git', 'v3.5.22'),
+        # (REPO_LINUX, 'v2.6.39', Needs.SYMLINKS | Needs.CASE_MIX),
+        # (REPO_LINUX, 'v3.19', Needs.SYMLINKS | Needs.CASE_MIX),
+        # (REPO_LINUX, 'v4.20', Needs.SYMLINKS | Needs.CASE_MIX),
+        # (REPO_LINUX, 'v5.19', Needs.SYMLINKS | Needs.CASE_MIX),
+        # (REPO_LINUX, 'v6.17', Needs.SYMLINKS | Needs.CASE_MIX),
+        ('https://github.com/denoland/deno.git', 'v2.5.6', Needs.SYMLINKS),
+        ('https://github.com/fastapi/fastapi.git', '0.120.4', Needs(0)),
+        ('https://github.com/godotengine/godot.git', '4.5-stable', Needs(0)),
+        # TODO: #35 Glug does not use .gitignore files in TypeScript repo
+        # ('https://github.com/microsoft/TypeScript.git', 'v5.9.3', Needs(0)),
+        # TODO: #34 Glug treats directory in PowerShell repo as a file
+        # ('https://github.com/PowerShell/PowerShell.git', 'v7.5.4', Needs(0)),
+        ('https://github.com/vuejs/core.git', 'v3.5.22', Needs(0)),
     ]
 )
-def test_listing(repo: str, branch: str) -> None:
-    if 'linux' in repo and os.name == 'nt':
-        # Linux repo does not like Windows, requiring case-sensitive fs
-        # and symlinks, both of which are disabled by default.
-        pytest.skip('Skipping Linux repo on Windows')
-
+def test_listing(repo: str, branch: str, needs: Needs) -> None:
     data_dir = f'{PROJECT_ROOT}/test/data/.cloned'
+    os.makedirs(data_dir, exist_ok=True)
+
+    if needs & Needs.SYMLINKS and not supports_symlinks(data_dir):
+        pytest.skip('Skipping repo with symlinks')
+    elif needs & Needs.CASE_MIX and not supports_case_mix(data_dir):
+        pytest.skip('Skipping repo with case-mixed files')
+
     path = git.clone_lean(repo, branch, data_dir)
     assert list_glug(path) == list_git(path)

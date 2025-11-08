@@ -21,7 +21,17 @@ def list_glug(path: str) -> set[str]:
     glug = f'{PROJECT_ROOT}/build/latest/glug'
     if not os.path.isfile(glug):
         glug += '.exe'
-    return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
+
+    try:
+        output = subprocess.check_output([glug], cwd=path)
+    except subprocess.CalledProcessError as e:
+        import logging
+        logging.basicConfig()
+        logging.warning(f'Process exit code: {e.returncode}, output:')
+        logging.warning(e.output.decode().splitlines())
+        output = e.output
+
+    return set(output.decode().splitlines())
 
 
 def supports_symlinks(path: str) -> bool:

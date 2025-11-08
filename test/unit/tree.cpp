@@ -98,6 +98,24 @@ std::ostream& operator<<(std::ostream& os, const node& node) {
     return std::visit(visitor, node.variant());
 }
 
+link::link(const std::string& name, const std::filesystem::path& target) :
+    path_{ name },
+    target_{ target } {}
+
+node link::leaf() const { return *this; }
+
+void link::move(const std::filesystem::path& destination) {
+    path_ = destination / name();
+}
+
+void link::materialize(const temp_fs& temp) const {
+    std::filesystem::create_symlink(target(), temp / path());
+}
+
+std::ostream& operator<<(std::ostream& os, const link& link) {
+    return os << "link{ " << link.path() << ", " << link.target() << " }";
+}
+
 static std::filesystem::path make_temp_directory() {
     auto i = size_t{ 0 };
     auto path = std::filesystem::path{};

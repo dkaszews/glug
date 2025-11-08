@@ -8,6 +8,7 @@
 
 namespace glug::unit_test {
 
+// TODO: Try more traditional polymorphism
 class node;
 class temp_fs;
 
@@ -63,12 +64,37 @@ inline bool operator==(const dir& lhs, const dir& rhs) {
 }
 std::ostream& operator<<(std::ostream& os, const dir& dir);
 
+class link {
+    public:
+    link(const std::string& name, const std::filesystem::path& target);
+
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& target() const { return target_; }
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    // Might throw `std::filesystem::filesystem_error` on Windows
+    void materialize(const temp_fs& temp) const;
+
+    private:
+    std::filesystem::path path_{};
+    std::filesystem::path target_{};
+};
+inline bool operator==(const link& lhs, const link& rhs) {
+    return std::tie(lhs.path(), lhs.target())
+            == std::tie(rhs.path(), rhs.target());
+}
+std::ostream& operator<<(std::ostream& os, const link& link);
+
 class node {
     public:
     node(const file& file) :
         variant_{ file } {}
     node(const dir& dir) :
         variant_{ dir } {}
+    node(const link& link) :
+        variant_{ link } {}
 
     const auto& variant() const { return variant_; }
     const std::filesystem::path& path() const;
@@ -79,7 +105,7 @@ class node {
     void materialize(const temp_fs& temp) const;
 
     private:
-    std::variant<file, dir> variant_;
+    std::variant<file, dir, link> variant_;
 };
 inline bool operator==(const node& lhs, const node& rhs) {
     return lhs.variant() == rhs.variant();

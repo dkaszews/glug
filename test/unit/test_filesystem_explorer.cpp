@@ -52,7 +52,11 @@ TEST_F(explorer_test, dereference) {
 TEST_P(explorer_test, test) {
     const auto& [tree, expected] = GetParam();
     const auto temp = temp_fs{};
-    tree.materialize(temp);
+    try {
+        tree.materialize(temp);
+    } catch (const std::filesystem::filesystem_error& e) {
+        GTEST_SKIP() << e.what();
+    }
 
     auto exp = explorer{ temp / tree.path() };
     auto relative = std::vector<std::filesystem::path>{};
@@ -215,6 +219,24 @@ static const auto explorer_cases = std::vector<explorer_param>{
             "git_dir/README.md",
         },
     },
+    {
+        dir{
+            "symlinks",
+            {
+                dir{
+                    "docs",
+                    {
+                        file{ "README.md" },
+                    },
+                },
+                link{ "documentation", "docs" },
+                link{ "README.md", "docs/README.md" },
+            },
+        },
+        {
+            "symlinks/docs/README.md",
+        },
+    }
 };
 
 INSTANTIATE_TEST_SUITE_P(

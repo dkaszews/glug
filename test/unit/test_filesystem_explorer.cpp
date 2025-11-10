@@ -236,7 +236,17 @@ static const auto explorer_cases = std::vector<explorer_param>{
         {
             "symlinks/docs/README.md",
         },
-    }
+    },
+    {
+        dir{
+            "linux_v2_6_39",
+            {
+                "arch"_d / ("microblaze"_d / "boot"_d),
+                "block"_d,
+            },
+        },
+        {},
+    },
 };
 
 INSTANTIATE_TEST_SUITE_P(

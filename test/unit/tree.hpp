@@ -8,31 +8,128 @@
 
 namespace glug::unit_test {
 
-class tree {
+class temp_fs {
     public:
-    static std::filesystem::path temp_dir();
+    temp_fs();
+    temp_fs(const temp_fs&) = delete;
+    temp_fs(temp_fs&&) = delete;
+    temp_fs& operator=(const temp_fs&) = delete;
+    temp_fs& operator=(temp_fs&&) = delete;
+    ~temp_fs();
 
-    tree(const char* path);
-    tree(const char* path, const char* contents);
-    tree(const char* path, const std::vector<tree>& contents);
-
-    std::filesystem::directory_entry create() const;
-    void remove() const;
-
-    const std::filesystem::path name() const { return path.filename(); }
-    std::vector<std::filesystem::path> list() const;
-
-    friend bool operator==(const tree& lhs, const tree& rhs);
-    friend bool operator<(const tree& lhs, const tree& rhs);
-    friend std::ostream& operator<<(std::ostream& os, const tree& obj);
+    const auto& path() const { return path_; }
+    operator const std::filesystem::path&() const { return path(); }
 
     private:
-    std::filesystem::path path{};
-    bool is_dir{};
-    std::variant<std::string, std::vector<tree>> inner{};
+    std::filesystem::path path_{};
 };
 
-inline tree operator""_t(const char* path, size_t) { return tree{ path }; }
+class node;
+
+class file {
+    public:
+    explicit file(const std::string& name) :
+        file{ name, {} } {}
+    file(const std::string& name, const std::string& contents) :
+        path_{ name },
+        contents_{ contents } {}
+
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& contents() const { return contents_; }
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    void materialize(const temp_fs& temp) const;
+
+    private:
+    std::filesystem::path path_{};
+    std::string contents_{};
+};
+inline file operator""_f(const char* name, size_t) { return file{ name }; }
+inline bool operator==(const file& lhs, const file& rhs) {
+    return std::tie(lhs.path(), lhs.contents())
+            == std::tie(rhs.path(), rhs.contents());
+}
+std::ostream& operator<<(std::ostream& os, const file& file);
+
+class link {
+    public:
+    link(const std::string& name, const std::filesystem::path& target);
+
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& target() const { return target_; }
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    // Might throw `std::filesystem::filesystem_error` on Windows
+    void materialize(const temp_fs& temp) const;
+
+    private:
+    std::filesystem::path path_{};
+    std::filesystem::path target_{};
+};
+inline bool operator==(const link& lhs, const link& rhs) {
+    return std::tie(lhs.path(), lhs.target())
+            == std::tie(rhs.path(), rhs.target());
+}
+std::ostream& operator<<(std::ostream& os, const link& link);
+
+class dir {
+    public:
+    explicit dir(const std::string& name) :
+        dir{ name, {} } {}
+    dir(const std::string& name, const std::vector<node>& contents);
+
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& contents() const { return contents_; }
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    void materialize(const temp_fs& temp) const;
+
+    private:
+    std::filesystem::path path_{};
+    std::vector<node> contents_{};
+};
+inline dir operator""_d(const char* name, size_t) { return dir{ name }; }
+inline bool operator==(const dir& lhs, const dir& rhs) {
+    return std::tie(lhs.path(), lhs.contents())
+            == std::tie(rhs.path(), rhs.contents());
+}
+std::ostream& operator<<(std::ostream& os, const dir& dir);
+
+class node {
+    public:
+    node(const file& file) :
+        variant_{ file } {}
+    node(const dir& dir) :
+        variant_{ dir } {}
+    node(const link& link) :
+        variant_{ link } {}
+
+    const std::filesystem::path& path() const;
+    std::filesystem::path name() const;
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    void materialize(const temp_fs& temp) const;
+
+    friend bool operator==(const node& lhs, const node& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const node& node);
+
+    private:
+    std::variant<file, dir, link> variant_;
+};
+
+// Warning: shorthand only works for single level, needs right-parenthesising
+// after that to ensure proper precedence. Fixing would require additional API
+// with `leaf()` returning a modifiable reference to add `node` to.
+inline dir operator/(const dir& dir, const node& node) {
+    return { dir.path().string(), { node } };
+}
 
 }  // namespace glug::unit_test
 

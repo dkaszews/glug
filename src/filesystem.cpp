@@ -71,7 +71,15 @@ void explorer_impl::filter_and_sort(storage& stack) {
     auto& entries = stack.back().entries;
     const auto predicate = [&stack](const auto& entry) {
         for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-            // TODO: Better place to put it?
+            // GCOVR_EXCL_START: Special file types not testable on all OS
+            // `is_directory() || is_file()` returns value for symlink target
+            if (entry.is_symlink()) {
+                return true;
+            } else if (!entry.is_directory() && !entry.is_regular_file()) {
+                return true;
+            }
+            // GCOVR_EXCL_STOP
+
             if (entry.path().filename() == ".git") {
                 return true;
             }

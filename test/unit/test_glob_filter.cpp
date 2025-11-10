@@ -55,8 +55,8 @@ static const auto filter_cases = std::vector<filter_param>{
             { "dir_only"_d, decision::ignored },
             { "dir"_d / "dir_only"_f, decision::undecided },
             { "dir"_d / "dir_only"_d, decision::ignored },
-            // // Files in ignored directories are not ignored explicitly,
-            // // but are ignored implicitly as they will not be enumerated.
+            // Files in ignored directories are not ignored explicitly,
+            // but are ignored implicitly as they will not be enumerated.
             { "dir_only"_d / "file"_f, decision::undecided },
         },
     },

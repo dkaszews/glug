@@ -8,9 +8,23 @@
 
 namespace glug::unit_test {
 
-// TODO: Try more traditional polymorphism
+class temp_fs {
+    public:
+    temp_fs();
+    temp_fs(const temp_fs&) = delete;
+    temp_fs(temp_fs&&) = delete;
+    temp_fs& operator=(const temp_fs&) = delete;
+    temp_fs& operator=(temp_fs&&) = delete;
+    ~temp_fs();
+
+    const auto& path() const { return path_; }
+    operator const std::filesystem::path&() const { return path(); }
+
+    private:
+    std::filesystem::path path_{};
+};
+
 class node;
-class temp_fs;
 
 class file {
     public:
@@ -39,6 +53,29 @@ inline bool operator==(const file& lhs, const file& rhs) {
 }
 std::ostream& operator<<(std::ostream& os, const file& file);
 
+class link {
+    public:
+    link(const std::string& name, const std::filesystem::path& target);
+
+    const auto& path() const { return path_; }
+    auto name() const { return path_.filename(); }
+    const auto& target() const { return target_; }
+    node leaf() const;
+
+    void move(const std::filesystem::path& destination);
+    // Might throw `std::filesystem::filesystem_error` on Windows
+    void materialize(const temp_fs& temp) const;
+
+    private:
+    std::filesystem::path path_{};
+    std::filesystem::path target_{};
+};
+inline bool operator==(const link& lhs, const link& rhs) {
+    return std::tie(lhs.path(), lhs.target())
+            == std::tie(rhs.path(), rhs.target());
+}
+std::ostream& operator<<(std::ostream& os, const link& link);
+
 class dir {
     public:
     explicit dir(const std::string& name) :
@@ -64,29 +101,6 @@ inline bool operator==(const dir& lhs, const dir& rhs) {
 }
 std::ostream& operator<<(std::ostream& os, const dir& dir);
 
-class link {
-    public:
-    link(const std::string& name, const std::filesystem::path& target);
-
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& target() const { return target_; }
-    node leaf() const;
-
-    void move(const std::filesystem::path& destination);
-    // Might throw `std::filesystem::filesystem_error` on Windows
-    void materialize(const temp_fs& temp) const;
-
-    private:
-    std::filesystem::path path_{};
-    std::filesystem::path target_{};
-};
-inline bool operator==(const link& lhs, const link& rhs) {
-    return std::tie(lhs.path(), lhs.target())
-            == std::tie(rhs.path(), rhs.target());
-}
-std::ostream& operator<<(std::ostream& os, const link& link);
-
 class node {
     public:
     node(const file& file) :
@@ -96,7 +110,6 @@ class node {
     node(const link& link) :
         variant_{ link } {}
 
-    const auto& variant() const { return variant_; }
     const std::filesystem::path& path() const;
     std::filesystem::path name() const;
     node leaf() const;
@@ -104,13 +117,12 @@ class node {
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
+    friend bool operator==(const node& lhs, const node& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const node& node);
+
     private:
     std::variant<file, dir, link> variant_;
 };
-inline bool operator==(const node& lhs, const node& rhs) {
-    return lhs.variant() == rhs.variant();
-}
-std::ostream& operator<<(std::ostream& os, const node& node);
 
 // Warning: shorthand only works for single level, needs right-parenthesising
 // after that to ensure proper precedence. Fixing would require additional API
@@ -118,25 +130,6 @@ std::ostream& operator<<(std::ostream& os, const node& node);
 inline dir operator/(const dir& dir, const node& node) {
     return { dir.path().string(), { node } };
 }
-
-std::filesystem::path leaf(const node& node);
-
-class temp_fs {
-    public:
-    temp_fs();
-    // TODO: Consider moveable
-    temp_fs(const temp_fs&) = delete;
-    temp_fs(temp_fs&&) = delete;
-    temp_fs& operator=(const temp_fs&) = delete;
-    temp_fs& operator=(temp_fs&&) = delete;
-    ~temp_fs();
-
-    const auto& path() const { return path_; }
-    operator const std::filesystem::path&() const { return path(); }
-
-    private:
-    std::filesystem::path path_{};
-};
 
 }  // namespace glug::unit_test
 

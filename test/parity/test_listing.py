@@ -66,10 +66,6 @@ class Needs(enum.IntFlag):
     ]
 )
 def test_listing(repo: str, branch: str, needs: Needs) -> None:
-    # TODO: #35 Glug does not use .gitignore files in TypeScript repo
-    if 'TypeScript' in repo:
-        pytest.skip('Issue #35')
-
     data_dir = f'{PROJECT_ROOT}/test/data/.cloned'
     os.makedirs(data_dir, exist_ok=True)
 

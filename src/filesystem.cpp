@@ -21,11 +21,20 @@ explorer::reference explorer_impl::front(const storage& stack) noexcept {
     return stack.back().entries.front();
 }
 
+static bool getline(std::istream& input, std::string& s) {
+    if (!std::getline(input, s, '\n')) {
+        return false;
+    } else if (!s.empty() && s.back() == '\r') {
+        s.pop_back();
+    }
+    return true;
+}
+
 static auto read_lines(const std::filesystem::path& path) {
     auto stream = std::ifstream{ path };
     auto lines = std::vector<std::string>{};
     auto line = std::string{};
-    while (std::getline(stream, line)) {
+    while (getline(stream, line)) {
         lines.push_back(std::move(line));
     }
     return lines;

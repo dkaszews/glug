@@ -82,12 +82,26 @@ static const auto explorer_cases = std::vector<explorer_param>{
             {
                 file{ "README.md" },
                 file{ "build.log" },
-                file{ ".gitignore", "# no logs\n*.log" },
+                file{ ".gitignore", "# no logs\n\n*.log" },
             },
         },
         {
             "with_gitignore/.gitignore",
             "with_gitignore/README.md",
+        },
+    },
+    {
+        dir{
+            "with_gitignore_crlf",
+            {
+                file{ "README.md" },
+                file{ "build.log" },
+                file{ ".gitignore", "# no logs\r\n\r\n*.log\r\n" },
+            },
+        },
+        {
+            "with_gitignore_crlf/.gitignore",
+            "with_gitignore_crlf/README.md",
         },
     },
     {

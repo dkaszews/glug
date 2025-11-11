@@ -92,6 +92,20 @@ static const auto explorer_cases = std::vector<explorer_param>{
     },
     {
         dir{
+            "with_gitignore_crlf",
+            {
+                file{ "README.md" },
+                file{ "build.log" },
+                file{ ".gitignore", "*.log\r\n" },
+            },
+        },
+        {
+            "with_gitignore_crlf/.gitignore",
+            "with_gitignore_crlf/README.md",
+        },
+    },
+    {
+        dir{
             "nested",
             {
                 file{ "README.md" },

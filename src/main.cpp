@@ -15,9 +15,6 @@ int main(int argc, const char** argv) {
 
     for (const auto& file : explorer) {
         std::cout << file.path().generic_string().c_str() + trim_dot << "\n";
-        if (file.is_directory()) {
-            return 1;
-        }
     }
     return 0;
 }

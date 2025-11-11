@@ -143,6 +143,28 @@ static const auto explorer_cases = std::vector<explorer_param>{
     },
     {
         dir{
+            "recurse_empty_after_empty",
+            {
+                "a"_d / ("b"_d / "c"_d),
+                "x"_d,
+            },
+        },
+        {},
+    },
+    {
+        dir{
+            "recurse_nonempty_after_empty",
+            {
+                "a"_d / ("b"_d / "c"_d),
+                "x"_d / ("y"_d / "z"_f),
+            },
+        },
+        {
+            "recurse_nonempty_after_empty/x/y/z",
+        },
+    },
+    {
+        dir{
             "all_ignored",
             {
                 file{ ".gitignore", "generated/*.h" },
@@ -236,17 +258,7 @@ static const auto explorer_cases = std::vector<explorer_param>{
         {
             "symlinks/docs/README.md",
         },
-    },
-    {
-        dir{
-            "linux_v2_6_39",
-            {
-                "arch"_d / ("microblaze"_d / "boot"_d),
-                "block"_d,
-            },
-        },
-        {},
-    },
+    }
 };
 
 INSTANTIATE_TEST_SUITE_P(

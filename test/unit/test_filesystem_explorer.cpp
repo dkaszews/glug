@@ -106,6 +106,31 @@ static const auto explorer_cases = std::vector<explorer_param>{
     },
     {
         dir{
+            "unicode_name",
+            {
+                dir{
+                    "translations",
+                    {
+                        "українська.md"_f,
+                        "Ελληνική.md"_f,
+                        "한국어.md"_f,
+                        "generated.md"_f,
+                        "generate.sh"_f,
+                    },
+                },
+                file{ ".gitignore", "generated*" },
+            },
+        },
+        {
+            "unicode_name/.gitignore",
+            "unicode_name/translations/generate.sh",
+            "unicode_name/translations/Ελληνική.md",
+            "unicode_name/translations/українська.md",
+            "unicode_name/translations/한국어.md",
+        },
+    },
+    {
+        dir{
             "nested",
             {
                 file{ "README.md" },

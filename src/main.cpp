@@ -14,7 +14,7 @@ int main(int argc, const char** argv) {
     const auto explorer = glug::filesystem::explorer{ dir };
 
     for (const auto& file : explorer) {
-        std::cout << file.path().generic_string().c_str() + trim_dot << "\n";
+        std::cout << file.path().generic_string().substr(trim_dot) << "\n";
     }
     return 0;
 }

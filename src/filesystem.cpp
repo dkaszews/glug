@@ -109,13 +109,14 @@ void explorer_impl::filter_and_sort(storage& stack) {
                                                         : lhs < rhs;
     };
     std::sort(entries.begin(), entries.end(), files_first);
-
-    if (front(stack).is_directory()) {
-        recurse(stack);
-    }
+    recurse(stack);
 }
 
 void explorer_impl::recurse(storage& stack) {
+    if (stack.empty() || !front(stack).is_directory()) {
+        return;
+    }
+
     const auto dir = front(stack).path();
     stack.back().entries.pop_front();
     populate(stack, dir);
@@ -123,6 +124,7 @@ void explorer_impl::recurse(storage& stack) {
     while (!stack.empty() && stack.back().entries.empty()) {
         stack.pop_back();
     }
+    recurse(stack);
 }
 
 void explorer_impl::next(storage& stack) {
@@ -130,10 +132,7 @@ void explorer_impl::next(storage& stack) {
     while (!stack.empty() && stack.back().entries.empty()) {
         stack.pop_back();
     }
-
-    if (!stack.empty() && front(stack).is_directory()) {
-        recurse(stack);
-    }
+    recurse(stack);
 }
 
 explorer::explorer(const std::filesystem::path& root) {

@@ -66,9 +66,6 @@ class Needs(enum.IntFlag):
     ]
 )
 def test_listing(repo: str, branch: str, needs: Needs) -> None:
-    # TODO: #34 Glug treats directory in PowerShell repo as a file
-    if 'PowerShell' in repo or 'linux' in repo:
-        pytest.skip('Issue #34')
     # TODO: #35 Glug does not use .gitignore files in TypeScript repo
     if 'TypeScript' in repo:
         pytest.skip('Issue #35')

@@ -9,4 +9,5 @@ flake8-import-order == 0.19.*
 flake8-unused-arguments == 0.0.*
 mypy == 1.18.*
 pep8-naming == 0.15.*
+python-magic == 0.4.27
 

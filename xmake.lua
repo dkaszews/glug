@@ -29,6 +29,11 @@ if engines[get_config('engine')] then
     add_requires(engine .. ' ' .. engines[engine])
 end
 
+-- Windows assumes all strings are ANSI code pages, garbling output
+if is_plat('windows', 'mingw') then
+    add_cxxflags('-utf-8')
+end
+
 -- https://github.com/xmake-io/xmake/issues/5769
 if is_mode('coverage') then
     set_policy('build.ccache', false)

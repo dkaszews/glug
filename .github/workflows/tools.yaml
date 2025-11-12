@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tool: [ license, encoding ]
+        tool: [ license, encoding, ignored ]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

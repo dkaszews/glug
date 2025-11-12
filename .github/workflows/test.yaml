@@ -77,8 +77,13 @@ jobs:
           project-path: glug
       - run: git config --global user.name CI
       - run: git config --global user.email ci@github.com
-      - run: git config --system core.longpaths true
+      - name: Windows path fixes
         if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.longpaths true
+          reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v ACP -d 65001 -f
+          reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v OEMCP -d 65001 -f
+          reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v MACCP -d 65001 -f
       - run: xmake config -vy --mode=release
       - run: xmake build -v parity_test
       - run: xmake test -v parity_test/default

@@ -75,10 +75,4 @@ def test_listing(repo: str, branch: str, needs: Needs) -> None:
         pytest.skip('Skipping repo with case-mixed files')
 
     path = git.clone_lean(repo, branch, data_dir)
-
-    # TODO: #41 glug crashes on Windows on files with UTF8 name
-    if 'deno' in repo and os.name == 'nt':
-        os.remove(f'{path}/tests/unit_node/testdata/worker_module/βάρβαροι.js')
-        git.cmd(path, ['add', '.'])
-
     assert list_glug(path) == list_git(path)

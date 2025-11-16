@@ -6,6 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -16,6 +17,7 @@ using namespace glug::unit_test;
 struct explorer_param {
     node tree;
     std::vector<std::filesystem::path> expected{};
+    std::optional<std::filesystem::path> target{};
 
     friend void PrintTo(const explorer_param& param, std::ostream* os) {
         std::ignore = std::tie(param, os);
@@ -50,7 +52,7 @@ TEST_F(explorer_test, dereference) {
 }
 
 TEST_P(explorer_test, test) {
-    const auto& [tree, expected] = GetParam();
+    const auto& [tree, expected, target] = GetParam();
     const auto temp = temp_fs{};
     try {
         tree.materialize(temp);
@@ -58,7 +60,7 @@ TEST_P(explorer_test, test) {
         GTEST_SKIP() << e.what();
     }
 
-    auto exp = explorer{ temp / tree.path() };
+    auto exp = explorer{ temp / target.value_or(tree.path()) };
     auto relative = std::vector<std::filesystem::path>{};
     std::transform(
             exp,
@@ -297,7 +299,26 @@ static const auto explorer_cases = std::vector<explorer_param>{
         {
             "symlinks/docs/README.md",
         },
-    }
+    },
+    {
+        dir{
+            "outer",
+            {
+                file{ ".gitignore", "*.log" },
+                dir{
+                    "inner",
+                    {
+                        "out.log"_f,
+                        "README.md"_f,
+                    },
+                },
+            },
+        },
+        {
+            "outer/inner/README.md",
+        },
+        "outer/inner",
+    },
 };
 
 INSTANTIATE_TEST_SUITE_P(

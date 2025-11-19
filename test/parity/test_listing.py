@@ -31,6 +31,9 @@ def list_glug(path: str) -> set[str]:
         (repos.DENO, ''),
         (repos.FASTAPI, ''),
         (repos.GODOT, ''),
+        (repos.GODOT, 'editor'),
+        (repos.GODOT, 'modules'),
+        (repos.GODOT, 'tests/core/input'),
         (repos.TYPESCRIPT, ''),
         (repos.POWERSHELL, ''),
         (repos.VUEJS, ''),
@@ -47,4 +50,5 @@ def test_listing(repo: repos.Repo, target: str) -> None:
         pytest.skip('Skipping repo with case-mixed files')
 
     path = git.clone_lean(repo.source, repo.branch, data_dir)
-    assert list_glug(f'{path}/{target}') == list_git(path)
+    target = f'{path}/{target}'
+    assert list_glug(target) == list_git(target)

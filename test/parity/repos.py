@@ -34,11 +34,7 @@ class Repo:
         return f'{self.source}:{self.branch}'
 
 
-LINUX_2 = Repo('https://github.com/torvalds/linux.git', 'v2.6.39', True, True)
-LINUX_3 = Repo('https://github.com/torvalds/linux.git', 'v3.19', True, True)
-LINUX_4 = Repo('https://github.com/torvalds/linux.git', 'v4.20', True, True)
-LINUX_5 = Repo('https://github.com/torvalds/linux.git', 'v5.19', True, True)
-LINUX_6 = Repo('https://github.com/torvalds/linux.git', 'v6.17', True, True)
+LINUX = Repo('https://github.com/torvalds/linux.git', 'v6.17', True, True)
 DENO = Repo('https://github.com/denoland/deno.git', 'v2.5.6', True)
 FASTAPI = Repo('https://github.com/fastapi/fastapi.git', '0.120.4')
 GODOT = Repo('https://github.com/godotengine/godot.git', '4.5-stable')

@@ -17,7 +17,10 @@ static std::filesystem::path make_temp_directory() {
 }
 
 temp_fs::temp_fs() :
-    path_{ make_temp_directory() } {}
+    path_{ make_temp_directory() } {
+    // Create barrier to prevent `glug::filesystem::explorer` travelling above
+    std::filesystem::create_directory(path_ / ".git");
+}
 
 temp_fs::~temp_fs() { std::filesystem::remove_all(path()); }
 

@@ -6,12 +6,17 @@
 
 namespace glug::filesystem {
 
+namespace fs = std::filesystem;
+
+// Allows adding helpers with private access without modifying header
 class explorer_impl {
     public:
+    using level = explorer::level;
     using storage = decltype(explorer::stack);
 
     static explorer::reference front(const storage& stack) noexcept;
-    static void populate(storage& stack, const std::filesystem::path& path);
+    static void add_outer_filters(storage& stack, const fs::path& path);
+    static void populate(storage& stack, const fs::path& path);
     static void recurse(storage& stack);
     static void filter_and_sort(storage& stack);
     static void next(storage& stack);
@@ -30,7 +35,7 @@ static bool getline(std::istream& input, std::string& s) {
     return true;
 }
 
-static auto read_lines(const std::filesystem::path& path) {
+static auto read_lines(const fs::path& path) {
     auto stream = std::ifstream{ path };
     auto lines = std::vector<std::string>{};
     auto line = std::string{};
@@ -40,7 +45,7 @@ static auto read_lines(const std::filesystem::path& path) {
     return lines;
 }
 
-static glob::filter make_filter(const std::filesystem::path& path) {
+static glob::filter make_filter(const fs::path& path) {
     auto globs = std::vector<glob::decomposition>{};
     auto lines = read_lines(path);
     for (const auto& line : lines) {
@@ -52,12 +57,45 @@ static glob::filter make_filter(const std::filesystem::path& path) {
     return { globs, path };
 }
 
-void explorer_impl::populate(
-        storage& stack, const std::filesystem::path& path
-) {
-    auto entries = std::deque<std::filesystem::directory_entry>{
-        std::filesystem::directory_iterator{ path },
-        std::filesystem::directory_iterator{},
+static std::vector<fs::path> gather_gitignores(const fs::path& path) {
+    if (fs::is_directory(path / ".git")) {
+        return {};
+    }
+
+    auto current = path;
+    auto result = std::vector<fs::path>{};
+
+    // False branch unreachable in UT by design, see `temp_fs::temp_fs`
+    while (current.has_parent_path()) {  // GCOVR_EXCL_LINE
+        current = current.parent_path();
+        const auto gitignore = current / ".gitignore";
+        if (fs::exists(gitignore)) {
+            result.push_back(gitignore);
+        }
+        if (fs::is_directory(current / ".git")) {
+            return result;
+        }
+    }
+    return result;  // GCOVR_EXCL_LINE
+}
+
+void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
+    const auto gitignores = gather_gitignores(path);
+    const auto make_storage = [](const auto& path) {
+        return level{ make_filter(path), {} };
+    };  // GCOVR_EXCL_LINE: Unknown exceptional path
+    std::transform(
+            gitignores.rbegin(),
+            gitignores.rend(),
+            std::back_inserter(stack),
+            make_storage
+    );
+}
+
+void explorer_impl::populate(storage& stack, const fs::path& path) {
+    auto entries = std::deque<fs::directory_entry>{
+        fs::directory_iterator{ path },
+        fs::directory_iterator{},
     };
     if (entries.empty()) {
         return;
@@ -145,6 +183,7 @@ void explorer_impl::next(storage& stack) {
 }
 
 explorer::explorer(const std::filesystem::path& root) {
+    explorer_impl::add_outer_filters(stack, root);
     explorer_impl::populate(stack, root);
 }
 

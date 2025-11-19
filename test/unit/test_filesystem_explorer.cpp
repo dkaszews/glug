@@ -304,20 +304,28 @@ static const auto explorer_cases = std::vector<explorer_param>{
         dir{
             "outer",
             {
-                file{ ".gitignore", "*.log" },
+                file{ ".gitignore", "*.log\n*.zip" },
                 dir{
-                    "inner",
+                    "middle",
                     {
-                        "out.log"_f,
-                        "README.md"_f,
+                        file{ ".gitignore", "!*.zip" },
+                        dir{
+                            "inner",
+                            {
+                                "out.log"_f,
+                                "README.md"_f,
+                                "thingy.zip"_f,
+                            },
+                        },
                     },
                 },
             },
         },
         {
-            "outer/inner/README.md",
+            "outer/middle/inner/README.md",
+            "outer/middle/inner/thingy.zip",
         },
-        "outer/inner",
+        "outer/middle/inner",
     },
 };
 

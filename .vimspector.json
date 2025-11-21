@@ -1,12 +1,22 @@
 {
   "configurations": {
-    "Launch glug test": {
+    "Launch test": {
       "adapter": "CodeLLDB",
       "configuration": {
         "request": "launch",
         "stopAtEntry": true,
         "program": "${workspaceRoot}/build/latest/unit_test",
         "args": [ "--gtest_filter=${filter:*}" ],
+        "sourceLanguages": [ "cpp" ]
+      }
+    },
+    "Launch glug": {
+      "adapter": "CodeLLDB",
+      "configuration": {
+        "request": "launch",
+        "stopAtEntry": true,
+        "program": "${workspaceRoot}/build/latest/glug",
+        "args": [ "${args:}" ],
         "sourceLanguages": [ "cpp" ]
       }
     }

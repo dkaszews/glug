@@ -1,5 +1,4 @@
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
-import enum
 import os
 import subprocess
 
@@ -7,9 +6,10 @@ import git
 
 import pytest
 
+import repos
+
 
 PROJECT_ROOT = os.path.abspath(f'{os.path.dirname(__file__)}/../..')
-REPO_LINUX = 'https://github.com/torvalds/linux.git'
 
 
 def list_git(path: str) -> set[str]:
@@ -24,55 +24,52 @@ def list_glug(path: str) -> set[str]:
     return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
 
 
-def supports_symlinks(path: str) -> bool:
-    symlink_name = 'symlink.check'
-    symlink_path = f'{path}/{symlink_name}'
-    if os.path.islink(symlink_path):
-        return True
-
-    try:
-        os.symlink(symlink_name, symlink_path)
-        return True
-    except OSError:
-        return False
-
-
-def supports_case_mix(path: str) -> bool:
-    first = f'{path}/SpOnGeBoB.check'
-    second = f'{path}/sPoNgEbOb.check'
-    with open(first, 'w'), open(second, 'w'):
-        return not os.path.samefile(first, second)
-
-
-class Needs(enum.IntFlag):
-    SYMLINKS = enum.auto()
-    CASE_MIX = enum.auto()
-
-
 @pytest.mark.parametrize(
-    'repo,branch,needs',
+    'repo,target',
     [
-        (REPO_LINUX, 'v2.6.39', Needs.SYMLINKS | Needs.CASE_MIX),
-        (REPO_LINUX, 'v3.19', Needs.SYMLINKS | Needs.CASE_MIX),
-        (REPO_LINUX, 'v4.20', Needs.SYMLINKS | Needs.CASE_MIX),
-        (REPO_LINUX, 'v5.19', Needs.SYMLINKS | Needs.CASE_MIX),
-        (REPO_LINUX, 'v6.17', Needs.SYMLINKS | Needs.CASE_MIX),
-        ('https://github.com/denoland/deno.git', 'v2.5.6', Needs.SYMLINKS),
-        ('https://github.com/fastapi/fastapi.git', '0.120.4', Needs(0)),
-        ('https://github.com/godotengine/godot.git', '4.5-stable', Needs(0)),
-        ('https://github.com/microsoft/TypeScript.git', 'v5.9.3', Needs(0)),
-        ('https://github.com/PowerShell/PowerShell.git', 'v7.5.4', Needs(0)),
-        ('https://github.com/vuejs/core.git', 'v3.5.22', Needs(0)),
-    ]
+        (repos.LINUX, ''),
+        (repos.DENO, 'tests'),
+        (repos.DENO, 'tests/specs/fmt'),
+        (repos.FASTAPI, ''),
+        (repos.FASTAPI, 'scripts'),
+        (repos.GODOT, ''),
+        (repos.GODOT, 'editor'),
+        (repos.GODOT, 'modules/mono/editor'),
+        (repos.GODOT, 'platform/android'),
+        (repos.TYPESCRIPT, ''),
+        (repos.POWERSHELL, 'tools'),
+        (repos.POWERSHELL, 'tools/packaging'),
+        (repos.POWERSHELL, 'src'),
+        (repos.VUEJS, ''),
+    ],
+    ids=str
 )
-def test_listing(repo: str, branch: str, needs: Needs) -> None:
+def test_listing_repo(repo: repos.Repo, target: str) -> None:
     data_dir = f'{PROJECT_ROOT}/test/data/.cloned'
     os.makedirs(data_dir, exist_ok=True)
 
-    if needs & Needs.SYMLINKS and not supports_symlinks(data_dir):
+    if repo.needs_symlinks and not repo.supports_symlinks(data_dir):
         pytest.skip('Skipping repo with symlinks')
-    elif needs & Needs.CASE_MIX and not supports_case_mix(data_dir):
+    elif repo.needs_case_mix and not repo.supports_case_mix(data_dir):
         pytest.skip('Skipping repo with case-mixed files')
 
-    path = git.clone_lean(repo, branch, data_dir)
+    path = f'{git.clone_lean(repo.source, repo.branch, data_dir)}/{target}'
+    assert list_glug(path) == list_git(path)
+
+
+@pytest.mark.parametrize(
+    'target',
+    [
+        '',
+        'src',
+        'include',
+        'include/glug',
+        'test',
+        'test/parity',
+        'test/unit',
+    ],
+    ids=str
+)
+def test_listing_self(target: str) -> None:
+    path = f'{PROJECT_ROOT}/{target}'
     assert list_glug(path) == list_git(path)

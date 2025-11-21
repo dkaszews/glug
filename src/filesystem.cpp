@@ -59,7 +59,7 @@ static glob::filter make_filter(const fs::path& path) {
 
 static bool is_root(const fs::path& path) {
 #ifdef UNIT_TEST
-    if (path.parent_path() == fs::temp_directory_path()) {
+    if (path.parent_path() == fs::canonical(fs::temp_directory_path())) {
         return true;
     }
 #endif

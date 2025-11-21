@@ -53,7 +53,7 @@ jobs:
         if: always() && matrix.mode == 'coverage'
         with:
           name: coverage_${{ matrix.os }}
-          path: coverage_report.html
+          path: 'coverage_report.*'
   parity-test:
     strategy:
       fail-fast: false

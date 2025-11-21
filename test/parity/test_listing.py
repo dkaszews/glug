@@ -44,7 +44,7 @@ def list_glug(path: str) -> set[str]:
     ],
     ids=str
 )
-def test_listing(repo: repos.Repo, target: str) -> None:
+def test_listing_repo(repo: repos.Repo, target: str) -> None:
     data_dir = f'{PROJECT_ROOT}/test/data/.cloned'
     os.makedirs(data_dir, exist_ok=True)
 
@@ -53,6 +53,23 @@ def test_listing(repo: repos.Repo, target: str) -> None:
     elif repo.needs_case_mix and not repo.supports_case_mix(data_dir):
         pytest.skip('Skipping repo with case-mixed files')
 
-    path = git.clone_lean(repo.source, repo.branch, data_dir)
-    target = f'{path}/{target}'
-    assert list_glug(target) == list_git(target)
+    path = f'{git.clone_lean(repo.source, repo.branch, data_dir)}/{target}'
+    assert list_glug(path) == list_git(path)
+
+
+@pytest.mark.parametrize(
+    'target',
+    [
+        '',
+        'src',
+        'include',
+        'include/glug',
+        'test',
+        'test/parity',
+        'test/unit',
+    ],
+    ids=str
+)
+def test_listing_self(target: str) -> None:
+    path = f'{PROJECT_ROOT}/{target}'
+    assert list_glug(path) == list_git(path)

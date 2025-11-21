@@ -62,7 +62,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
         return {};
     }
 
-    auto current = path;
+    auto current = fs::absolute(path);
     auto result = std::vector<fs::path>{};
 
     // False branch unreachable in UT by design, see `temp_fs::temp_fs`

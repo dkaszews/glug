@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <fstream>
 
-namespace glug::filesystem {
-
 namespace fs = std::filesystem;
+
+namespace glug::filesystem {
 
 // Allows adding helpers with private access without modifying header
 class explorer_impl {
@@ -57,6 +57,15 @@ static glob::filter make_filter(const fs::path& path) {
     return { globs, path };
 }
 
+static bool is_root(const fs::path& path) {
+#ifdef UNIT_TEST
+    if (path.parent_path() == fs::temp_directory_path()) {
+        return true;
+    }
+#endif
+    return !path.has_parent_path();
+}
+
 static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     if (fs::is_directory(path / ".git")) {
         return {};
@@ -65,8 +74,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     auto current = fs::absolute(path);
     auto result = std::vector<fs::path>{};
 
-    // False branch unreachable in UT by design, see `temp_fs::temp_fs`
-    while (current.has_parent_path()) {  // GCOVR_EXCL_LINE
+    while (!is_root(current)) {  // GCOVR_EXCL_LINE: duplicate branch in report
         current = current.parent_path();
         const auto gitignore = current / ".gitignore";
         if (fs::exists(gitignore)) {
@@ -76,7 +84,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
             return result;
         }
     }
-    return result;  // GCOVR_EXCL_LINE
+    return result;
 }
 
 void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {

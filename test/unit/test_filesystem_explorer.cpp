@@ -327,6 +327,32 @@ static const auto explorer_cases = std::vector<explorer_param>{
         },
         "outer/middle/inner",
     },
+    {
+        dir{
+            "outer_with_git_barrier",
+            {
+                file{ ".gitignore", "*.log" },
+                dir{
+                    "middle",
+                    {
+                        dir{ ".git" },
+                        dir{
+                            "inner",
+                            {
+                                "out.log"_f,
+                                "README.md"_f,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "outer_with_git_barrier/middle/inner/README.md",
+            "outer_with_git_barrier/middle/inner/out.log",
+        },
+        "outer_with_git_barrier/middle/inner",
+    },
 };
 
 INSTANTIATE_TEST_SUITE_P(

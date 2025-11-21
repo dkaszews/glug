@@ -89,10 +89,17 @@ target_end()
 task('coverage')
     on_run(function (target)
         os.rm('build/**/*.gcda')
-        os.exec('xmake build -v unit_test/default')
-        os.exec('xmake test -v unit_test/default')
-        os.execv('gcovr', {}, { try = true })
-        os.exec('gcovr --html-details --html-single-page --output coverage_report.html')
+        os.execv('xmake', { 'build', '-v', 'unit_test/default' })
+        os.execv('xmake', { 'test', '-v', 'unit_test/default' })
+        os.execv('gcovr', {
+            '--txt',
+            '--html-single-page',
+            '--html-details',
+            'coverage_report.html',
+            '--json-pretty',
+            '--json',
+            'coverage_report.json'
+        })
     end)
     set_menu {}
 task_end()

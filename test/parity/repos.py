@@ -31,7 +31,8 @@ class Repo:
             return not os.path.samefile(first, second)
 
     def __str__(self) -> str:
-        return f'{self.source}:{self.branch}'
+        name = '/'.join(self.source.rsplit('/', maxsplit=2)[1:]).split('.')[0]
+        return f'{name}:{self.branch}'
 
 
 LINUX = Repo('https://github.com/torvalds/linux.git', 'v6.17', True, True)

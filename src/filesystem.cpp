@@ -63,7 +63,7 @@ static bool is_root(const fs::path& path) {
         return true;
     }
 #endif
-    return !path.has_parent_path();
+    return path == path.parent_path();
 }
 
 static std::vector<fs::path> gather_gitignores(const fs::path& path) {
@@ -71,7 +71,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
         return {};
     }
 
-    auto current = fs::absolute(path);
+    auto current = fs::canonical(path);
     auto result = std::vector<fs::path>{};
 
     while (!is_root(current)) {  // GCOVR_EXCL_LINE: duplicate branch in report

@@ -18,18 +18,31 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Run clang-format
-        run: >
-          clang-format --dry-run -Werror $(git ls-files **.hpp **.cpp)
+        run: 'clang-format --dry-run -Werror $(git ls-files **.hpp **.cpp)'
       - name: Save format patch
         if: failure()
         run: |
           clang-format -i $(git ls-files **.hpp **.cpp)
-          git diff > clang-format.patch
+          git diff | tee clang-format.patch
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: clang-format
-          path: 'clang-format.patch'
+          path: clang-format.patch
+  clang-tidy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Generate compilation DB
+        run: xmake project -k compile_commands
+      - name: Run clang-tidy
+        run: 'clang-tidy $(git ls-files **.hpp **.cpp)'
   flake8:
     runs-on: ubuntu-latest
     timeout-minutes: 10

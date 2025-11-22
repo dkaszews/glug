@@ -74,7 +74,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     auto current = fs::canonical(path);
     auto result = std::vector<fs::path>{};
 
-    while (!is_root(current)) {  // GCOVR_EXCL_LINE: duplicate branch in report
+    while (!is_root(current)) {   // GCOVR_EXCL_LINE: duplicate branch in report
         current = current.parent_path();
         const auto gitignore = current / ".gitignore";
         if (fs::exists(gitignore)) {

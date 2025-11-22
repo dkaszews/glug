@@ -7,15 +7,30 @@ on:
   pull_request:
 
 jobs:
-  clang:
+  clang-format:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: jidicula/clang-format-action@v4.15.0
+      - uses: actions/setup-python@v6
         with:
-          clang-format-version: 20
-  python:
+          python-version: 3.13
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run clang-format
+        run: >
+          clang-format --dry-run -Werror $(git ls-files **.hpp **.cpp)
+      - name: Save format patch
+        if: failure()
+        run: |
+          clang-format -i $(git ls-files **.hpp **.cpp)
+          git diff > clang-format.patch
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: clang-format
+          path: 'clang-format.patch'
+  flake8:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -26,5 +41,15 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: flake8
+  mypy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+          cache: pip
+      - run: pip install -r requirements.txt
       - run: mypy
 

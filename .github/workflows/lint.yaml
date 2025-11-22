@@ -38,7 +38,16 @@ jobs:
         with:
           python-version: 3.13
           cache: pip
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
+          project-path: glug
       - run: pip install -r requirements.txt
+      - name: Pull dependencies
+        run: xmake config -vy
       - name: Generate compilation DB
         run: xmake project -k compile_commands
       - name: Run clang-tidy

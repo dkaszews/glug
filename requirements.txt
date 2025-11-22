@@ -11,3 +11,6 @@ mypy == 1.18.*
 pep8-naming == 0.15.*
 python-magic == 0.4.27
 
+clang-format == 21.1.6
+clang-tidy == 21.1.1
+

@@ -130,7 +130,8 @@ void explorer_impl::filter_and_sort(storage& stack) {
             // `is_directory() || is_file()` returns value for symlink target
             if (entry.is_symlink()) {
                 return true;
-            } else if (!entry.is_directory() && !entry.is_regular_file()) {
+            }
+            if (!entry.is_directory() && !entry.is_regular_file()) {
                 return true;
             }
             // GCOVR_EXCL_STOP

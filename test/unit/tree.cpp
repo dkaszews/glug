@@ -2,7 +2,6 @@
 #include "tree.hpp"
 
 #include <fstream>
-#include <string_view>
 
 namespace glug::unit_test {
 
@@ -31,7 +30,7 @@ void file::materialize(const temp_fs& temp) const {
     std::ofstream{ temp / path() } << contents();
 }
 
-static std::string escape_literal(const std::string& s) {
+static std::string escape_literal(std::string_view s) {
     static constexpr auto escapes
             = std::string_view{ "\'\"\?\\\a\b\f\n\r\t\v" };
     auto result = std::string{};
@@ -42,7 +41,7 @@ static std::string escape_literal(const std::string& s) {
         }
         result += c;
     }
-    return s;
+    return result;
 }
 
 std::ostream& operator<<(std::ostream& os, const file& file) {
@@ -53,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const file& file) {
     return os << " }";
 }
 
-link::link(const std::string& name, const std::filesystem::path& target) :
+link::link(std::string_view name, const std::filesystem::path& target) :
     path_{ name },
     target_{ target } {}
 
@@ -71,7 +70,7 @@ std::ostream& operator<<(std::ostream& os, const link& link) {
     return os << "link{ " << link.path() << ", " << link.target() << " }";
 }
 
-dir::dir(const std::string& name, const std::vector<node>& contents) :
+dir::dir(std::string_view name, const std::vector<node>& contents) :
     path_{ name },
     contents_{ contents } {
 

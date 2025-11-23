@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -28,9 +29,11 @@ class node;
 
 class file {
     public:
-    explicit file(const std::string& name) :
+    explicit file(std::string_view name) :
         file{ name, {} } {}
-    file(const std::string& name, const std::string& contents) :
+    // No good alternative, `path` would imply multi-element support
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    file(std::string_view name, std::string_view contents) :
         path_{ name },
         contents_{ contents } {}
 
@@ -55,7 +58,7 @@ std::ostream& operator<<(std::ostream& os, const file& file);
 
 class link {
     public:
-    link(const std::string& name, const std::filesystem::path& target);
+    link(std::string_view name, const std::filesystem::path& target);
 
     const auto& path() const { return path_; }
     auto name() const { return path_.filename(); }
@@ -78,9 +81,9 @@ std::ostream& operator<<(std::ostream& os, const link& link);
 
 class dir {
     public:
-    explicit dir(const std::string& name) :
+    explicit dir(std::string_view name) :
         dir{ name, {} } {}
-    dir(const std::string& name, const std::vector<node>& contents);
+    dir(std::string_view name, const std::vector<node>& contents);
 
     const auto& path() const { return path_; }
     auto name() const { return path_.filename(); }

@@ -1,0 +1,18 @@
+# Important: This workflow ensures every other one runs,
+# so please make sure it still runs after you modify it!
+name: Workflows
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: raven-actions/actionlint@v2
+

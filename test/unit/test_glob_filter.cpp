@@ -27,6 +27,7 @@ struct filter_param {
 
 class filter_test : public testing::TestWithParam<filter_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(filter_test, test) {
     const auto& param = GetParam();
     const auto globs = std::vector<std::string_view>{
@@ -131,8 +132,10 @@ static const auto filter_cases = std::vector<filter_param>{
     },
 };
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(test, filter_test, testing::ValuesIn(filter_cases));
 
+// NOLINTNEXTLINE
 TEST(decision, to_string) {
     static constexpr auto str
             = [](auto x) { return (std::stringstream{} << x).str(); };

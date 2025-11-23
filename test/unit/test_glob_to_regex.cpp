@@ -35,6 +35,7 @@ static std::ostream& operator<<(std::ostream& os, const to_regex_param& param) {
 
 class to_regex_test : public testing::TestWithParam<to_regex_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(to_regex_test, test) {
     const auto [glob, expected, test_affix] = GetParam();
     ASSERT_EQ(to_regex(glob), expected);
@@ -55,6 +56,7 @@ TEST_P(to_regex_test, test) {
     }
 }
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         literal,
         to_regex_test,
@@ -66,6 +68,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         escaped_literal,
         to_regex_test,
@@ -89,6 +92,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         escaped_backspace,
         to_regex_test,
@@ -102,6 +106,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         question_mark,
         to_regex_test,
@@ -110,6 +115,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         star,
         to_regex_test,
@@ -127,6 +133,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         star_star,
         to_regex_test,
@@ -142,6 +149,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_invalid,
         to_regex_test,
@@ -162,6 +170,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_literal,
         to_regex_test,
@@ -182,6 +191,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_range,
         to_regex_test,
@@ -204,6 +214,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_negative,
         to_regex_test,
@@ -217,6 +228,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         mix,
         to_regex_test,
@@ -236,11 +248,13 @@ using escape_param = std::tuple<std::string, std::string>;
 
 class escape_test : public testing::TestWithParam<escape_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(escape_test, test) {
     const auto& [glob, escaped] = GetParam();
     EXPECT_EQ(glob_escape(glob), escaped);
 }
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         escape_test,
         escape_test,

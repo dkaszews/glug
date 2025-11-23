@@ -7,12 +7,14 @@ namespace glug::unit_test {
 
 static std::filesystem::path make_temp_directory() {
     auto i = size_t{ 0 };
-    auto path = std::filesystem::path{};
-    do {
-        path = std::filesystem::temp_directory_path()
+    auto result = std::filesystem::path{};
+    bool created = false;
+    while (!created) {
+        result = std::filesystem::temp_directory_path()
                 / ("glug_test." + std::to_string(i++));
-    } while (!std::filesystem::create_directory(path));
-    return path;
+        created = std::filesystem::create_directory(result);
+    };
+    return result;
 }
 
 temp_fs::temp_fs() :

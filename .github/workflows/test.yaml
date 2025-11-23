@@ -25,7 +25,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'
@@ -73,12 +73,13 @@ jobs:
           xmake-version: '>=3.0.1'
           actions-cache-folder: .xmake-cache
           package-cache: true
-          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
+          package-cache-key: ${{ matrix.os }}
           project-path: glug
       - run: git config --global user.name CI
       - run: git config --global user.email ci@github.com
       - name: Windows path fixes
         if: matrix.os == 'windows-latest'
+        shell: powershell  # To silence actionlint shellcheck errors
         run: |
           git config --global core.longpaths true
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v ACP -d 65001 -f

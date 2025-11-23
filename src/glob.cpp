@@ -1,17 +1,24 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/glob.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
+#include <string>
+#include <string_view>
 #include <tuple>
 
 using namespace std::string_literals;
 
 namespace glug::glob {
 
-static constexpr bool has_suffix(std::string_view s, std::string_view suffix) {
+namespace {
+
+constexpr bool has_suffix(std::string_view s, std::string_view suffix) {
     return s.size() >= suffix.size()
             && s.substr(s.size() - suffix.size()) == suffix;
 };
+
+}  // namespace
 
 decomposition decompose(std::string_view glob) noexcept {
     if (glob.empty() || glob.front() == '#') {
@@ -59,7 +66,9 @@ std::string decomposed_pattern_fixup(std::string_view pattern) noexcept {
     return s + std::string(trail, ' ');
 }
 
-static auto regex_meta(char c, bool hyphen = true) noexcept {
+namespace {
+
+auto regex_meta(char c, bool hyphen = true) noexcept {
     switch (c) {
         case ' ':
         case '#':
@@ -87,12 +96,12 @@ static auto regex_meta(char c, bool hyphen = true) noexcept {
     }
 }
 
-static auto regex_escape(char c, bool hyphen = true) noexcept {
+auto regex_escape(char c, bool hyphen = true) noexcept {
+    // NOLINTNEXTLINE(misc-include-cleaner): FP
     return regex_meta(c, hyphen) ? "\\"s + c : std::string{ c };
 }
 
-static std::string
-regex_escape(std::string_view s, bool hyphen = true) noexcept {
+std::string regex_escape(std::string_view s, bool hyphen = true) noexcept {
     auto result = std::string{};
     result.reserve(s.size() * 2);
     for (const auto c : s) {
@@ -103,15 +112,16 @@ regex_escape(std::string_view s, bool hyphen = true) noexcept {
 
 using skip = std::tuple<std::string, size_t>;
 
-static void
-apply_skip(std::tuple<std::string&, size_t&> acc, const skip& val) noexcept {
+void apply_skip(
+        std::tuple<std::string&, size_t&> acc, const skip& val
+) noexcept {
     auto& [acc_s, acc_i] = acc;
     const auto& [val_s, val_i] = val;
     acc_s += val_s;
     acc_i += val_i - 1;
 }
 
-static skip star_to_regex(std::string_view glob, size_t i) noexcept {
+skip star_to_regex(std::string_view glob, size_t i) noexcept {
     const auto count
             = std::min(glob.find_first_not_of('*', i + 1), glob.size()) - i;
     const auto first = i == 0;
@@ -129,7 +139,7 @@ static skip star_to_regex(std::string_view glob, size_t i) noexcept {
     return { "[^/]"s + quantifier, count };
 }
 
-static std::string range_to_regex(std::string_view s) noexcept {
+std::string range_to_regex(std::string_view s) noexcept {
     auto result = std::string{};
     result.reserve(s.size() * 2);
 
@@ -152,7 +162,7 @@ static std::string range_to_regex(std::string_view s) noexcept {
     return result;
 }
 
-static skip set_to_regex(std::string_view glob, size_t i) noexcept {
+skip set_to_regex(std::string_view glob, size_t i) noexcept {
     const auto negative = i + 1 < glob.size() && glob[i + 1] == '!';
     const auto close = glob.find(']', i + 2 + negative);
     const auto count = close - i + 1;
@@ -172,6 +182,8 @@ static skip set_to_regex(std::string_view glob, size_t i) noexcept {
             ? skip{ "[" + regex_escape(inner) + "]", count }
             : skip{ "[" + range_to_regex(inner) + "]", count };
 }
+
+}  // namespace
 
 // Only possible exceptions are allocation errors, which are neither
 // plausible, nor reasonable to handle, so mark as noexcept

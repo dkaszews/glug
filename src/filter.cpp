@@ -1,8 +1,14 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/filter.hpp"
+#include "glug/glob.hpp"
 
 #include <algorithm>
-#include <sstream>
+#include <filesystem>
+#include <iterator>
+#include <ostream>
+#include <string_view>
+#include <type_traits>
+#include <vector>
 
 namespace glug::glob {
 
@@ -18,8 +24,9 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     return os;  // GCOVR_EXCL_LINE
 }
 
-static decltype(auto)
-fix_path_separator(const std::filesystem::path& path) noexcept {
+namespace {
+
+decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
     if constexpr (std::filesystem::path::preferred_separator == '/'
                   && std::is_same_v<std::filesystem::path::value_type, char>) {
         return path;
@@ -29,6 +36,8 @@ fix_path_separator(const std::filesystem::path& path) noexcept {
         };
     }
 }
+
+}  // namespace
 
 filter::filter(
         const std::vector<glob::decomposition>& globs,

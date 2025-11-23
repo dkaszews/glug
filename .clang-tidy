@@ -9,6 +9,8 @@
 # * readability-identifier-length:
 #   Short does not mean non-descriptive, like `string_view s` or `to = from`,
 #   coding in all those exceptions is a waste of time
+# * misc-no-recursion:
+#   Recursion is a valid tool, often only tool to get the job done
 # * readability-redundant-member-init:
 #   All members should be explicitly value-initialized for consistency,
 #   as it is not guaranteed that default initialization is sane, like primitives
@@ -28,16 +30,13 @@ Checks: >
   readability-*,
 
   -google-readability-avoid-underscore-in-googletest-name,
+  -misc-no-recursion,
   -modernize-use-trailing-return-type,
   -portability-avoid-pragma-once,
   -readability-identifier-length,
   -readability-redundant-member-init,
   -readability-static-accessed-through-instance,
 
-  -misc-include-cleaner,
-  -misc-no-recursion,
-  -misc-non-private-member-variables-in-classes,
-  -misc-use-anonymous-namespace,
   -modernize-pass-by-value,
   -modernize-type-traits,
   -modernize-use-nodiscard,
@@ -54,5 +53,7 @@ Checks: >
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-cognitive-complexity.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-size.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html
-# CheckOptions:
+CheckOptions:
+  key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+  value: true
 

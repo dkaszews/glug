@@ -3,12 +3,16 @@
 
 #include "tree.hpp"
 
+#include <algorithm>
+#include <filesystem>
+#include <iterator>
+#include <optional>
+#include <ostream>
+#include <tuple>
+#include <vector>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include <optional>
-#include <variant>
-#include <vector>
 
 namespace glug::filesystem::unit_test {
 

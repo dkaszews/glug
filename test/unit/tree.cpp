@@ -1,11 +1,20 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "tree.hpp"
 
+#include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
 
 namespace glug::unit_test {
 
-static std::filesystem::path make_temp_directory() {
+namespace {
+
+std::filesystem::path make_temp_directory() {
     auto i = size_t{ 0 };
     auto result = std::filesystem::path{};
     bool created = false;
@@ -16,6 +25,8 @@ static std::filesystem::path make_temp_directory() {
     };
     return result;
 }
+
+}  // namespace
 
 temp_fs::temp_fs() :
     path_{ make_temp_directory() } {}
@@ -32,7 +43,9 @@ void file::materialize(const temp_fs& temp) const {
     std::ofstream{ temp / path() } << contents();
 }
 
-static std::string escape_literal(std::string_view s) {
+namespace {
+
+std::string escape_literal(std::string_view s) {
     static constexpr auto escapes
             = std::string_view{ "\'\"\?\\\a\b\f\n\r\t\v" };
     auto result = std::string{};
@@ -45,6 +58,8 @@ static std::string escape_literal(std::string_view s) {
     }
     return result;
 }
+
+}  // namespace
 
 std::ostream& operator<<(std::ostream& os, const file& file) {
     os << "file{ " << file.name();

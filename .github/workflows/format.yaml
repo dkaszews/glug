@@ -46,7 +46,7 @@ jobs:
           xmake-version: '>=3.0.1'
           actions-cache-folder: .xmake-cache
           package-cache: true
-          package-cache-key: ubuntu-latest
+          package-cache-key: ${{ runner.os }}
           project-path: glug
       - run: pip install -r requirements.txt
       - name: Pull dependencies

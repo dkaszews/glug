@@ -3,6 +3,11 @@
 
 #include "parametrized.hpp"
 
+#include <cstddef>
+#include <ostream>
+#include <string>
+#include <tuple>
+
 #include <gtest/gtest.h>
 
 namespace glug::glob::unit_test {
@@ -14,24 +19,28 @@ enum class affix {
     both = prefix | suffix,
 };
 
-static constexpr auto operator&(affix lhs, affix rhs) {
+struct to_regex_param {
+    // NOLINTBEGIN(misc-non-private-member-variables-in-classes): FP
+    std::string glob = {};
+    std::string expected = {};
+    affix test_affix = affix::both;
+    // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+    std::ostream& operator<<(std::ostream& os) {
+        // Use `make_tuple` instead of `tie` to avoid gtest printing address
+        testing::internal::PrintTo(std::make_tuple(glob, expected), &os);
+        return os;
+    }
+};
+
+namespace {
+
+constexpr auto operator&(affix lhs, affix rhs) {
     constexpr auto val = [](auto x) { return static_cast<size_t>(x); };
     return static_cast<affix>(val(lhs) & val(rhs));
 }
 
-struct to_regex_param {
-    std::string glob = {};
-    std::string expected = {};
-    affix test_affix = affix::both;
-};
-
-static std::ostream& operator<<(std::ostream& os, const to_regex_param& param) {
-    // Use `make_tuple` instead of `tie` to avoid gtest printing address
-    testing::internal::PrintTo(
-            std::make_tuple(param.glob, param.expected), &os
-    );
-    return os;
-}
+}  // namespace
 
 class to_regex_test : public testing::TestWithParam<to_regex_param> {};
 

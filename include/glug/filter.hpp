@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <string_view>
 #include <vector>
 
 namespace glug::glob {

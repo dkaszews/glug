@@ -1,8 +1,17 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/filesystem.hpp"
+#include "glug/filter.hpp"
+#include "glug/glob.hpp"
 
 #include <algorithm>
+#include <deque>
+#include <filesystem>
 #include <fstream>
+#include <istream>
+#include <iterator>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -26,7 +35,9 @@ explorer::reference explorer_impl::front(const storage& stack) noexcept {
     return stack.back().entries.front();
 }
 
-static bool getline(std::istream& input, std::string& s) {
+namespace {
+
+auto getline(std::istream& input, std::string& s) {
     if (!std::getline(input, s, '\n')) {
         return false;
     } else if (!s.empty() && s.back() == '\r') {
@@ -35,7 +46,7 @@ static bool getline(std::istream& input, std::string& s) {
     return true;
 }
 
-static auto read_lines(const fs::path& path) {
+auto read_lines(const fs::path& path) {
     auto stream = std::ifstream{ path };
     auto lines = std::vector<std::string>{};
     auto line = std::string{};
@@ -45,7 +56,7 @@ static auto read_lines(const fs::path& path) {
     return lines;
 }
 
-static glob::filter make_filter(const fs::path& path) {
+glob::filter make_filter(const fs::path& path) {
     auto globs = std::vector<glob::decomposition>{};
     auto lines = read_lines(path);
     for (const auto& line : lines) {
@@ -57,7 +68,7 @@ static glob::filter make_filter(const fs::path& path) {
     return { globs, path };
 }
 
-static bool is_root(const fs::path& path) {
+auto is_root(const fs::path& path) {
 #ifdef UNIT_TEST
     if (path.parent_path() == fs::canonical(fs::temp_directory_path())) {
         return true;
@@ -66,7 +77,7 @@ static bool is_root(const fs::path& path) {
     return path == path.parent_path();
 }
 
-static std::vector<fs::path> gather_gitignores(const fs::path& path) {
+std::vector<fs::path> gather_gitignores(const fs::path& path) {
     if (fs::is_directory(path / ".git")) {
         return {};
     }
@@ -74,7 +85,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     auto current = fs::canonical(path);
     auto result = std::vector<fs::path>{};
 
-    while (!is_root(current)) {  // GCOVR_EXCL_LINE: duplicate branch in report
+    while (!is_root(current)) {
         current = current.parent_path();
         const auto gitignore = current / ".gitignore";
         if (fs::exists(gitignore)) {
@@ -86,6 +97,8 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     }
     return result;
 }
+
+}  // namespace
 
 void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
     const auto gitignores = gather_gitignores(path);

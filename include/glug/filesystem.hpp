@@ -3,9 +3,10 @@
 
 #include "glug/filter.hpp"
 
+#include <cstddef>
 #include <deque>
 #include <filesystem>
-#include <string>
+#include <iterator>
 #include <vector>
 
 namespace glug::filesystem {

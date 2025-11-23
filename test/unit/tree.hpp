@@ -1,9 +1,12 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #pragma once
 
+#include <cstddef>
 #include <filesystem>
+#include <ostream>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <variant>
 #include <vector>
 

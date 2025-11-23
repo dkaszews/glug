@@ -12,13 +12,16 @@ class Repo:
 
     @classmethod
     def supports_symlinks(cls, path: str) -> bool:
-        symlink_name = 'symlink.check'
-        symlink_path = f'{path}/{symlink_name}'
+        symlink_path = f'{path}/symlink.check'
+        symlink_target = 'target.check'
         if os.path.islink(symlink_path):
             return True
 
+        with open(f'{path}/{symlink_target}', 'w'):
+            pass
+
         try:
-            os.symlink(symlink_name, symlink_path)
+            os.symlink(symlink_target, symlink_path)
             return True
         except OSError:
             return False

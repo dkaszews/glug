@@ -44,11 +44,17 @@ class filter {
     public:
     filter() noexcept = default;
 
+    explicit filter(const std::vector<glob::decomposition>& globs) noexcept :
+        filter{ globs, "" } {}
+
+    explicit filter(const std::vector<std::string_view>& globs) noexcept :
+        filter{ globs, "" } {}
+
     filter(const std::vector<glob::decomposition>& globs,
-           const std::filesystem::path& source = "") noexcept;
+           const std::filesystem::path& source) noexcept;
 
     filter(const std::vector<std::string_view>& globs,
-           const std::filesystem::path& source = "") noexcept;
+           const std::filesystem::path& source) noexcept;
 
     /**
      * Check a file or directory against the list of globs.

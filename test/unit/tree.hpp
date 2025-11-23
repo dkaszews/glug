@@ -19,6 +19,7 @@ class temp_fs {
     ~temp_fs();
 
     const auto& path() const { return path_; }
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     operator const std::filesystem::path&() const { return path(); }
 
     private:
@@ -106,10 +107,15 @@ std::ostream& operator<<(std::ostream& os, const dir& dir);
 
 class node {
     public:
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     node(const file& file) :
         variant_{ file } {}
+
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     node(const dir& dir) :
         variant_{ dir } {}
+
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     node(const link& link) :
         variant_{ link } {}
 

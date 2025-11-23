@@ -27,7 +27,7 @@ class explorer {
     using iterator_category = std::input_iterator_tag;
 
     explorer() noexcept = default;
-    explorer(const std::filesystem::path& root);
+    explicit explorer(const std::filesystem::path& root);
 
     explorer begin() const noexcept { return *this; }
     explorer end() const noexcept { return {}; }

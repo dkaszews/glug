@@ -12,10 +12,16 @@
 
 namespace glug::filesystem::unit_test {
 
-using namespace glug::unit_test;
+// Moving into outer scope causes ambiguity of `link` with linux function
+using glug::unit_test::dir;
+using glug::unit_test::file;
+using glug::unit_test::link;
+using glug::unit_test::temp_fs;
+using glug::unit_test::operator""_d;
+using glug::unit_test::operator""_f;
 
 struct explorer_param {
-    node tree;
+    glug::unit_test::node tree;
     std::vector<std::filesystem::path> expected{};
     std::optional<std::filesystem::path> target{};
 

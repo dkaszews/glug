@@ -34,8 +34,6 @@ Checks: >
   -readability-redundant-member-init,
   -readability-static-accessed-through-instance,
 
-  -google-build-using-namespace,
-  -google-explicit-constructor,
   -misc-include-cleaner,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,

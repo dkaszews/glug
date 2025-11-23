@@ -13,12 +13,13 @@
 
 namespace glug::glob::unit_test {
 
-using namespace glug::unit_test;
+using glug::unit_test::operator""_d;
+using glug::unit_test::operator""_f;
 
 struct filter_param {
     std::filesystem::path source{};
     std::vector<std::string> globs{};
-    std::vector<std::pair<node, decision>> cases{};
+    std::vector<std::pair<glug::unit_test::node, decision>> cases{};
 
     friend void PrintTo(const filter_param& param, std::ostream* os) {
         std::ignore = std::tie(param, os);
@@ -37,7 +38,7 @@ TEST_P(filter_test, test) {
 
     auto actual = param.cases;
     for (auto& [node, ignored] : actual) {
-        const temp_fs temp{};
+        const glug::unit_test::temp_fs temp{};
         node.materialize(temp);
         const auto list = filter{ globs, temp / param.source };
         ignored = list.is_ignored(

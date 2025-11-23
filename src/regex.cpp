@@ -165,6 +165,7 @@ bool engine::match(std::string_view s) const {
 namespace detail {
 
 struct impl {
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     impl(std::string_view s) :
         re{ s.data(), s.size() } {}
 

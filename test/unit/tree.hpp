@@ -21,9 +21,11 @@ class temp_fs {
     temp_fs& operator=(temp_fs&&) = delete;
     ~temp_fs();
 
-    const auto& path() const { return path_; }
+    [[nodiscard]] const auto& path() const { return path_; }
     // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
-    operator const std::filesystem::path&() const { return path(); }
+    [[nodiscard]] operator const std::filesystem::path&() const {
+        return path();
+    }
 
     private:
     std::filesystem::path path_{};
@@ -41,10 +43,10 @@ class file {
         path_{ name },
         contents_{ contents } {}
 
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& contents() const { return contents_; }
-    node leaf() const;
+    [[nodiscard]] const auto& path() const { return path_; }
+    [[nodiscard]] auto name() const { return path_.filename(); }
+    [[nodiscard]] const auto& contents() const { return contents_; }
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
@@ -62,12 +64,12 @@ std::ostream& operator<<(std::ostream& os, const file& file);
 
 class link {
     public:
-    link(std::string_view name, const std::filesystem::path& target);
+    link(std::string_view name, std::filesystem::path target);
 
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& target() const { return target_; }
-    node leaf() const;
+    [[nodiscard]] const auto& path() const { return path_; }
+    [[nodiscard]] auto name() const { return path_.filename(); }
+    [[nodiscard]] const auto& target() const { return target_; }
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     // Might throw `std::filesystem::filesystem_error` on Windows
@@ -89,10 +91,10 @@ class dir {
         dir{ name, {} } {}
     dir(std::string_view name, const std::vector<node>& contents);
 
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& contents() const { return contents_; }
-    node leaf() const;
+    [[nodiscard]] const auto& path() const { return path_; }
+    [[nodiscard]] auto name() const { return path_.filename(); }
+    [[nodiscard]] const auto& contents() const { return contents_; }
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
@@ -122,9 +124,9 @@ class node {
     node(const link& link) :
         variant_{ link } {}
 
-    const std::filesystem::path& path() const;
-    std::filesystem::path name() const;
-    node leaf() const;
+    [[nodiscard]] const std::filesystem::path& path() const;
+    [[nodiscard]] std::filesystem::path name() const;
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;

@@ -37,9 +37,6 @@ Checks: >
   -readability-redundant-member-init,
   -readability-static-accessed-through-instance,
 
-  -modernize-pass-by-value,
-  -modernize-type-traits,
-  -modernize-use-nodiscard,
   -performance-enum-size,
   -performance-inefficient-string-concatenation,
   -performance-unnecessary-value-param,

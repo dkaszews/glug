@@ -40,7 +40,7 @@ struct decomposition {
  * @see decomposed_pattern_fixup_required
  * @see decomposed_pattern_fixup
  */
-decomposition decompose(std::string_view glob_line) noexcept;
+[[nodiscard]] decomposition decompose(std::string_view glob_line) noexcept;
 
 /**
  * Checks if pattern obtained from `decompose` contains trailing whitespace
@@ -49,7 +49,8 @@ decomposition decompose(std::string_view glob_line) noexcept;
  * @see decompose
  * @see decomposed_pattern_fixup
  */
-bool decomposed_pattern_fixup_required(std::string_view pattern) noexcept;
+[[nodiscard]] bool
+decomposed_pattern_fixup_required(std::string_view pattern) noexcept;
 
 /**
  * Unescapes all escaped trailing whitespace to obtain a valid glob pattern.
@@ -57,7 +58,8 @@ bool decomposed_pattern_fixup_required(std::string_view pattern) noexcept;
  * @see decompose
  * @see decomposed_pattern_fixup_required
  */
-std::string decomposed_pattern_fixup(std::string_view pattern) noexcept;
+[[nodiscard]] std::string
+decomposed_pattern_fixup(std::string_view pattern) noexcept;
 
 /**
  * Converts glob pattern to equivalent regular expression per gitignore rules.
@@ -70,12 +72,12 @@ std::string decomposed_pattern_fixup(std::string_view pattern) noexcept;
  * range splitting instead of negative lookahead, to allow use in even simplest
  * regex engines.
  */
-std::string to_regex(std::string_view glob) noexcept;
+[[nodiscard]] std::string to_regex(std::string_view glob) noexcept;
 
 /**
  * Escapes a string literal into a glob expression matching only the literal.
  */
-std::string glob_escape(std::string_view s) noexcept;
+[[nodiscard]] std::string glob_escape(std::string_view s) noexcept;
 
 }  // namespace glug::glob
 

@@ -61,7 +61,7 @@ class filter {
      * Check a file or directory against the list of globs.
      * @see decision
      */
-    decision
+    [[nodiscard]] decision
     is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
 
     private:

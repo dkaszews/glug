@@ -30,11 +30,11 @@ class explorer {
     explorer() noexcept = default;
     explicit explorer(const std::filesystem::path& root);
 
-    explorer begin() const noexcept { return *this; }
-    explorer end() const noexcept { return {}; }
+    [[nodiscard]] explorer begin() const noexcept { return *this; }
+    [[nodiscard]] explorer end() const noexcept { return {}; }
 
-    reference operator*() const;
-    pointer operator->() const;
+    [[nodiscard]] reference operator*() const;
+    [[nodiscard]] pointer operator->() const;
     explorer& operator++();
     explorer operator++(int);
 

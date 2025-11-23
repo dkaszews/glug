@@ -7,6 +7,7 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -69,9 +70,9 @@ std::ostream& operator<<(std::ostream& os, const file& file) {
     return os << " }";
 }
 
-link::link(std::string_view name, const std::filesystem::path& target) :
+link::link(std::string_view name, std::filesystem::path target) :
     path_{ name },
-    target_{ target } {}
+    target_{ std::move(target) } {}
 
 node link::leaf() const { return *this; }
 

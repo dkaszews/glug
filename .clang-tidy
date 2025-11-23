@@ -1,4 +1,19 @@
 # Note: `src/**.cpp` files might be analyzed twice, once for each target
+# Explain every exclusion here, since cannot comment in middle of block scalar
+# * google-readability-avoid-underscore-in-googletest-name:
+#   Incompatible with snake_case naming convention
+# * readability-identifier-length:
+#   Short does not mean non-descriptive, like `string_view s` or `to = from`,
+#   coding in all those exceptions is a waste of time
+# * readability-redundant-member-init:
+#   All members should be explicitly value-initialized for consistency,
+#   as it is not guaranteed that default initialization is sane, like primitives
+# * readability-static-accessed-through-instance:
+#   `s.npos` is much shorter and more readable than `std::string_view::npos`
+# * portability-avoid-pragma-once:
+#   `#pragma once` is supported by all serious compilers and is more likely
+#   to produce safe behavior than hand-rolled `#ifndef` guards
+#
 # TODO: Fix third group, static or recursion are to be comment-ignored
 WarningsAsErrors: '*'
 Checks: >
@@ -12,26 +27,39 @@ Checks: >
   readability-*,
 
   -google-readability-avoid-underscore-in-googletest-name,
-  -readability-named-parameter,
+  -readability-identifier-length,
   -readability-redundant-member-init,
   -readability-static-accessed-through-instance,
+  -portability-avoid-pragma-once,
 
+  -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -google-build-using-namespace,
   -google-explicit-constructor,
   -misc-include-cleaner,
   -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
   -modernize-pass-by-value,
+  -modernize-type-traits,
   -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -performance-enum-size,
+  -performance-inefficient-string-concatenation,
+  -performance-unnecessary-value-param,
   -readability-convert-member-functions-to-static,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-implicit-bool-conversion,
+  -readability-named-parameter,
+  -readability-use-concise-preprocessor-directives,
 
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-cognitive-complexity.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-size.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html
-CheckOptions:
-  - key: readability-identifier-length.IgnoredParameterNames
-    value: '^(s|os)$'
-  - key: readability-identifier-length.IgnoredVariableNames
-    value: '^(s|os)$'
+# CheckOptions:
 

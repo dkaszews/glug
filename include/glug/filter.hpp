@@ -4,6 +4,7 @@
 #include "glug/glob.hpp"
 #include "glug/regex.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <string_view>
@@ -14,7 +15,7 @@ namespace glug::glob {
 /**
  * Represents a filter decision about an entry (file or directory).
  */
-enum class decision {
+enum class decision : uint8_t {
     /**
      * Filter does not consider the entry.
      *

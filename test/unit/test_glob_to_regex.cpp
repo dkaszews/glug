@@ -4,6 +4,7 @@
 #include "parametrized.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <tuple>
@@ -12,7 +13,7 @@
 
 namespace glug::glob::unit_test {
 
-enum class affix {
+enum class affix : uint8_t {
     none = 0x0,
     prefix = 0x1,
     suffix = 0x2,

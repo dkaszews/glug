@@ -60,7 +60,9 @@ filter::filter(
             s = glob::decomposed_pattern_fixup(s);
         }
         if (glob.is_anchored) {
-            s = anchor + std::string{ s };
+            // False positive, this is prepend instead of append
+            // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
+            s = anchor + s;
         }
         items.push_back(
                 ignore_item{
@@ -96,7 +98,7 @@ filter::filter(
 decision filter::is_ignored(
         const std::filesystem::directory_entry& entry
 ) const noexcept {
-    const auto make_decision = [this](auto it) {
+    const auto make_decision = [this](const auto& it) {
         if (it == items.rend()) {
             return decision::undecided;
         } else if (it->is_negative) {

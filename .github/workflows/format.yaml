@@ -12,26 +12,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      - uses: jidicula/clang-format-action@v4.15.0
         with:
-          python-version: 3.13
-          cache: pip
-      - run: pip install -r requirements.txt
-      - name: Run clang-format
-        run: |
-          # shellcheck disable=SC2046
-          clang-format --dry-run -Werror $(git ls-files '**.hpp' '**.cpp')
-      - name: Save format patch
-        if: failure()
-        run: |
-          # shellcheck disable=SC2046
-          clang-format -i $(git ls-files '**.hpp' '**.cpp')
-          git diff | tee clang-format.patch
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: clang-format
-          path: clang-format.patch
+          clang-format-version: 21
   clang-tidy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -49,14 +32,10 @@ jobs:
           package-cache-key: ${{ runner.os }}
           project-path: glug
       - run: pip install -r requirements.txt
-      - name: Pull dependencies
-        run: xmake config -vy
-      - name: Generate compilation DB
-        run: xmake project -k compile_commands
-      - name: Run clang-tidy
-        run: |
-          # shellcheck disable=SC2046
-          clang-tidy $(git ls-files '**.hpp' '**.cpp')
+      - run: xmake config -vy
+      - run: xmake project -k compile_commands
+      - run: wget 'https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-21.1.6/clang-tools-extra/clang-tidy/tool/run-clang-tidy.py'
+      - run: python3 ./run-clang-tidy.py
   flake8:
     runs-on: ubuntu-latest
     timeout-minutes: 10

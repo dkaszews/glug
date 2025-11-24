@@ -18,6 +18,8 @@
 #   `s.npos` is much shorter and more readable than `std::string_view::npos`
 #
 # TODO: Fix third group, static or recursion are to be comment-ignored
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '\.xmake'
 WarningsAsErrors: '*'
 Checks: >
   bugprone-*,

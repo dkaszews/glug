@@ -101,11 +101,8 @@ decision filter::is_ignored(
     const auto make_decision = [this](const auto& it) {
         if (it == items.rend()) {
             return decision::undecided;
-        } else if (it->is_negative) {
-            return decision::included;
-        } else {
-            return decision::ignored;
         }
+        return it->is_negative ? decision::included : decision::ignored;
     };
 
     if constexpr (std::filesystem::path::preferred_separator == '/'

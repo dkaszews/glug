@@ -55,7 +55,9 @@ class file {
     std::filesystem::path path_{};
     std::string contents_{};
 };
-inline file operator""_f(const char* name, size_t) { return file{ name }; }
+inline file operator""_f(const char* name, [[maybe_unused]] size_t n) {
+    return file{ name };
+}
 inline bool operator==(const file& lhs, const file& rhs) {
     return std::tie(lhs.path(), lhs.contents())
             == std::tie(rhs.path(), rhs.contents());
@@ -103,7 +105,9 @@ class dir {
     std::filesystem::path path_{};
     std::vector<node> contents_{};
 };
-inline dir operator""_d(const char* name, size_t) { return dir{ name }; }
+inline dir operator""_d(const char* name, [[maybe_unused]] size_t n) {
+    return dir{ name };
+}
 inline bool operator==(const dir& lhs, const dir& rhs) {
     return std::tie(lhs.path(), lhs.contents())
             == std::tie(rhs.path(), rhs.contents());

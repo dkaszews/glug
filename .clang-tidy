@@ -1,4 +1,3 @@
-# Note: `src/**.cpp` files might be analyzed twice, once for each target
 # Explain every exclusion here, since cannot comment in middle of block scalar
 # * google-readability-avoid-underscore-in-googletest-name:
 #   Incompatible with snake_case naming convention
@@ -16,8 +15,10 @@
 #   as it is not guaranteed that default initialization is sane, like primitives
 # * readability-static-accessed-through-instance:
 #   `s.npos` is much shorter and more readable than `std::string_view::npos`
+# * readability-use-concise-preprocessor-directives:
+#   `#(el)if (!)defined` is deemed more consistent and readable,
+#   especially without `#elif(n)def` monster which comes in C++23
 #
-# TODO: Fix third group, static or recursion are to be comment-ignored
 HeaderFilterRegex: '.*'
 ExcludeHeaderFilterRegex: '\.xmake'
 WarningsAsErrors: '*'
@@ -38,12 +39,6 @@ Checks: >
   -readability-identifier-length,
   -readability-redundant-member-init,
   -readability-static-accessed-through-instance,
-
-  -readability-convert-member-functions-to-static,
-  -readability-else-after-return,
-  -readability-function-cognitive-complexity,
-  -readability-implicit-bool-conversion,
-  -readability-named-parameter,
   -readability-use-concise-preprocessor-directives,
 
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-cognitive-complexity.html

@@ -40,7 +40,8 @@ namespace {
 auto getline(std::istream& input, std::string& s) {
     if (!std::getline(input, s, '\n')) {
         return false;
-    } else if (!s.empty() && s.back() == '\r') {
+    }
+    if (!s.empty() && s.back() == '\r') {
         s.pop_back();
     }
     return true;
@@ -69,7 +70,7 @@ glob::filter make_filter(const fs::path& path) {
 }
 
 auto is_root(const fs::path& path) {
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST)
     if (path.parent_path() == fs::canonical(fs::temp_directory_path())) {
         return true;
     }

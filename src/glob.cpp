@@ -26,8 +26,8 @@ decomposition decompose(std::string_view glob) noexcept {
     }
 
     const bool is_negative = glob.front() == '!';
-    glob.remove_prefix(glob.front() == '\\');
-    glob.remove_prefix(is_negative);
+    glob.remove_prefix(glob.front() == '\\' ? 1 : 0);
+    glob.remove_prefix(is_negative ? 1 : 0);
 
     while (has_suffix(glob, " ") && !has_suffix(glob, "\\ ")) {
         glob.remove_suffix(1);
@@ -39,7 +39,7 @@ decomposition decompose(std::string_view glob) noexcept {
 
     const bool is_anchored = glob.find('/') < glob.size() - 1;
     const bool is_directory = glob.back() == '/';
-    glob.remove_suffix(is_directory);
+    glob.remove_suffix(is_directory ? 1 : 0);
 
     while (!glob.empty() && glob.front() == '/') {
         glob.remove_prefix(1);
@@ -164,12 +164,13 @@ std::string range_to_regex(std::string_view s) noexcept {
 
 skip set_to_regex(std::string_view glob, size_t i) noexcept {
     const auto negative = i + 1 < glob.size() && glob[i + 1] == '!';
-    const auto close = glob.find(']', i + 2 + negative);
+    const auto close = glob.find(']', i + (negative ? 3 : 2));
     const auto count = close - i + 1;
 
     if (close == glob.npos) {
         return { regex_escape(glob.substr(i)), glob.size() - i };
-    } else if (glob.find('/', i) < close) {
+    }
+    if (glob.find('/', i) < close) {
         return { regex_escape(glob.substr(i, count)), count };
     }
 

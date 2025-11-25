@@ -31,6 +31,7 @@ class explorer {
     explicit explorer(const std::filesystem::path& root);
 
     [[nodiscard]] explorer begin() const noexcept { return *this; }
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static): interface
     [[nodiscard]] explorer end() const noexcept { return {}; }
 
     [[nodiscard]] reference operator*() const;

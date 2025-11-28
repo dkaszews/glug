@@ -21,11 +21,9 @@ enum class affix : uint8_t {
 };
 
 struct to_regex_param {
-    // NOLINTBEGIN(misc-non-private-member-variables-in-classes): FP
     std::string glob = {};
     std::string expected = {};
     affix test_affix = affix::both;
-    // NOLINTEND(misc-non-private-member-variables-in-classes)
 
     std::ostream& operator<<(std::ostream& os) {
         // Use `make_tuple` instead of `tie` to avoid gtest printing address

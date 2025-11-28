@@ -170,7 +170,6 @@ struct impl {
     impl(std::string_view s) :
         re{ s.data(), s.size() } {}
 
-    // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes): FP
     std::regex re{};
 };
 

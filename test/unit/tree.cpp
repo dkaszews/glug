@@ -30,14 +30,14 @@ std::filesystem::path make_temp_directory() {
 }  // namespace
 
 temp_fs::temp_fs() :
-    path_{ make_temp_directory() } {}
+    path_value{ make_temp_directory() } {}
 
 temp_fs::~temp_fs() { std::filesystem::remove_all(path()); }
 
 node file::leaf() const { return *this; }
 
 void file::move(const std::filesystem::path& destination) {
-    path_ = destination / name();
+    path_value = destination / name();
 }
 
 void file::materialize(const temp_fs& temp) const {
@@ -71,13 +71,13 @@ std::ostream& operator<<(std::ostream& os, const file& file) {
 }
 
 link::link(std::string_view name, std::filesystem::path target) :
-    path_{ name },
-    target_{ std::move(target) } {}
+    path_value{ name },
+    target_value{ std::move(target) } {}
 
 node link::leaf() const { return *this; }
 
 void link::move(const std::filesystem::path& destination) {
-    path_ = destination / name();
+    path_value = destination / name();
 }
 
 void link::materialize(const temp_fs& temp) const {
@@ -89,10 +89,10 @@ std::ostream& operator<<(std::ostream& os, const link& link) {
 }
 
 dir::dir(std::string_view name, const std::vector<node>& contents) :
-    path_{ name },
-    contents_{ contents } {
+    path_value{ name },
+    contents_value{ contents } {
 
-    for (auto& child : contents_) {
+    for (auto& child : contents_value) {
         child.move(path());
     }
 }
@@ -102,8 +102,8 @@ node dir::leaf() const {
 }
 
 void dir::move(const std::filesystem::path& destination) {
-    path_ = destination / name();
-    for (auto& child : contents_) {
+    path_value = destination / name();
+    for (auto& child : contents_value) {
         child.move(path());
     }
 }
@@ -130,36 +130,36 @@ std::ostream& operator<<(std::ostream& os, const dir& dir) {
 
 const std::filesystem::path& node::path() const {
     const auto visitor = [](auto& node) -> auto& { return node.path(); };
-    return std::visit(visitor, variant_);
+    return std::visit(visitor, value);
 }
 
 std::filesystem::path node::name() const {
     const auto visitor = [](auto& node) { return node.name(); };
-    return std::visit(visitor, variant_);
+    return std::visit(visitor, value);
 }
 
 node node::leaf() const {
     const auto visitor = [](auto& node) { return node.leaf(); };
-    return std::visit(visitor, variant_);
+    return std::visit(visitor, value);
 }
 
 void node::move(const std::filesystem::path& destination) {
     const auto visitor = [&destination](auto& node) { node.move(destination); };
-    std::visit(visitor, variant_);
+    std::visit(visitor, value);
 }
 
 void node::materialize(const temp_fs& temp) const {
     const auto visitor = [&temp](auto& node) { node.materialize(temp); };
-    std::visit(visitor, variant_);
+    std::visit(visitor, value);
 }
 
 bool operator==(const node& lhs, const node& rhs) {
-    return lhs.variant_ == rhs.variant_;
+    return lhs.value == rhs.value;
 }
 
 std::ostream& operator<<(std::ostream& os, const node& node) {
     const auto visitor = [&os](auto& node) -> auto& { return os << node; };
-    return std::visit(visitor, node.variant_);
+    return std::visit(visitor, node.value);
 }
 
 }  // namespace glug::unit_test

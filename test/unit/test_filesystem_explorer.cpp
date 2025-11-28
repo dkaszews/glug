@@ -8,7 +8,6 @@
 #include <iterator>
 #include <optional>
 #include <ostream>
-#include <tuple>
 #include <vector>
 
 #include <gmock/gmock.h>
@@ -29,9 +28,7 @@ struct explorer_param {
     std::vector<std::filesystem::path> expected{};
     std::optional<std::filesystem::path> target{};
 
-    friend void PrintTo(const explorer_param& param, std::ostream* os) {
-        std::ignore = std::tie(param, os);
-    }
+    std::ostream& operator<<(std::ostream& os) const { return os; }
 };
 
 class explorer_test : public testing::TestWithParam<explorer_param> {};

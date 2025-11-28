@@ -7,7 +7,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -24,9 +23,7 @@ struct filter_param {
     std::vector<std::string> globs{};
     std::vector<std::pair<glug::unit_test::node, decision>> cases{};
 
-    friend void PrintTo(const filter_param& param, std::ostream* os) {
-        std::ignore = std::tie(param, os);
-    }
+    std::ostream& operator<<(std::ostream& os) const { return os; }
 };
 
 class filter_test : public testing::TestWithParam<filter_param> {};

@@ -98,7 +98,7 @@ filter::filter(
 decision filter::is_ignored(
         const std::filesystem::directory_entry& entry
 ) const noexcept {
-    const auto make_decision = [this](const auto& it) {
+    const auto make_decision = [&items = items](const auto& it) {
         if (it == items.rend()) {
             return decision::undecided;
         }

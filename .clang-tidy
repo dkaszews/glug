@@ -41,7 +41,6 @@ Checks: >
   -readability-static-accessed-through-instance,
   -readability-use-concise-preprocessor-directives,
 
-# TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-size.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/magic-numbers.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html
 CheckOptions:
@@ -50,4 +49,17 @@ CheckOptions:
 
   - key: readability-function-cognitive-complexity.Threshold
     value: 10
+
+  - key: readability-function-size.ParameterThreshold
+    value: 3
+  - key: readability-function-size.LineThreshold
+    value: 50
+  - key: readability-function-size.VariableThreshold
+    value: 10
+  - key: readability-function-size.BranchThreshold
+    value: 10
+  - key: readability-function-size.NestingThreshold
+    value: 3
+  - key: readability-function-size.StatementThreshold
+    value: none
 

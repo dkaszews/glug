@@ -159,19 +159,14 @@ glob::decision explorer_impl::filter_entry(
     return filter.is_ignored(entry);
 }
 
+// NOLINTNEXTLINE(readability-function-size): Nesting counts lambda as level
 void explorer_impl::filter_and_sort(storage& stack) {
     auto& entries = stack.back().entries;
     const auto predicate = [&stack](const auto& entry) {
         for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-            switch (
-                    filter_entry(it->filter, entry)  // GCOVR_EXCL_LINE: no def
-            ) {
-                case glob::decision::ignored:
-                    return true;
-                case glob::decision::included:
-                    return false;
-                case glob::decision::undecided:
-                    break;
+            const auto decision = filter_entry(it->filter, entry);
+            if (decision != glob::decision::undecided) {
+                return decision == glob::decision::ignored;
             }
         }
         return false;

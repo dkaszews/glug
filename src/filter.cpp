@@ -105,32 +105,16 @@ decision filter::is_ignored(
         return it->is_negative ? decision::included : decision::ignored;
     };
 
-    if constexpr (std::filesystem::path::preferred_separator == '/'
-                  && std::is_same_v<std::filesystem::path::value_type, char>) {
-        const auto& full = entry.path();
-        const auto& file = full.filename();
-
-        const auto match = [&entry, &full, &file](const auto& item) noexcept {
-            const auto& path = item.is_anchored ? full : file;
-            return item.is_directory && !entry.is_directory()
-                    ? false
-                    : item.regex(path.c_str());
-        };
-        return make_decision(std::find_if(items.rbegin(), items.rend(), match));
-    } else {
-        // PERF: Move to caller to deduplicate calculations with multi-level
-        // ignore
-        const auto full = fix_path_separator(entry.path()).string();
-        const auto file = entry.path().filename().string();
-
-        const auto match = [&entry, &full, &file](const auto& item) noexcept {
-            const auto& path = item.is_anchored ? full : file;
-            return item.is_directory && !entry.is_directory()
-                    ? false
-                    : item.regex(path);
-        };
-        return make_decision(std::find_if(items.rbegin(), items.rend(), match));
-    }
+    // PERF: Move to caller to deduplicate calculations with multi-level ignore
+    const auto& full = fix_path_separator(entry.path());
+    const auto& file = entry.path().filename();
+    const auto match = [&entry, &full, &file](const auto& item) noexcept {
+        const auto& path = item.is_anchored ? full : file;
+        return item.is_directory && !entry.is_directory()
+                ? false
+                : item.regex(path.string());
+    };
+    return make_decision(std::find_if(items.rbegin(), items.rend(), match));
 }
 
 }  // namespace glug::glob

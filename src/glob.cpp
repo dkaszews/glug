@@ -26,8 +26,8 @@ decomposition decompose(std::string_view glob) noexcept {
     }
 
     const bool is_negative = glob.front() == '!';
-    glob.remove_prefix(glob.front() == '\\' ? 1 : 0);
-    glob.remove_prefix(is_negative ? 1 : 0);
+    glob.remove_prefix(static_cast<size_t>(glob.front() == '\\'));
+    glob.remove_prefix(static_cast<size_t>(is_negative));
 
     while (has_suffix(glob, " ") && !has_suffix(glob, "\\ ")) {
         glob.remove_suffix(1);
@@ -39,7 +39,7 @@ decomposition decompose(std::string_view glob) noexcept {
 
     const bool is_anchored = glob.find('/') < glob.size() - 1;
     const bool is_directory = glob.back() == '/';
-    glob.remove_suffix(is_directory ? 1 : 0);
+    glob.remove_suffix(static_cast<size_t>(is_directory));
 
     while (!glob.empty() && glob.front() == '/') {
         glob.remove_prefix(1);

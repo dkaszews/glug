@@ -27,6 +27,8 @@ class explorer_impl {
     static void add_outer_filters(storage& stack, const fs::path& path);
     static void populate(storage& stack, const fs::path& path);
     static void recurse(storage& stack);
+    static glob::decision
+    filter_entry(const glob::filter& filter, const fs::directory_entry& entry);
     static void filter_and_sort(storage& stack);
     static void next(storage& stack);
 };
@@ -136,25 +138,34 @@ void explorer_impl::populate(storage& stack, const fs::path& path) {
     filter_and_sort(stack);
 }  // GCOVR_EXCL_LINE: Unknown exceptional branch
 
+glob::decision explorer_impl::filter_entry(
+        const glob::filter& filter, const fs::directory_entry& entry
+) {
+    // GCOVR_EXCL_START: Special file types not testable on all OS
+    // `is_directory() || is_file()` returns value for symlink target
+    if (entry.is_symlink()) {
+        return glob::decision::ignored;
+    }
+
+    if (!entry.is_directory() && !entry.is_regular_file()) {
+        return glob::decision::ignored;
+    }
+    // GCOVR_EXCL_STOP
+
+    if (entry.path().filename() == ".git") {
+        return glob::decision::ignored;
+    }
+
+    return filter.is_ignored(entry);
+}
+
 void explorer_impl::filter_and_sort(storage& stack) {
     auto& entries = stack.back().entries;
     const auto predicate = [&stack](const auto& entry) {
         for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-            // GCOVR_EXCL_START: Special file types not testable on all OS
-            // `is_directory() || is_file()` returns value for symlink target
-            if (entry.is_symlink()) {
-                return true;
-            }
-            if (!entry.is_directory() && !entry.is_regular_file()) {
-                return true;
-            }
-            // GCOVR_EXCL_STOP
-
-            if (entry.path().filename() == ".git") {
-                return true;
-            }
-
-            switch (it->filter.is_ignored(entry)) {  // GCOVR_EXCL_LINE: no def
+            switch (
+                    filter_entry(it->filter, entry)  // GCOVR_EXCL_LINE: no def
+            ) {
                 case glob::decision::ignored:
                     return true;
                 case glob::decision::included:
@@ -165,6 +176,7 @@ void explorer_impl::filter_and_sort(storage& stack) {
         }
         return false;
     };
+
     entries.erase(
             std::remove_if(entries.begin(), entries.end(), predicate),
             entries.end()

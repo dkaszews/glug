@@ -41,10 +41,13 @@ Checks: >
   -readability-static-accessed-through-instance,
   -readability-use-concise-preprocessor-directives,
 
-# TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-cognitive-complexity.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/function-size.html
+# TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/magic-numbers.html
 # TODO: https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html
 CheckOptions:
   - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
     value: true
+
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 10
 

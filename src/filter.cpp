@@ -28,7 +28,6 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept {
 namespace {
 
 decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
-    static_assert(std::filesystem::path::preferred_separator == '/');
     if constexpr (std::filesystem::path::preferred_separator == '/'
                   && std::is_same_v<std::filesystem::path::value_type, char>) {
         return path;

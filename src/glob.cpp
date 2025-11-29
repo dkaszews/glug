@@ -163,8 +163,9 @@ std::string range_to_regex(std::string_view s) noexcept {
 }
 
 skip set_to_regex(std::string_view glob, size_t i) noexcept {
+    constexpr auto minimum_length = size_t{ 2 };  // One char + close bracket
     const auto negative = i + 1 < glob.size() && glob[i + 1] == '!';
-    const auto close = glob.find(']', i + (negative ? 3 : 2));
+    const auto close = glob.find(']', i + minimum_length + (negative ? 1 : 0));
     const auto count = close - i + 1;
 
     if (close == glob.npos) {

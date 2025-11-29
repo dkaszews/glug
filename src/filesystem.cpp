@@ -1,5 +1,6 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/filesystem.hpp"
+
 #include "glug/filter.hpp"
 #include "glug/glob.hpp"
 
@@ -7,7 +8,6 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
-#include <istream>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -39,7 +39,7 @@ explorer::reference explorer_impl::front(const storage& stack) noexcept {
 
 namespace {
 
-auto getline(std::istream& input, std::string& s) {
+auto getline(std::ifstream& input, std::string& s) {
     if (!std::getline(input, s, '\n')) {
         return false;
     }
@@ -171,7 +171,6 @@ void explorer_impl::filter_and_sort(storage& stack) {
         }
         return false;
     };
-
     entries.erase(
             std::remove_if(entries.begin(), entries.end(), predicate),
             entries.end()

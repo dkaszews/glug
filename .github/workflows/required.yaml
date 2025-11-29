@@ -1,0 +1,28 @@
+name: Required
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  required:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs:
+      - actionlint
+      - clang-format
+      - clang-tidy
+      - flake8
+      - mypy
+      - parity-test
+      - tools
+      - unit-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+

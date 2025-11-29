@@ -92,4 +92,17 @@ jobs:
       - run: xmake config -vy --mode=release
       - run: xmake build -v parity_test
       - run: xmake test -v parity_test/default
+  required:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs:
+      - unit-test
+      - parity-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+
 

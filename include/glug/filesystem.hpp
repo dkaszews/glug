@@ -3,9 +3,10 @@
 
 #include "glug/filter.hpp"
 
+#include <cstddef>
 #include <deque>
 #include <filesystem>
-#include <string>
+#include <iterator>
 #include <vector>
 
 namespace glug::filesystem {
@@ -27,13 +28,14 @@ class explorer {
     using iterator_category = std::input_iterator_tag;
 
     explorer() noexcept = default;
-    explorer(const std::filesystem::path& root);
+    explicit explorer(const std::filesystem::path& root);
 
-    explorer begin() const noexcept { return *this; }
-    explorer end() const noexcept { return {}; }
+    [[nodiscard]] explorer begin() const noexcept { return *this; }
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static): interface
+    [[nodiscard]] explorer end() const noexcept { return {}; }
 
-    reference operator*() const;
-    pointer operator->() const;
+    [[nodiscard]] reference operator*() const;
+    [[nodiscard]] pointer operator->() const;
     explorer& operator++();
     explorer operator++(int);
 

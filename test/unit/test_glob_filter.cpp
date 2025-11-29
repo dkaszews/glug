@@ -1,32 +1,34 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/filter.hpp"
 
-#include "parametrized.hpp"
 #include "tree.hpp"
+
+#include <filesystem>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <string>
-#include <vector>
-
 namespace glug::glob::unit_test {
 
-using namespace glug::unit_test;
+using glug::unit_test::operator""_d;
+using glug::unit_test::operator""_f;
 
 struct filter_param {
     std::filesystem::path source{};
     std::vector<std::string> globs{};
-    std::vector<std::pair<node, decision>> cases{};
+    std::vector<std::pair<glug::unit_test::node, decision>> cases{};
 
-    friend void PrintTo(const filter_param& param, std::ostream* os) {
-        std::ignore = std::tie(param, os);
-    }
+    std::ostream& operator<<(std::ostream& os) const { return os; }
 };
 
 class filter_test : public testing::TestWithParam<filter_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(filter_test, test) {
     const auto& param = GetParam();
     const auto globs = std::vector<std::string_view>{
@@ -36,7 +38,7 @@ TEST_P(filter_test, test) {
 
     auto actual = param.cases;
     for (auto& [node, ignored] : actual) {
-        const temp_fs temp{};
+        const glug::unit_test::temp_fs temp{};
         node.materialize(temp);
         const auto list = filter{ globs, temp / param.source };
         ignored = list.is_ignored(
@@ -131,8 +133,10 @@ static const auto filter_cases = std::vector<filter_param>{
     },
 };
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(test, filter_test, testing::ValuesIn(filter_cases));
 
+// NOLINTNEXTLINE
 TEST(decision, to_string) {
     static constexpr auto str
             = [](auto x) { return (std::stringstream{} << x).str(); };

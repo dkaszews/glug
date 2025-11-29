@@ -1,8 +1,17 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/filesystem.hpp"
 
+#include "glug/filter.hpp"
+#include "glug/glob.hpp"
+
 #include <algorithm>
+#include <deque>
+#include <filesystem>
 #include <fstream>
+#include <iterator>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -18,6 +27,8 @@ class explorer_impl {
     static void add_outer_filters(storage& stack, const fs::path& path);
     static void populate(storage& stack, const fs::path& path);
     static void recurse(storage& stack);
+    static glob::decision
+    filter_entry(const glob::filter& filter, const fs::directory_entry& entry);
     static void filter_and_sort(storage& stack);
     static void next(storage& stack);
 };
@@ -26,16 +37,19 @@ explorer::reference explorer_impl::front(const storage& stack) noexcept {
     return stack.back().entries.front();
 }
 
-static bool getline(std::istream& input, std::string& s) {
+namespace {
+
+auto getline(std::ifstream& input, std::string& s) {
     if (!std::getline(input, s, '\n')) {
         return false;
-    } else if (!s.empty() && s.back() == '\r') {
+    }
+    if (!s.empty() && s.back() == '\r') {
         s.pop_back();
     }
     return true;
 }
 
-static auto read_lines(const fs::path& path) {
+auto read_lines(const fs::path& path) {
     auto stream = std::ifstream{ path };
     auto lines = std::vector<std::string>{};
     auto line = std::string{};
@@ -45,7 +59,7 @@ static auto read_lines(const fs::path& path) {
     return lines;
 }
 
-static glob::filter make_filter(const fs::path& path) {
+glob::filter make_filter(const fs::path& path) {
     auto globs = std::vector<glob::decomposition>{};
     auto lines = read_lines(path);
     for (const auto& line : lines) {
@@ -57,8 +71,8 @@ static glob::filter make_filter(const fs::path& path) {
     return { globs, path };
 }
 
-static bool is_root(const fs::path& path) {
-#ifdef UNIT_TEST
+auto is_root(const fs::path& path) {
+#if defined(UNIT_TEST)
     if (path.parent_path() == fs::canonical(fs::temp_directory_path())) {
         return true;
     }
@@ -66,7 +80,7 @@ static bool is_root(const fs::path& path) {
     return path == path.parent_path();
 }
 
-static std::vector<fs::path> gather_gitignores(const fs::path& path) {
+std::vector<fs::path> gather_gitignores(const fs::path& path) {
     if (fs::is_directory(path / ".git")) {
         return {};
     }
@@ -74,7 +88,7 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     auto current = fs::canonical(path);
     auto result = std::vector<fs::path>{};
 
-    while (!is_root(current)) {  // GCOVR_EXCL_LINE: duplicate branch in report
+    while (!is_root(current)) {
         current = current.parent_path();
         const auto gitignore = current / ".gitignore";
         if (fs::exists(gitignore)) {
@@ -86,6 +100,8 @@ static std::vector<fs::path> gather_gitignores(const fs::path& path) {
     }
     return result;
 }
+
+}  // namespace
 
 void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
     const auto gitignores = gather_gitignores(path);
@@ -122,30 +138,35 @@ void explorer_impl::populate(storage& stack, const fs::path& path) {
     filter_and_sort(stack);
 }  // GCOVR_EXCL_LINE: Unknown exceptional branch
 
+glob::decision explorer_impl::filter_entry(
+        const glob::filter& filter, const fs::directory_entry& entry
+) {
+    // GCOVR_EXCL_START: Special file types not testable on all OS
+    // `is_directory() || is_file()` returns value for symlink target
+    if (entry.is_symlink()) {
+        return glob::decision::ignored;
+    }
+
+    if (!entry.is_directory() && !entry.is_regular_file()) {
+        return glob::decision::ignored;
+    }
+    // GCOVR_EXCL_STOP
+
+    if (entry.path().filename() == ".git") {
+        return glob::decision::ignored;
+    }
+
+    return filter.is_ignored(entry);
+}
+
+// NOLINTNEXTLINE(readability-function-size): Nesting counts lambda as level
 void explorer_impl::filter_and_sort(storage& stack) {
     auto& entries = stack.back().entries;
     const auto predicate = [&stack](const auto& entry) {
         for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-            // GCOVR_EXCL_START: Special file types not testable on all OS
-            // `is_directory() || is_file()` returns value for symlink target
-            if (entry.is_symlink()) {
-                return true;
-            } else if (!entry.is_directory() && !entry.is_regular_file()) {
-                return true;
-            }
-            // GCOVR_EXCL_STOP
-
-            if (entry.path().filename() == ".git") {
-                return true;
-            }
-
-            switch (it->filter.is_ignored(entry)) {  // GCOVR_EXCL_LINE: no def
-                case glob::decision::ignored:
-                    return true;
-                case glob::decision::included:
-                    return false;
-                case glob::decision::undecided:
-                    break;
+            const auto decision = filter_entry(it->filter, entry);
+            if (decision != glob::decision::undecided) {
+                return decision == glob::decision::ignored;
             }
         }
         return false;

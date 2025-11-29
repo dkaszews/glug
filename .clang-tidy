@@ -1,0 +1,177 @@
+# Explain every exclusion here, since cannot comment in middle of block scalar
+# * google-readability-avoid-underscore-in-googletest-name:
+#   Incompatible with snake_case naming convention
+# * modernize-use-trailing-return-type:
+#   Might consider in future, limit refactor for now
+# * portability-avoid-pragma-once:
+#   Supported by all serious compilers
+# * readability-identifier-length:
+#   Short does not mean non-descriptive, like `string_view s` or `to = from`,
+#   coding in all those exceptions is a waste of time
+# * misc-no-recursion:
+#   Recursion is a valid tool, often only tool to get the job done
+# * readability-redundant-member-init:
+#   All members should be explicitly value-initialized for consistency,
+#   as it is not guaranteed that default initialization is sane, like primitives
+# * readability-static-accessed-through-instance:
+#   `s.npos` is much shorter and more readable than `std::string_view::npos`
+# * readability-use-concise-preprocessor-directives:
+#   `#(el)if (!)defined` is deemed more consistent and readable,
+#   especially without `#elif(n)def` monster which comes in C++23
+#
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '\.xmake'
+WarningsAsErrors: '*'
+Checks: >
+  bugprone-*,
+  cppcoreguidelines-*,
+  google-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+
+  -google-readability-avoid-underscore-in-googletest-name,
+  -misc-no-recursion,
+  -modernize-use-trailing-return-type,
+  -portability-avoid-pragma-once,
+  -readability-identifier-length,
+  -readability-redundant-member-init,
+  -readability-static-accessed-through-instance,
+  -readability-use-concise-preprocessor-directives,
+
+CheckOptions:
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: true
+
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 10
+
+  - key: readability-function-size.ParameterThreshold
+    value: 3
+  - key: readability-function-size.LineThreshold
+    value: 50
+  - key: readability-function-size.VariableThreshold
+    value: 10
+  - key: readability-function-size.BranchThreshold
+    value: 10
+  - key: readability-function-size.NestingThreshold
+    value: 3
+  - key: readability-function-size.StatementThreshold
+    value: none
+
+  # https://github.com/llvm/llvm-project/issues/75688 would be nice
+  - key: readability-identifier-naming.AbstractClassCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassConstexprCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.ConceptCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantPointerParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprFunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.EnumCase
+    value: lower_case
+  - key: readability-identifier-naming.EnumConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantPointerCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalFunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalPointerCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.InlineNamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalConstantPointerCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalPointerCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterPackCase
+    value: lower_case
+  - key: readability-identifier-naming.PointerParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ProtectedMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.PublicMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PublicMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.ScopedEnumConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+  - key: readability-identifier-naming.TypeAliasCase
+    value: lower_case
+  - key: readability-identifier-naming.TypedefCase
+    value: lower_case
+  - key: readability-identifier-naming.UnionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.VirtualMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.TemplateTemplateParameterCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.TypeTemplateParameterCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ValueTemplateParameterCase
+    value: UPPER_CASE
+

@@ -3,29 +3,37 @@
 
 #include "tree.hpp"
 
+#include <algorithm>
+#include <filesystem>
+#include <iterator>
+#include <optional>
+#include <ostream>
+#include <vector>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <optional>
-#include <variant>
-#include <vector>
-
 namespace glug::filesystem::unit_test {
 
-using namespace glug::unit_test;
+// Moving into outer scope causes ambiguity of `link` with linux function
+using glug::unit_test::dir;
+using glug::unit_test::file;
+using glug::unit_test::link;
+using glug::unit_test::temp_fs;
+using glug::unit_test::operator""_d;
+using glug::unit_test::operator""_f;
 
 struct explorer_param {
-    node tree;
+    glug::unit_test::node tree;
     std::vector<std::filesystem::path> expected{};
     std::optional<std::filesystem::path> target{};
 
-    friend void PrintTo(const explorer_param& param, std::ostream* os) {
-        std::ignore = std::tie(param, os);
-    }
+    std::ostream& operator<<(std::ostream& os) const { return os; }
 };
 
 class explorer_test : public testing::TestWithParam<explorer_param> {};
 
+// NOLINTNEXTLINE
 TEST_F(explorer_test, iterators) {
     auto tree = "iterators"_d / "README.md"_f;
     const auto temp = temp_fs{};
@@ -38,6 +46,7 @@ TEST_F(explorer_test, iterators) {
     EXPECT_NE(exp.end(), exp);
 }
 
+// NOLINTNEXTLINE
 TEST_F(explorer_test, dereference) {
     auto tree = dir{ "deref", { "LICENSE.txt"_f, "README.md"_f } };
     const auto temp = temp_fs{};
@@ -51,6 +60,7 @@ TEST_F(explorer_test, dereference) {
     EXPECT_EQ(exp->path(), prefix / "deref/README.md");
 }
 
+// NOLINTNEXTLINE
 TEST_P(explorer_test, test) {
     const auto& [tree, expected, target] = GetParam();
     const auto temp = temp_fs{};
@@ -355,6 +365,7 @@ static const auto explorer_cases = std::vector<explorer_param>{
     },
 };
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         explorer_test,
         explorer_test,

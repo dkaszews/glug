@@ -4,8 +4,10 @@
 #include "glug/glob.hpp"
 #include "glug/regex.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <string_view>
 #include <vector>
 
 namespace glug::glob {
@@ -13,7 +15,7 @@ namespace glug::glob {
 /**
  * Represents a filter decision about an entry (file or directory).
  */
-enum class decision {
+enum class decision : uint8_t {
     /**
      * Filter does not consider the entry.
      *
@@ -44,17 +46,23 @@ class filter {
     public:
     filter() noexcept = default;
 
+    explicit filter(const std::vector<glob::decomposition>& globs) noexcept :
+        filter{ globs, "" } {}
+
+    explicit filter(const std::vector<std::string_view>& globs) noexcept :
+        filter{ globs, "" } {}
+
     filter(const std::vector<glob::decomposition>& globs,
-           const std::filesystem::path& source = "") noexcept;
+           const std::filesystem::path& source) noexcept;
 
     filter(const std::vector<std::string_view>& globs,
-           const std::filesystem::path& source = "") noexcept;
+           const std::filesystem::path& source) noexcept;
 
     /**
      * Check a file or directory against the list of globs.
      * @see decision
      */
-    decision
+    [[nodiscard]] decision
     is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
 
     private:

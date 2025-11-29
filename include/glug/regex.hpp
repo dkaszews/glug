@@ -15,8 +15,8 @@ class engine {
     engine() = default;
     explicit engine(std::string_view pattern);
 
-    bool match(std::string_view s) const;
-    bool operator()(std::string_view s) const { return match(s); }
+    [[nodiscard]] bool match(std::string_view s) const;
+    [[nodiscard]] bool operator()(std::string_view s) const { return match(s); }
 
     private:
     std::shared_ptr<detail::impl> pimpl{};

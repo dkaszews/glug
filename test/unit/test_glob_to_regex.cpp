@@ -3,38 +3,47 @@
 
 #include "parametrized.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
+#include <string>
+#include <tuple>
+
 #include <gtest/gtest.h>
 
 namespace glug::glob::unit_test {
 
-enum class affix {
+enum class affix : uint8_t {
     none = 0x0,
     prefix = 0x1,
     suffix = 0x2,
     both = prefix | suffix,
 };
 
-static constexpr auto operator&(affix lhs, affix rhs) {
-    constexpr auto val = [](auto x) { return static_cast<size_t>(x); };
-    return static_cast<affix>(val(lhs) & val(rhs));
-}
-
 struct to_regex_param {
     std::string glob = {};
     std::string expected = {};
     affix test_affix = affix::both;
+
+    std::ostream& operator<<(std::ostream& os) {
+        // Use `make_tuple` instead of `tie` to avoid gtest printing address
+        testing::internal::PrintTo(std::make_tuple(glob, expected), &os);
+        return os;
+    }
 };
 
-static std::ostream& operator<<(std::ostream& os, const to_regex_param& param) {
-    // Use `make_tuple` instead of `tie` to avoid gtest printing address
-    testing::internal::PrintTo(
-            std::make_tuple(param.glob, param.expected), &os
-    );
-    return os;
+namespace {
+
+constexpr auto operator&(affix lhs, affix rhs) {
+    constexpr auto val = [](auto x) { return static_cast<size_t>(x); };
+    return static_cast<affix>(val(lhs) & val(rhs));
 }
+
+}  // namespace
 
 class to_regex_test : public testing::TestWithParam<to_regex_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(to_regex_test, test) {
     const auto [glob, expected, test_affix] = GetParam();
     ASSERT_EQ(to_regex(glob), expected);
@@ -55,6 +64,7 @@ TEST_P(to_regex_test, test) {
     }
 }
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         literal,
         to_regex_test,
@@ -66,6 +76,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         escaped_literal,
         to_regex_test,
@@ -89,6 +100,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         escaped_backspace,
         to_regex_test,
@@ -102,6 +114,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         question_mark,
         to_regex_test,
@@ -110,6 +123,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         star,
         to_regex_test,
@@ -127,6 +141,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         star_star,
         to_regex_test,
@@ -142,6 +157,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_invalid,
         to_regex_test,
@@ -162,6 +178,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_literal,
         to_regex_test,
@@ -182,6 +199,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_range,
         to_regex_test,
@@ -204,6 +222,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         set_negative,
         to_regex_test,
@@ -217,6 +236,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         mix,
         to_regex_test,
@@ -236,11 +256,13 @@ using escape_param = std::tuple<std::string, std::string>;
 
 class escape_test : public testing::TestWithParam<escape_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(escape_test, test) {
     const auto& [glob, escaped] = GetParam();
     EXPECT_EQ(glob_escape(glob), escaped);
 }
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         escape_test,
         escape_test,

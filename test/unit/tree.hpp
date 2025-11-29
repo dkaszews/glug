@@ -1,8 +1,12 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #pragma once
 
+#include <cstddef>
 #include <filesystem>
+#include <ostream>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <variant>
 #include <vector>
 
@@ -17,36 +21,43 @@ class temp_fs {
     temp_fs& operator=(temp_fs&&) = delete;
     ~temp_fs();
 
-    const auto& path() const { return path_; }
-    operator const std::filesystem::path&() const { return path(); }
+    [[nodiscard]] const auto& path() const { return path_value; }
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
+    [[nodiscard]] operator const std::filesystem::path&() const {
+        return path();
+    }
 
     private:
-    std::filesystem::path path_{};
+    std::filesystem::path path_value{};
 };
 
 class node;
 
 class file {
     public:
-    explicit file(const std::string& name) :
+    explicit file(std::string_view name) :
         file{ name, {} } {}
-    file(const std::string& name, const std::string& contents) :
-        path_{ name },
-        contents_{ contents } {}
+    // No good alternative, `path` would imply multi-element support
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    file(std::string_view name, std::string_view contents) :
+        path_value{ name },
+        contents_value{ contents } {}
 
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& contents() const { return contents_; }
-    node leaf() const;
+    [[nodiscard]] const auto& path() const { return path_value; }
+    [[nodiscard]] auto name() const { return path().filename(); }
+    [[nodiscard]] const auto& contents() const { return contents_value; }
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
     private:
-    std::filesystem::path path_{};
-    std::string contents_{};
+    std::filesystem::path path_value{};
+    std::string contents_value{};
 };
-inline file operator""_f(const char* name, size_t) { return file{ name }; }
+inline file operator""_f(const char* name, [[maybe_unused]] size_t n) {
+    return file{ name };
+}
 inline bool operator==(const file& lhs, const file& rhs) {
     return std::tie(lhs.path(), lhs.contents())
             == std::tie(rhs.path(), rhs.contents());
@@ -55,20 +66,20 @@ std::ostream& operator<<(std::ostream& os, const file& file);
 
 class link {
     public:
-    link(const std::string& name, const std::filesystem::path& target);
+    link(std::string_view name, std::filesystem::path target);
 
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& target() const { return target_; }
-    node leaf() const;
+    [[nodiscard]] const auto& path() const { return path_value; }
+    [[nodiscard]] auto name() const { return path_value.filename(); }
+    [[nodiscard]] const auto& target() const { return target_value; }
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     // Might throw `std::filesystem::filesystem_error` on Windows
     void materialize(const temp_fs& temp) const;
 
     private:
-    std::filesystem::path path_{};
-    std::filesystem::path target_{};
+    std::filesystem::path path_value{};
+    std::filesystem::path target_value{};
 };
 inline bool operator==(const link& lhs, const link& rhs) {
     return std::tie(lhs.path(), lhs.target())
@@ -78,23 +89,25 @@ std::ostream& operator<<(std::ostream& os, const link& link);
 
 class dir {
     public:
-    explicit dir(const std::string& name) :
+    explicit dir(std::string_view name) :
         dir{ name, {} } {}
-    dir(const std::string& name, const std::vector<node>& contents);
+    dir(std::string_view name, const std::vector<node>& contents);
 
-    const auto& path() const { return path_; }
-    auto name() const { return path_.filename(); }
-    const auto& contents() const { return contents_; }
-    node leaf() const;
+    [[nodiscard]] const auto& path() const { return path_value; }
+    [[nodiscard]] auto name() const { return path_value.filename(); }
+    [[nodiscard]] const auto& contents() const { return contents_value; }
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
     private:
-    std::filesystem::path path_{};
-    std::vector<node> contents_{};
+    std::filesystem::path path_value{};
+    std::vector<node> contents_value{};
 };
-inline dir operator""_d(const char* name, size_t) { return dir{ name }; }
+inline dir operator""_d(const char* name, [[maybe_unused]] size_t n) {
+    return dir{ name };
+}
 inline bool operator==(const dir& lhs, const dir& rhs) {
     return std::tie(lhs.path(), lhs.contents())
             == std::tie(rhs.path(), rhs.contents());
@@ -103,16 +116,21 @@ std::ostream& operator<<(std::ostream& os, const dir& dir);
 
 class node {
     public:
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     node(const file& file) :
-        variant_{ file } {}
-    node(const dir& dir) :
-        variant_{ dir } {}
-    node(const link& link) :
-        variant_{ link } {}
+        value{ file } {}
 
-    const std::filesystem::path& path() const;
-    std::filesystem::path name() const;
-    node leaf() const;
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
+    node(const dir& dir) :
+        value{ dir } {}
+
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
+    node(const link& link) :
+        value{ link } {}
+
+    [[nodiscard]] const std::filesystem::path& path() const;
+    [[nodiscard]] std::filesystem::path name() const;
+    [[nodiscard]] node leaf() const;
 
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
@@ -121,7 +139,7 @@ class node {
     friend std::ostream& operator<<(std::ostream& os, const node& node);
 
     private:
-    std::variant<file, dir, link> variant_;
+    std::variant<file, dir, link> value;
 };
 
 // Warning: shorthand only works for single level, needs right-parenthesising

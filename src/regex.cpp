@@ -1,7 +1,8 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/regex.hpp"
 
-#include "glug/detail/backport/type_traits.hpp"
+#include <memory>
+#include <string_view>
 
 #if defined(ENGINE_PCRE2)
 #include <pcre2.h>
@@ -165,6 +166,7 @@ bool engine::match(std::string_view s) const {
 namespace detail {
 
 struct impl {
+    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
     impl(std::string_view s) :
         re{ s.data(), s.size() } {}
 

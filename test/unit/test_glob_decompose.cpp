@@ -3,9 +3,11 @@
 
 #include "parametrized.hpp"
 
-#include <gtest/gtest.h>
-
+#include <optional>
+#include <string>
 #include <tuple>
+
+#include <gtest/gtest.h>
 
 namespace glug::glob::unit_test {
 
@@ -13,6 +15,7 @@ using decompose_param = std::tuple<std::string, std::string, bool, bool, bool>;
 
 class decompose_test : public testing::TestWithParam<decompose_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(decompose_test, pattern) {
     const auto glob = std::get<0>(GetParam());
     const auto pattern = std::get<1>(GetParam());
@@ -20,6 +23,7 @@ TEST_P(decompose_test, pattern) {
     EXPECT_EQ(decompose(glob + " ").pattern, pattern);
 }
 
+// NOLINTNEXTLINE
 TEST_P(decompose_test, is_negative) {
     const auto glob = std::get<0>(GetParam());
     const auto is_negative = std::get<2>(GetParam());
@@ -27,6 +31,7 @@ TEST_P(decompose_test, is_negative) {
     EXPECT_EQ(decompose(glob + " ").is_negative, is_negative);
 }
 
+// NOLINTNEXTLINE
 TEST_P(decompose_test, is_anchored) {
     const auto glob = std::get<0>(GetParam());
     const auto is_anchored = std::get<3>(GetParam());
@@ -34,6 +39,7 @@ TEST_P(decompose_test, is_anchored) {
     EXPECT_EQ(decompose(glob + " ").is_anchored, is_anchored);
 }
 
+// NOLINTNEXTLINE
 TEST_P(decompose_test, is_directory) {
     const auto glob = std::get<0>(GetParam());
     const auto is_directory = std::get<4>(GetParam());
@@ -41,6 +47,7 @@ TEST_P(decompose_test, is_directory) {
     EXPECT_EQ(decompose(glob + " ").is_directory, is_directory);
 }
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         empty,
         decompose_test,
@@ -58,6 +65,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         simple,
         decompose_test,
@@ -71,6 +79,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         trailing_whitespace,
         decompose_test,
@@ -83,6 +92,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative,
         decompose_test,
@@ -93,6 +103,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         anchored,
         decompose_test,
@@ -105,6 +116,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative_anchored,
         decompose_test,
@@ -115,6 +127,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         directory,
         decompose_test,
@@ -126,6 +139,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative_directory,
         decompose_test,
@@ -135,6 +149,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         anchored_directory,
         decompose_test,
@@ -145,6 +160,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative_anchored_directory,
         decompose_test,
@@ -159,6 +175,7 @@ using fixup_param = std::tuple<std::string, std::optional<std::string>>;
 
 class fixup_test : public testing::TestWithParam<fixup_param> {};
 
+// NOLINTNEXTLINE
 TEST_P(fixup_test, test) {
     const auto [pattern, fixup] = GetParam();
     if (fixup.has_value()) {
@@ -170,6 +187,7 @@ TEST_P(fixup_test, test) {
     }
 }
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         fixup_test,
         fixup_test,

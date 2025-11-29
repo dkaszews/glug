@@ -10,5 +10,6 @@ callgrind.out.*
 !.github/
 !.gitignore
 !.clang-format
+!.clang-tidy
 !.vimspector.json
 

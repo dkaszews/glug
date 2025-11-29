@@ -1,0 +1,61 @@
+name: Format
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jidicula/clang-format-action@v4.15.0
+        with:
+          clang-format-version: 21
+  clang-tidy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+          cache: pip
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ runner.os }}
+          project-path: glug
+      - run: pip install -r requirements.txt
+      - run: xmake config -vy
+      - run: xmake project -k compile_commands
+      - run: wget 'https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-21.1.6/clang-tools-extra/clang-tidy/tool/run-clang-tidy.py'
+      - run: python3 ./run-clang-tidy.py
+  flake8:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: flake8
+  mypy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: mypy
+

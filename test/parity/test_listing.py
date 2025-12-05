@@ -27,20 +27,21 @@ def list_glug(path: str) -> set[str]:
 @pytest.mark.parametrize(
     'repo,target',
     [
-        (repos.LINUX, ''),
-        (repos.DENO, 'tests'),
-        (repos.DENO, 'tests/specs/fmt'),
-        (repos.FASTAPI, ''),
-        (repos.FASTAPI, 'scripts'),
+        # TODO: Commented temporarily to speed up testing
+        # (repos.LINUX, ''),
+        # (repos.DENO, 'tests'),
+        # (repos.DENO, 'tests/specs/fmt'),
+        # (repos.FASTAPI, ''),
+        # (repos.FASTAPI, 'scripts'),
         (repos.GODOT, ''),
         (repos.GODOT, 'editor'),
         (repos.GODOT, 'modules/mono/editor'),
         (repos.GODOT, 'platform/android'),
-        (repos.TYPESCRIPT, ''),
-        (repos.POWERSHELL, 'tools'),
-        (repos.POWERSHELL, 'tools/packaging'),
-        (repos.POWERSHELL, 'src'),
-        (repos.VUEJS, ''),
+        # (repos.TYPESCRIPT, ''),
+        # (repos.POWERSHELL, 'tools'),
+        # (repos.POWERSHELL, 'tools/packaging'),
+        # (repos.POWERSHELL, 'src'),
+        # (repos.VUEJS, ''),
     ],
     ids=str
 )

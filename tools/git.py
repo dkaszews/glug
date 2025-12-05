@@ -1,14 +1,15 @@
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 """Utilities for interacting with git repositories."""
 import dataclasses
-import hashlib
 import logging
 import os
 import re
-import shutil
 import subprocess
 import timeit
 import typing
+from hashlib import sha256
+from random import Random
+from shutil import rmtree
 
 from fasteners import InterProcessLock  # type: ignore
 
@@ -24,7 +25,7 @@ def cmd(workdir: str, args: list[str]) -> list[str]:
 
 def _get_current_version() -> str:
     with open(__file__, 'rb') as file:
-        return hashlib.sha256(file.read()).hexdigest()
+        return sha256(file.read()).hexdigest()
 
 
 def _check_version(dest: str) -> bool:
@@ -38,8 +39,8 @@ def _check_version(dest: str) -> bool:
     if clone_version == _get_current_version():
         return True
 
-    shutil.rmtree(dest, ignore_errors=True)
-    shutil.rmtree(version_file, ignore_errors=True)
+    rmtree(dest, ignore_errors=True)
+    rmtree(version_file, ignore_errors=True)
     return False
 
 
@@ -111,6 +112,11 @@ class IndexItem:
     path: str
     is_symlink: bool
 
+    @property
+    def is_gitignore(self) -> bool:
+        """Check if item is a .gitignore file."""
+        return os.path.basename(self.path) == '.gitignore'
+
     @classmethod
     def parse_diff_line(cls, line: str) -> typing.Self:
         """Create IndexItem from line of `git diff-index`."""
@@ -129,7 +135,7 @@ def _clone_lean_locked(dest: str, repo: str, branch: str) -> None:
         for line in cmd(dest, ['diff-index', branch])
     ]
     _checkout_or_touch(dest, branch, files)
-    _add_ignored_files(dest, files)
+    _add_ignored_files(dest, f'{repo}:{branch}', files)
     _clean_history(dest, branch)
     logging.info(f'Done in {timeit.default_timer() - start:.1f}s')
 
@@ -138,7 +144,7 @@ def _checkout_or_touch(dest: str, branch: str, files: list[IndexItem]) -> None:
     to_checkout = [
         item.path
         for item in files
-        if item.is_symlink or os.path.basename(item.path) == '.gitignore'
+        if item.is_symlink or item.is_gitignore
     ]
     logging.info(f'Restoring {len(to_checkout)} files')
     cmd(dest, ['restore', '-s', branch] + to_checkout)
@@ -152,16 +158,54 @@ def _checkout_or_touch(dest: str, branch: str, files: list[IndexItem]) -> None:
             pass
 
 
-def _add_ignored_files(dest: str, files: list[IndexItem]) -> None:
-    logging.info(f'Adding ~{len(files)} ignored files')
+def _read_ignore_globs(path: str) -> list[str]:
+    with open(path) as file:
+        lines = [
+            line.strip().lstrip('!/')
+            for line in file.readlines()
+        ]
+    return [line for line in lines if line and line[0] != '#']
+
+
+def _make_random_filename(rng: Random, globs: list[str]) -> str:
+    glob = rng.choice(globs)
     # TODO: Implement
-    _ = (dest, files)
+    return glob
+
+
+def _add_ignored_files(dest: str, seed: str, files: list[IndexItem]) -> None:
+    gitignores = [
+        os.path.join(dest, item.path)
+        for item in files
+        if item.is_gitignore
+    ]
+    logging.info(
+        f'Generating {len(files)} items'
+        f' matching {len(gitignores)} .gitignore files'
+    )
+
+    globs = list({
+        glob
+        for path in gitignores
+        for glob in _read_ignore_globs(path)
+    })
+    dirs = list({
+        os.path.dirname(item.path)
+        for item in files
+    })
+
+    rng = Random(seed)
+    for _ in range(len(files)):
+        name = _make_random_filename(rng, globs)
+        target = os.path.join(dest, rng.choice(dirs))
+        as_dir = rng.random() < 0.1
+        _ = name, target, as_dir
 
 
 def _clean_history(dest: str, branch: str) -> None:
     logging.info('Removing git history')
     # Windows has tendency to lock random index files
-    shutil.rmtree(f'{dest}/.git', ignore_errors=True)
+    rmtree(f'{dest}/.git', ignore_errors=True)
     cmd(dest, ['init'])
     # Force-add ignored files which were tracked on remote.
     # This will not be picked up by glug, but maintains full repo shape.

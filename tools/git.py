@@ -4,6 +4,7 @@ import dataclasses
 import logging
 import os
 import re
+import string
 import subprocess
 import timeit
 import typing
@@ -105,6 +106,12 @@ def ls_tracked_ignored(path: str, absolute: bool = False) -> list[str]:
     return _ls_cmd(path, args, absolute)
 
 
+def ls_untracked(path: str, absolute: bool = False) -> list[str]:
+    """List files which are neither tracked, nor ignored."""
+    args = ['ls-files', '--others', '--exclude-standard']
+    return _ls_cmd(path, args, absolute)
+
+
 @dataclasses.dataclass(frozen=True)
 class IndexItem:
     """Represents a file tracked by git with its attributes."""
@@ -140,6 +147,12 @@ def _clone_lean_locked(dest: str, repo: str, branch: str) -> None:
     logging.info(f'Done in {timeit.default_timer() - start:.1f}s')
 
 
+def _touch(path: str) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w'):
+        pass
+
+
 def _checkout_or_touch(dest: str, branch: str, files: list[IndexItem]) -> None:
     to_checkout = [
         item.path
@@ -152,10 +165,71 @@ def _checkout_or_touch(dest: str, branch: str, files: list[IndexItem]) -> None:
     to_touch = {item.path for item in files} - set(to_checkout)
     to_touch = {os.path.join(dest, path) for path in to_touch}
     logging.info(f'Creating {len(to_touch)} empty files')
-    for file in to_touch:
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        with open(file, 'w'):
-            pass
+    for path in to_touch:
+        _touch(path)
+
+
+class GlobRandomizer:
+    # `string.printable` contains control chars like vertical tab or backspace
+    RETRIES = 10
+    PRINTABLE_CHARS = set(c for c in string.printable if c.isprintable())
+    BANNED_CHARS = set(r'<>:"/\|?*')
+    ALLOWED_CHARS = PRINTABLE_CHARS - BANNED_CHARS
+    BANNED_NAMES = {'.', '..', 'CON', 'PRN', 'AUX', 'NUL'}
+    BANNED_NAMES |= {f'COM{i}' for i in range(10)}
+    BANNED_NAMES |= {f'LPT{i}' for i in range(10)}
+
+    def __init__(self, seed: str = '') -> None:
+        self._rng = Random(seed)
+        self._range_cache: dict[str, str] = {}
+
+    def __call__(self, glob: str) -> str:
+        return self.generate(glob)
+
+    def generate(self, glob: str) -> str:
+        assert glob
+        glob = self._expand_anchors(glob)
+        glob = self._expand_sets(glob)
+        glob = self._expand_stars(glob)
+
+        for _ in range(self.RETRIES):
+            # TODO: double check with fnmatch?
+            path = self._generate_once(glob)
+            if self.is_valid_path(path):
+                return path
+
+        raise TimeoutError(f"Failed to generate path from glob '{glob}'")
+
+    def _expand_anchors(self, glob: str) -> str:
+        if '/' not in glob[:-1]:
+            glob = f'**/{glob}'
+
+        if glob[-1] == '/':
+            glob = f'{glob}**/*'
+
+        return glob
+
+    def _expand_sets(self, glob: str) -> str:
+        _ = glob
+        raise NotImplementedError()
+
+    def _expand_stars(self, glob: str) -> str:
+        _ = glob
+        raise NotImplementedError()
+
+    def _generate_once(self, glob: str) -> str:
+        _ = glob
+        raise NotImplementedError()
+
+    def is_valid_path(self, path: str) -> bool:
+        if '/' in path:
+            return all(self.is_valid_path(segment) for segment in path)
+
+        if not path:
+            return False
+        if path[-1] in ' ':
+            return False
+        return path not in self.BANNED_NAMES
 
 
 def _read_ignore_globs(path: str) -> list[str]:
@@ -179,27 +253,31 @@ def _add_ignored_files(dest: str, seed: str, files: list[IndexItem]) -> None:
         for item in files
         if item.is_gitignore
     ]
-    logging.info(
-        f'Generating {len(files)} items'
-        f' matching {len(gitignores)} .gitignore files'
-    )
-
-    globs = list({
+    globs = {
         glob
         for path in gitignores
         for glob in _read_ignore_globs(path)
-    })
-    dirs = list({
-        os.path.dirname(item.path)
-        for item in files
-    })
+    }
+    logging.info(
+        f'Loaded {len(globs)} globs from {len(gitignores)} .gitignore files'
+    )
 
-    rng = Random(seed)
-    for _ in range(len(files)):
-        name = _make_random_filename(rng, globs)
-        target = os.path.join(dest, rng.choice(dirs))
-        as_dir = rng.random() < 0.1
-        _ = name, target, as_dir
+    randomizer = GlobRandomizer(seed)
+    generated = {
+        path
+        for glob in globs
+        for path in randomizer(glob)
+    }
+    logging.info(f'Generated {len(generated)} random filenames')
+    breakpoint()
+
+    for name in generated:
+        _touch(os.path.join(dest, name))
+
+    untracked = ls_untracked(dest, True)
+    logging.info(f'Removing {len(untracked)} false positives')
+    for path in untracked:
+        os.remove(path)
 
 
 def _clean_history(dest: str, branch: str) -> None:

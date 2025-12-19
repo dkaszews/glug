@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+from typing import Self
 
 from fasteners import InterProcessLock  # type: ignore
 
@@ -12,76 +13,132 @@ from fasteners import InterProcessLock  # type: ignore
 logging.basicConfig()
 
 
+class Clone:
+    """Represents cloned git repository."""
+
+    def __init__(self, path: str) -> None:
+        """Construct repository at given path."""
+        self._cwd = path
+        self._root: str | None = None
+
+    @property
+    def cwd(self) -> str:
+        """Get working directory of the repository, passed at construction."""
+        return self._cwd
+
+    @property
+    def root(self) -> str:
+        """Get root of the repository, cached."""
+        if self._root is None:
+            self._root = self.cmd(['rev-parse', '--show-toplevel'])[0]
+        return self._root
+
+    @classmethod
+    def clone_lean(cls, uri: str, branch: str, dest: str) -> Self:
+        """
+        Perform a "lean" clone of git repository.
+
+        A "lean" clone recreates tree of files, but keeps most empty to save
+        space. The only files that are checked out by default are `.gitignore`
+        files and links to maintain the output of tools like `git ls-files`
+        or `find`. The `.git` directory is replaced with an empty init to skip
+        storing history.
+
+        On large repositories this can be 50x smaller and is 2x faster.
+        """
+        name = re.search(r'/([^/.]+)\.git', uri)
+        if not name:
+            raise ValueError(f"Repo uri does not match '/().git': '{uri}'")
+
+        clone_dir = os.path.abspath(f'{dest}/{name[1]}-{branch}')
+        os.makedirs(dest, exist_ok=True)
+        with InterProcessLock(f'{clone_dir}.lock'):
+            if not os.path.isdir(clone_dir):
+                _clone_lean_locked(uri, branch, clone_dir)
+            return cls(clone_dir)
+
+    def cmd(self, args: list[str], cwd: str | None = None) -> list[str]:
+        """Run git command and return stdout as lines."""
+        if cwd is None:
+            cwd = self.cwd
+        return self._cmd(args, cwd)
+
+    def _join(self, subdir: str | None = None) -> str:
+        return os.path.join(self.cwd, subdir or '')
+
+    def get_tracked(
+        self,
+        subdir: str | None = None,
+        abspath: bool = False
+    ) -> list[str]:
+        """List tracked files in repository."""
+        return self._ls_cmd(['ls-files'], self._join(subdir), abspath)
+
+    def get_tracked_ignored(
+        self,
+        subdir: str | None = None,
+        abspath: bool = False
+    ) -> list[str]:
+        """List tracked files which are nonetheless matched by gitignore."""
+        args = ['ls-files', '-ic', '--exclude-standard', '.']
+        return self._ls_cmd(args, self._join(subdir), abspath)
+
+    @classmethod
+    def _cmd(cls, args: list[str], cwd: str) -> list[str]:
+        args = ['git'] + args
+        return subprocess.check_output(args, cwd=cwd).decode().splitlines()
+
+    @classmethod
+    def _ls_cmd(
+        cls,
+        args: list[str],
+        cwd: str,
+        abspath: bool = False
+    ) -> list[str]:
+        files = [cls.decode(path) for path in cls._cmd(args, cwd)]
+        if not abspath:
+            return files
+        return [os.path.abspath(os.path.join(cwd, file)) for file in files]
+
+    @classmethod
+    def decode(cls, path: str) -> str:
+        """Decode escaped path string."""
+        if path[0] != '"':
+            return path
+
+        return (
+            path[1:-1].encode('utf-8').decode('unicode_escape')
+            .encode('latin1').decode('utf8')
+        )
+
+
+# TODO: Remove
 def cmd(workdir: str, args: list[str]) -> list[str]:
     """Run git command and return stdout as lines."""
-    args = ['git'] + args
-    return subprocess.check_output(args, cwd=workdir).decode().splitlines()
+    return Clone(workdir).cmd(args)
 
 
-def clone_lean(repo: str, branch: str, dest: str) -> str:
-    """
-    Perform a "lean" clone of git repository.
-
-    A "lean" clone maintains a file tree, but keeps most files empty to save
-    space. The only files that are checked out by default are `.gitignore`
-    files and links to maintain the output of tools like `git ls-files`
-    or `find`. The `.git` directory is replaced with an empty init to skip
-    storing history.
-
-    On large repositories this can be 50x smaller and is 2x faster.
-    """
-    name = re.search(r'/([^/.]+)\.git', repo)
-    if not name:
-        raise ValueError(f"Expected repo to match '/().git' but was '{repo}'")
-
-    clone_dir = os.path.abspath(f'{dest}/{name[1]}-{branch}')
-    os.makedirs(dest, exist_ok=True)
-    with InterProcessLock(f'{clone_dir}.lock'):
-        if not os.path.isdir(clone_dir):
-            _clone_lean_locked(repo, branch, clone_dir)
-        return clone_dir
-
-
-def _resolve_absolute(root: str, files: list[str]) -> list[str]:
-    return [os.path.abspath(f'{root}/{file}') for file in files]
-
-
-def _decode_utf8_path(path: str) -> str:
-    if path[0] != '"':
-        return path
-
-    return (
-        path[1:-1].encode('utf-8').decode('unicode_escape')
-        .encode('latin1').decode('utf8')
-    )
-
-
-def _ls_cmd(path: str, args: list[str], absolute: bool = False) -> list[str]:
-    files = [_decode_utf8_path(path) for path in cmd(path, args)]
-    return _resolve_absolute(path, files) if absolute else files
-
-
+# TODO: Remove
 def ls_files(path: str, absolute: bool = False) -> list[str]:
     """List files tracked by git."""
-    args = ['ls-files', '.']
-    return _ls_cmd(path, args, absolute)
+    return Clone(path).get_tracked(abspath=absolute)
 
 
+# TODO: Remove
 def ls_tracked_ignored(path: str, absolute: bool = False) -> list[str]:
     """List files which have been ignored after committing or force-added."""
-    args = ['ls-files', '-ic', '--exclude-standard', '.']
-    return _ls_cmd(path, args, absolute)
+    return Clone(path).get_tracked_ignored(abspath=absolute)
 
 
 def _parse_diff_index(line: str) -> tuple[str, bool]:
     (stat, path) = line.split('\t')
     is_symlink = stat[2] == '2'
-    return (_decode_utf8_path(path), is_symlink)
+    return (Clone.decode(path), is_symlink)
 
 
-def _clone_lean_locked(repo: str, branch: str, dest: str) -> None:
-    logging.info(f'Cloning {repo}:{branch} to {dest}')
-    cmd('.', ['clone', repo, '--depth', '1', '-qnb', branch, dest])
+def _clone_lean_locked(uri: str, branch: str, dest: str) -> None:
+    logging.info(f'Cloning {uri}:{branch} to {dest}')
+    cmd('.', ['clone', uri, '--depth', '1', '-qnb', branch, dest])
 
     files = [
         _parse_diff_index(line)

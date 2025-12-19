@@ -4,18 +4,19 @@
 
 import sys
 
-import git
+from git import Clone
 
 
 def main(path: str) -> bool:
     """Script entry."""
-    ignored = git.ls_tracked_ignored(path)
+    clone = Clone(path)
+    ignored = clone.get_tracked_ignored(abspath=True)
     if not ignored:
         print('No tracked files match .gitignore rules')
         return True
 
     for file in ignored:
-        explain = git.cmd(path, ['check-ignore', '--no-index', '-v', file])[0]
+        explain = clone.cmd(['check-ignore', '--no-index', '-v', file])[0]
         print(f'File {file} ignored by:\n{explain}', file=sys.stderr)
 
     return False

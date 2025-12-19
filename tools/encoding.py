@@ -6,7 +6,7 @@ import enum
 import os
 import sys
 
-import git
+from git import Clone
 
 from magic import Magic
 
@@ -72,7 +72,7 @@ class EncodingChecker:
 def main(path: str, fix: bool = False) -> bool:
     """Script entry."""
     if os.path.isdir(path):
-        targets = git.ls_files(path, absolute=True)
+        targets = Clone(path).get_tracked(abspath=True)
     else:
         targets = [path]
 

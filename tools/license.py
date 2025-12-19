@@ -4,11 +4,10 @@
 
 import os
 import re
-import subprocess
 import sys
 from datetime import datetime
 
-import git
+from git import Clone
 
 
 class LicenseChecker:
@@ -93,15 +92,14 @@ class LicenseChecker:
     def _get_commit_history(cls, path: str) -> (
         tuple[datetime, datetime]
     ):
-        args = ['git', 'log', '--follow', '--format=%ci', path]
-        result = subprocess.run(args, capture_output=True)
-        if not result.stdout:
+        args = ['log', '--follow', '--format=%ci', path]
+        logs = Clone(os.path.dirname(path)).cmd(args)
+        if not logs:
             return (
                 datetime.fromtimestamp(os.path.getctime(path)),
                 datetime.fromtimestamp(os.path.getmtime(path)),
             )
 
-        logs = result.stdout.decode().splitlines()
         return (
             datetime.fromisoformat(logs[-1]),
             datetime.fromisoformat(logs[0]),
@@ -139,7 +137,7 @@ class LicenseChecker:
 def main(path: str, fix: bool = False) -> bool:
     """Script entry."""
     if os.path.isdir(path):
-        targets = git.ls_files(path, absolute=True)
+        targets = Clone(path).get_tracked(abspath=True)
     else:
         targets = [path]
 

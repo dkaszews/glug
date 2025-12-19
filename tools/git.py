@@ -118,18 +118,6 @@ def cmd(workdir: str, args: list[str]) -> list[str]:
     return Clone(workdir).cmd(args)
 
 
-# TODO: Remove
-def ls_files(path: str, absolute: bool = False) -> list[str]:
-    """List files tracked by git."""
-    return Clone(path).get_tracked(abspath=absolute)
-
-
-# TODO: Remove
-def ls_tracked_ignored(path: str, absolute: bool = False) -> list[str]:
-    """List files which have been ignored after committing or force-added."""
-    return Clone(path).get_tracked_ignored(abspath=absolute)
-
-
 def _parse_diff_index(line: str) -> tuple[str, bool]:
     (stat, path) = line.split('\t')
     is_symlink = stat[2] == '2'

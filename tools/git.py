@@ -54,8 +54,57 @@ class Clone:
         os.makedirs(dest, exist_ok=True)
         with InterProcessLock(f'{clone_dir}.lock'):
             if not os.path.isdir(clone_dir):
-                _clone_lean_locked(uri, branch, clone_dir)
+                cls._clone_lean_locked(uri, branch, clone_dir)
             return cls(clone_dir)
+
+    # TODO: Turn into dataclass
+    @classmethod
+    def _parse_diff_index(cls, line: str) -> tuple[str, bool]:
+        (stat, path) = line.split('\t')
+        is_symlink = stat[2] == '2'
+        # is_module = stat[1] == '1'
+        # config = configparser.ConfigParser()
+        # config.read(['.gitmodules'])
+        # [dict(section.items()) for (_, section) in config.items()]
+        # [{'path': 'third_party/ycmd', 'url': 'https://github.com/ycm-core/ycmd'}]  # NOQA
+        # git ls-tree -z -d HEAD -- third_party/ycmd
+        # 160000 commit 7895484ad55e0cbd0686e882891d59661f183476  third_party/ycmd  # NOQA
+        return (cls.decode(path), is_symlink)
+
+    @classmethod
+    def _clone_lean_locked(cls, uri: str, branch: str, dest: str) -> None:
+        logging.info(f'Cloning lean {uri}:{branch} to {dest}')
+        cls._cmd(['clone', uri, '--depth', '1', '-qnb', branch, dest])
+
+        files = [
+            cls._parse_diff_index(line)
+            for line in cls._cmd(['diff-index', branch], dest)
+        ]
+        to_checkout = [
+            path
+            for (path, is_symlink) in files
+            if is_symlink or os.path.basename(path) == '.gitignore'
+        ]
+        logging.info(f'Restoring {len(to_checkout)} files')
+        cls._cmd(['restore', '-s', branch] + to_checkout, dest)
+
+        to_touch = {path for (path, _) in files} - set(to_checkout)
+        to_touch = {os.path.join(dest, path) for path in to_touch}
+        logging.info(f'Creating {len(to_touch)} empty files')
+        for file in to_touch:
+            os.makedirs(os.path.dirname(file), exist_ok=True)
+            with open(file, 'w'):
+                pass
+
+        logging.info('Removing git history')
+        # Windows has tendency to lock random index files
+        shutil.rmtree(f'{dest}/.git', ignore_errors=True)
+        cls._cmd(['init'], dest)
+        # Force-add ignored files which were tracked on remote.
+        # This will not be picked up by glug, but maintains full repo shape.
+        cls._cmd(['add', '-f', '.'], dest)
+        cls._cmd(['commit', '-m', f'Lean clone of {branch}'], dest)
+        logging.info('Done')
 
     def cmd(self, args: list[str], cwd: str | None = None) -> list[str]:
         """Run git command and return stdout as lines."""
@@ -84,7 +133,7 @@ class Clone:
         return self._ls_cmd(args, self._join(subdir), abspath)
 
     @classmethod
-    def _cmd(cls, args: list[str], cwd: str) -> list[str]:
+    def _cmd(cls, args: list[str], cwd: str = '.') -> list[str]:
         args = ['git'] + args
         return subprocess.check_output(args, cwd=cwd).decode().splitlines()
 
@@ -110,50 +159,3 @@ class Clone:
             path[1:-1].encode('utf-8').decode('unicode_escape')
             .encode('latin1').decode('utf8')
         )
-
-
-# TODO: Remove
-def cmd(workdir: str, args: list[str]) -> list[str]:
-    """Run git command and return stdout as lines."""
-    return Clone(workdir).cmd(args)
-
-
-def _parse_diff_index(line: str) -> tuple[str, bool]:
-    (stat, path) = line.split('\t')
-    is_symlink = stat[2] == '2'
-    return (Clone.decode(path), is_symlink)
-
-
-def _clone_lean_locked(uri: str, branch: str, dest: str) -> None:
-    logging.info(f'Cloning {uri}:{branch} to {dest}')
-    cmd('.', ['clone', uri, '--depth', '1', '-qnb', branch, dest])
-
-    files = [
-        _parse_diff_index(line)
-        for line in cmd(dest, ['diff-index', branch])
-    ]
-    to_checkout = [
-        path
-        for (path, is_symlink) in files
-        if is_symlink or os.path.basename(path) == '.gitignore'
-    ]
-    logging.info(f'Restoring {len(to_checkout)} files')
-    cmd(dest, ['restore', '-s', branch] + to_checkout)
-
-    to_touch = {path for (path, _) in files} - set(to_checkout)
-    to_touch = {os.path.join(dest, path) for path in to_touch}
-    logging.info(f'Creating {len(to_touch)} empty files')
-    for file in to_touch:
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        with open(file, 'w'):
-            pass
-
-    logging.info('Removing git history')
-    # Windows has tendency to lock random index files
-    shutil.rmtree(f'{dest}/.git', ignore_errors=True)
-    cmd(dest, ['init'])
-    # Force-add ignored files which were tracked on remote.
-    # This will not be picked up by glug, but maintains full repo shape.
-    cmd(dest, ['add', '-f', '.'])
-    cmd(dest, ['commit', '-m', f'Lean clone of {branch}'])
-    logging.info('Done')

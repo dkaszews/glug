@@ -1,5 +1,6 @@
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 """Utilities for interacting with git repositories."""
+import dataclasses
 import logging
 import os
 import re
@@ -11,6 +12,70 @@ from fasteners import InterProcessLock  # type: ignore
 
 
 logging.basicConfig()
+
+
+def _git_path_decode(path: str) -> str:
+    if path[0] != '"':
+        return path
+
+    return (
+        path[1:-1].encode('utf-8').decode('unicode_escape')
+        .encode('latin1').decode('utf8')
+    )
+
+
+@dataclasses.dataclass(frozen=True)
+class Object:
+    """Represents object tracked by git."""
+
+    EXPECTED_MODES = ('100644', '100755', '120000', '160000')
+
+    path: str
+    mode: str
+    hash: str
+
+    @classmethod
+    def parse(cls, line: str) -> Self:
+        """
+        Parse line coming from git diff-index.
+
+        Examples ('r-' and 'l-' mean remote and local, hashes are truncated):
+         r-mode l-mode r-hash   l-hash   m  path
+        :100644 000000 8af04e10 00000000 D  .gitmodules
+        :100644 100644 975a57b0 00000000 M  tools/git.py
+        :160000 000000 7895484a 00000000 D  third_party/ycmd
+        :120000 000000 fe0c45aa 00000000 D  tests/testdata/symlink_to_subdir
+        """
+        assert line[0] == ':'
+        line = line[1:]
+        (meta, path) = line.split('\t')
+        (mode, _, hash, _, _) = meta.split(' ')
+        assert mode in cls.EXPECTED_MODES
+        return cls(_git_path_decode(path), mode, hash)
+
+    @property
+    def is_file(self) -> bool:
+        """Check if object represents regular file."""
+        return not self.is_symlink and not self.is_submodule
+
+    @property
+    def is_symlink(self) -> bool:
+        """Check if object represents symlink."""
+        return self.mode[1] == '2'
+
+    @property
+    def is_submodule(self) -> bool:
+        """Check if object represents submodule."""
+        # config = configparser.ConfigParser()
+        # config.read(['.gitmodules'])
+        # [dict(section.items()) for (_, section) in config.items()]
+        # [{'path': 'third_party/ycmd', 'url': 'https://github.com/ycm-core/ycmd'}]  # NOQA
+        return self.mode[1] == '6'
+
+    @property
+    def is_executable(self) -> bool:
+        """Check if object represents executable file."""
+        return self.mode[-1] == '5'
 
 
 class Clone:
@@ -57,38 +122,24 @@ class Clone:
                 cls._clone_lean_locked(uri, branch, clone_dir)
             return cls(clone_dir)
 
-    # TODO: Turn into dataclass
-    @classmethod
-    def _parse_diff_index(cls, line: str) -> tuple[str, bool]:
-        (stat, path) = line.split('\t')
-        is_symlink = stat[2] == '2'
-        # is_module = stat[1] == '1'
-        # config = configparser.ConfigParser()
-        # config.read(['.gitmodules'])
-        # [dict(section.items()) for (_, section) in config.items()]
-        # [{'path': 'third_party/ycmd', 'url': 'https://github.com/ycm-core/ycmd'}]  # NOQA
-        # git ls-tree -z -d HEAD -- third_party/ycmd
-        # 160000 commit 7895484ad55e0cbd0686e882891d59661f183476  third_party/ycmd  # NOQA
-        return (cls.decode(path), is_symlink)
-
     @classmethod
     def _clone_lean_locked(cls, uri: str, branch: str, dest: str) -> None:
         logging.info(f'Cloning lean {uri}:{branch} to {dest}')
         cls._cmd(['clone', uri, '--depth', '1', '-qnb', branch, dest])
 
-        files = [
-            cls._parse_diff_index(line)
+        objects = [
+            Object.parse(line)
             for line in cls._cmd(['diff-index', branch], dest)
         ]
         to_checkout = [
-            path
-            for (path, is_symlink) in files
-            if is_symlink or os.path.basename(path) == '.gitignore'
+            obj.path
+            for obj in objects
+            if obj.is_symlink or os.path.basename(obj.path) == '.gitignore'
         ]
         logging.info(f'Restoring {len(to_checkout)} files')
         cls._cmd(['restore', '-s', branch] + to_checkout, dest)
 
-        to_touch = {path for (path, _) in files} - set(to_checkout)
+        to_touch = {obj.path for obj in objects} - set(to_checkout)
         to_touch = {os.path.join(dest, path) for path in to_touch}
         logging.info(f'Creating {len(to_touch)} empty files')
         for file in to_touch:
@@ -144,18 +195,7 @@ class Clone:
         cwd: str,
         abspath: bool = False
     ) -> list[str]:
-        files = [cls.decode(path) for path in cls._cmd(args, cwd)]
+        files = [_git_path_decode(path) for path in cls._cmd(args, cwd)]
         if not abspath:
             return files
         return [os.path.abspath(os.path.join(cwd, file)) for file in files]
-
-    @classmethod
-    def decode(cls, path: str) -> str:
-        """Decode escaped path string."""
-        if path[0] != '"':
-            return path
-
-        return (
-            path[1:-1].encode('utf-8').decode('unicode_escape')
-            .encode('latin1').decode('utf8')
-        )

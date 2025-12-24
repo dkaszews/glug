@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from typing import Self
 
 from fasteners import InterProcessLock  # type: ignore
@@ -124,6 +125,7 @@ class Clone:
 
     @classmethod
     def _clone_lean_locked(cls, uri: str, branch: str, dest: str) -> None:
+        started = time.time()
         logging.info(f'Cloning lean {uri}:{branch} to {dest}')
         cls._cmd(['clone', uri, '--depth', '1', '-qnb', branch, dest])
 
@@ -155,7 +157,7 @@ class Clone:
         # This will not be picked up by glug, but maintains full repo shape.
         cls._cmd(['add', '-f', '.'], dest)
         cls._cmd(['commit', '-m', f'Lean clone of {branch}'], dest)
-        logging.info('Done')
+        logging.info(f'Done in {time.time() - started:.3f}s')
 
     def cmd(self, args: list[str], cwd: str | None = None) -> list[str]:
         """Run git command and return stdout as lines."""

@@ -34,6 +34,7 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
     'repo,subdir',
     [
         (repos.LINUX, ''),
+        (repos.DENO, ''),
         (repos.DENO, 'tests'),
         (repos.DENO, 'tests/specs/fmt'),
         (repos.FASTAPI, ''),
@@ -46,7 +47,11 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
         (repos.POWERSHELL, 'tools'),
         (repos.POWERSHELL, 'tools/packaging'),
         (repos.POWERSHELL, 'src'),
+        # TODO: Add subdirs
         (repos.VUEJS, ''),
+        (repos.MAGISK, ''),
+        (repos.JQ, ''),
+        (repos.OBS, ''),
     ],
     ids=str
 )
@@ -60,6 +65,8 @@ def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
         pytest.skip('Skipping repo with case-mixed files')
 
     clone = git.Clone.clone_lean(repo.source, repo.branch, data_dir)
+    if os.path.isfile(os.path.join(clone.cwd, '.gitmodules')):
+        pytest.skip('Issue: #123')  # TODO: Add issue number
     assert list_glug(clone, subdir) == list_git(clone, subdir)
 
 

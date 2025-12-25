@@ -1,5 +1,6 @@
 # Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 """Utilities for interacting with git repositories."""
+import configparser
 import dataclasses
 import logging
 import os
@@ -67,10 +68,6 @@ class Object:
     @property
     def is_submodule(self) -> bool:
         """Check if object represents submodule."""
-        # config = configparser.ConfigParser()
-        # config.read(['.gitmodules'])
-        # [dict(section.items()) for (_, section) in config.items()]
-        # [{'path': 'third_party/ycmd', 'url': 'https://github.com/ycm-core/ycmd'}]  # NOQA
         return self.mode[1] == '6'
 
     @property
@@ -119,30 +116,50 @@ class Clone:
         clone_dir = os.path.abspath(f'{dest}/{name[1]}-{branch}')
         os.makedirs(dest, exist_ok=True)
         with InterProcessLock(f'{clone_dir}.lock'):
-            if not os.path.isdir(clone_dir):
+            if os.path.isdir(clone_dir):
+                return cls(clone_dir)
+
+            try:
                 cls._clone_lean_locked(uri, branch, clone_dir)
-            return cls(clone_dir)
+                return cls(clone_dir)
+            except Exception:
+                shutil.rmtree(clone_dir, ignore_errors=True)
+                raise
 
     @classmethod
     def _clone_lean_locked(cls, uri: str, branch: str, dest: str) -> None:
+        # TODO: Break up into helpers
         started = time.time()
         logging.info(f'Cloning lean {uri}:{branch} to {dest}')
-        cls._cmd(['clone', uri, '--depth', '1', '-qnb', branch, dest])
+        # 40-char identifiers may be commit SHAs and cannot be cloned directly
+        if len(branch) == 40:
+            cls._cmd(['clone', uri, '--depth', '1', '-qn', dest])
+            cls._cmd(['fetch', 'origin', branch], dest)
+        else:
+            cls._cmd(['clone', uri, '--depth', '1', '-qnb', branch, dest])
 
         objects = [
             Object.parse(line)
             for line in cls._cmd(['diff-index', branch], dest)
         ]
-        to_checkout = [
+
+        checkout_names = ('.gitignore', '.gitmodules')
+        to_checkout = {
             obj.path
             for obj in objects
-            if obj.is_symlink or os.path.basename(obj.path) == '.gitignore'
-        ]
+            if obj.is_symlink or os.path.basename(obj.path) in checkout_names
+        }
         logging.info(f'Restoring {len(to_checkout)} files')
-        cls._cmd(['restore', '-s', branch] + to_checkout, dest)
+        if to_checkout:
+            cls._cmd(['restore', '-s', branch] + list(to_checkout), dest)
 
-        to_touch = {obj.path for obj in objects} - set(to_checkout)
-        to_touch = {os.path.join(dest, path) for path in to_touch}
+        submodules = {obj for obj in objects if obj.is_submodule}
+        skip_touch = to_checkout | {obj.path for obj in submodules}
+        to_touch = {
+            os.path.join(dest, obj.path)
+            for obj in objects
+            if obj.path not in skip_touch
+        }
         logging.info(f'Creating {len(to_touch)} empty files')
         for file in to_touch:
             os.makedirs(os.path.dirname(file), exist_ok=True)
@@ -158,6 +175,23 @@ class Clone:
         cls._cmd(['add', '-f', '.'], dest)
         cls._cmd(['commit', '-m', f'Lean clone of {branch}'], dest)
         logging.info(f'Done in {time.time() - started:.3f}s')
+
+        if not submodules:
+            return
+
+        logging.info(f'Recursing into {len(submodules)} submodules')
+        config = configparser.ConfigParser(default_section='')
+        config.read([os.path.join(dest, '.gitmodules')])
+        urls = {
+            section['path']: section['url']
+            for (_, section) in config.items()
+            if section
+        }
+        for submodule in submodules:
+            path = os.path.join(dest, submodule.path)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            url = urls[submodule.path]
+            cls._clone_lean_locked(url, submodule.hash, path)
 
     def cmd(self, args: list[str], cwd: str | None = None) -> list[str]:
         """Run git command and return stdout as lines."""

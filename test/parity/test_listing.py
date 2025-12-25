@@ -66,7 +66,7 @@ def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
 
     clone = git.Clone.clone_lean(repo.source, repo.branch, data_dir)
     if os.path.isfile(os.path.join(clone.cwd, '.gitmodules')):
-        pytest.skip('Issue: #123')  # TODO: Add issue number
+        pytest.skip('Issue: #64 - submodules')
     assert list_glug(clone, subdir) == list_git(clone, subdir)
 
 

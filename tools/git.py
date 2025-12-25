@@ -128,7 +128,6 @@ class Clone:
 
     @classmethod
     def _clone_lean_locked(cls, uri: str, branch: str, dest: str) -> None:
-        # TODO: Break up into helpers
         started = time.time()
         logging.info(f'Cloning lean {uri}:{branch} to {dest}')
         # 40-char identifiers may be commit SHAs and cannot be cloned directly
@@ -138,6 +137,12 @@ class Clone:
         else:
             cls._cmd(['clone', uri, '--depth', '1', '-qnb', branch, dest])
 
+        cls._clone_lean_populate(branch, dest)
+        cls._clone_lean_clean(dest)
+        logging.info(f'Done in {time.time() - started:.3f}s')
+
+    @classmethod
+    def _clone_lean_populate(cls, branch: str, dest: str) -> None:
         objects = [
             Object.parse(line)
             for line in cls._cmd(['diff-index', branch], dest)
@@ -166,6 +171,11 @@ class Clone:
             with open(file, 'w'):
                 pass
 
+        if submodules:
+            cls._clone_lean_recurse(submodules, dest)
+
+    @classmethod
+    def _clone_lean_clean(cls, dest: str) -> None:
         logging.info('Removing git history')
         # Windows has tendency to lock random index files
         shutil.rmtree(f'{dest}/.git', ignore_errors=True)
@@ -173,12 +183,10 @@ class Clone:
         # Force-add ignored files which were tracked on remote.
         # This will not be picked up by glug, but maintains full repo shape.
         cls._cmd(['add', '-f', '.'], dest)
-        cls._cmd(['commit', '-m', f'Lean clone of {branch}'], dest)
-        logging.info(f'Done in {time.time() - started:.3f}s')
+        cls._cmd(['commit', '-m', 'Lean clone'], dest)
 
-        if not submodules:
-            return
-
+    @classmethod
+    def _clone_lean_recurse(cls, submodules: set[Object], dest: str) -> None:
         logging.info(f'Recursing into {len(submodules)} submodules')
         config = configparser.ConfigParser(default_section='')
         config.read([os.path.join(dest, '.gitmodules')])

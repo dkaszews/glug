@@ -33,7 +33,6 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
 @pytest.mark.parametrize(
     'repo,subdir',
     [
-        (repos.LINUX, ''),
         (repos.DENO, ''),
         (repos.DENO, 'tests'),
         (repos.DENO, 'tests/specs/fmt'),
@@ -43,15 +42,29 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
         (repos.GODOT, 'editor'),
         (repos.GODOT, 'modules/mono/editor'),
         (repos.GODOT, 'platform/android'),
-        (repos.TYPESCRIPT, ''),
+        (repos.JQ, ''),
+        (repos.JQ, 'config/m4'),
+        (repos.JQ, 'tests/torture'),
+        (repos.JQ, 'vendor/oniguruma'),
+        (repos.JQ, 'vendor/oniguruma/harness'),
+        (repos.LINUX, ''),
+        (repos.LINUX, 'rust/kernel/alloc'),
+        (repos.LINUX, 'drivers/gpu/drm/amd'),
+        (repos.MAGISK, ''),
+        (repos.MAGISK, 'app/test/src/main'),
+        (repos.MAGISK, 'native/src/boot'),
+        (repos.MAGISK, 'native/src/external/lz4/programs'),
+        (repos.OBS, ''),
+        (repos.OBS, 'plugins/obs-websocket/docs/comments'),
+        (repos.OBS, 'shared/qt'),
+        (repos.POWERSHELL, ''),
+        (repos.POWERSHELL, 'src'),
         (repos.POWERSHELL, 'tools'),
         (repos.POWERSHELL, 'tools/packaging'),
-        (repos.POWERSHELL, 'src'),
-        # TODO: Add subdirs
+        (repos.TYPESCRIPT, ''),
+        (repos.TYPESCRIPT, 'src/jsTyping'),
         (repos.VUEJS, ''),
-        (repos.MAGISK, ''),
-        (repos.JQ, ''),
-        (repos.OBS, ''),
+        (repos.VUEJS, 'scripts'),
     ],
     ids=str
 )
@@ -66,6 +79,7 @@ def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
 
     clone = git.Clone.clone_lean(repo.source, repo.branch, data_dir)
     if os.path.isfile(os.path.join(clone.cwd, '.gitmodules')):
+        # TODO: #64 - Glug should ignore submodules by default
         pytest.skip('Issue: #64 - submodules')
     assert list_glug(clone, subdir) == list_git(clone, subdir)
 

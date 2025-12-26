@@ -181,6 +181,9 @@ void explorer_impl::filter_and_sort(storage& stack) {
             if (decision != glob::decision::undecided) {
                 return decision == glob::decision::ignored;
             }
+            if (it->is_root) {
+                return false;
+            }
         }
         return false;
     };

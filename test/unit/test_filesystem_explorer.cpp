@@ -391,11 +391,14 @@ static const auto explorer_cases = std::vector<explorer_param>{
         dir{
             "projects_directory",
             {
+                file{ ".gitignore", "*.log" },
                 dir{
                     "first",
                     {
                         dir{ ".git" },
+                        file{ ".gitignore", "*.log" },
                         file{ "README.md" },
+                        file{ "excluded.log" },
                     },
                 },
                 dir{
@@ -403,6 +406,7 @@ static const auto explorer_cases = std::vector<explorer_param>{
                     {
                         dir{ ".git" },
                         file{ "README.md" },
+                        file{ "included.log" },
                     },
                 },
                 dir{
@@ -422,8 +426,11 @@ static const auto explorer_cases = std::vector<explorer_param>{
             },
         },
         {
+            "projects_directory/.gitignore",
+            "projects_directory/first/.gitignore",
             "projects_directory/first/README.md",
             "projects_directory/second/README.md",
+            "projects_directory/second/included.log",
             "projects_directory/third/README.md",
         },
     },

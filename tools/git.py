@@ -2,6 +2,7 @@
 """Utilities for interacting with git repositories."""
 import configparser
 import dataclasses
+import itertools
 import logging
 import os
 import re
@@ -155,8 +156,9 @@ class Clone:
             if obj.is_symlink or os.path.basename(obj.path) in checkout_names
         }
         logging.info(f'Restoring {len(to_checkout)} files')
-        if to_checkout:
-            cls._cmd(['restore', '-s', branch] + list(to_checkout), dest)
+        # Checking out too many files at once can run into cmd length limit
+        for batch in itertools.batched(to_checkout, 100):
+            cls._cmd(['restore', '-s', branch] + list(batch), dest)
 
         submodules = {obj for obj in objects if obj.is_submodule}
         skip_touch = to_checkout | {obj.path for obj in submodules}

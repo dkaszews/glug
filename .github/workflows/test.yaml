@@ -89,7 +89,6 @@ jobs:
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v ACP -d 65001 -f
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v OEMCP -d 65001 -f
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v MACCP -d 65001 -f
-          reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem -v LongPathsEnabled -d 1 -f
       - run: xmake config -vy --mode=release
       - run: xmake build -v parity_test
       - run: xmake test -v parity_test/default

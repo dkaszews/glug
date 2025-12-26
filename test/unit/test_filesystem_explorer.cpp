@@ -387,6 +387,46 @@ static const auto explorer_cases = std::vector<explorer_param>{
             "repo_with_submodule/included.txt",
         },
     },
+    {
+        dir{
+            "projects_directory",
+            {
+                dir{
+                    "first",
+                    {
+                        dir{ ".git" },
+                        file{ "README.md" },
+                    },
+                },
+                dir{
+                    "second",
+                    {
+                        dir{ ".git" },
+                        file{ "README.md" },
+                    },
+                },
+                dir{
+                    "third",
+                    {
+                        dir{ ".git" },
+                        file{ "README.md" },
+                        dir{
+                            "submodules",
+                            {
+                                dir{ ".git" },
+                                file{ "README.md" },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "projects_directory/first/README.md",
+            "projects_directory/second/README.md",
+            "projects_directory/third/README.md",
+        },
+    },
 };
 
 // NOLINTNEXTLINE

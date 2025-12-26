@@ -14,3 +14,5 @@ python-magic == 0.4.27
 clang-format == 21.1.6
 clang-tidy == 21.1.1
 
+gcovr == 8.4
+

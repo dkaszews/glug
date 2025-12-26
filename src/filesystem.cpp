@@ -129,7 +129,7 @@ void explorer_impl::populate(storage& stack, const fs::path& path) {
     const auto is_named = [](const auto& filename) {
         return [filename](const auto& entry) {
             return entry.path().filename() == filename;
-        };
+        };  // GCOVR_EXCL_LINE: Unknown exceptional path
     };
     const bool is_root
             = std::any_of(entries.begin(), entries.end(), is_named(".git"));
@@ -178,11 +178,8 @@ void explorer_impl::filter_and_sort(storage& stack) {
     const auto predicate = [&stack](const auto& entry) {
         for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
             const auto decision = filter_entry(it->filter, entry);
-            if (decision != glob::decision::undecided) {
+            if (it->is_root || decision != glob::decision::undecided) {
                 return decision == glob::decision::ignored;
-            }
-            if (it->is_root) {
-                return false;
             }
         }
         return false;

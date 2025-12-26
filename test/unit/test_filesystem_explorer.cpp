@@ -363,6 +363,30 @@ static const auto explorer_cases = std::vector<explorer_param>{
         },
         "outer_with_git_barrier/middle/inner",
     },
+    {
+        dir{
+            "repo_with_submodule",
+            {
+                dir{ ".git" },
+                file{ ".gitignore", "*.log" },
+                file{ "excluded.log" },
+                file{ "included.txt" },
+                dir{
+                    "submodules",
+                    {
+                        dir{ ".git" },
+                        file{ ".gitignore", "*.txt" },
+                        file{ "excluded.txt" },
+                        file{ "included.log" },
+                    },
+                },
+            },
+        },
+        {
+            "repo_with_submodule/.gitignore",
+            "repo_with_submodule/included.txt",
+        },
+    },
 };
 
 // NOLINTNEXTLINE

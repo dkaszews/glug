@@ -12,22 +12,28 @@ import repos
 PROJECT_ROOT = os.path.abspath(f'{os.path.dirname(__file__)}/../..')
 
 
-def list_git(path: str) -> set[str]:
-    tracked = set(git.ls_files(path)) - set(git.ls_tracked_ignored(path))
-    return {file for file in tracked if not os.path.islink(f'{path}/{file}')}
+def list_git(clone: git.Clone, subdir: str | None = None) -> set[str]:
+    files = set(clone.get_tracked(subdir))
+    files -= set(clone.get_tracked_ignored(subdir))
+    return {
+        file
+        for file in files
+        if not os.path.islink(os.path.join(clone.cwd, subdir or '', file))
+    }
 
 
-def list_glug(path: str) -> set[str]:
+def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
     glug = f'{PROJECT_ROOT}/build/latest/glug'
+    path = f'{clone.cwd}/{subdir}'
     if not os.path.isfile(glug):
         glug += '.exe'
     return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
 
 
 @pytest.mark.parametrize(
-    'repo,target',
+    'repo,subdir',
     [
-        (repos.LINUX, ''),
+        (repos.DENO, ''),
         (repos.DENO, 'tests'),
         (repos.DENO, 'tests/specs/fmt'),
         (repos.FASTAPI, ''),
@@ -36,15 +42,33 @@ def list_glug(path: str) -> set[str]:
         (repos.GODOT, 'editor'),
         (repos.GODOT, 'modules/mono/editor'),
         (repos.GODOT, 'platform/android'),
-        (repos.TYPESCRIPT, ''),
+        (repos.JQ, ''),
+        (repos.JQ, 'config/m4'),
+        (repos.JQ, 'tests/torture'),
+        (repos.JQ, 'vendor/oniguruma'),
+        (repos.JQ, 'vendor/oniguruma/harness'),
+        (repos.LINUX, ''),
+        (repos.LINUX, 'rust/kernel/alloc'),
+        (repos.LINUX, 'drivers/gpu/drm/amd'),
+        (repos.MAGISK, ''),
+        (repos.MAGISK, 'app/test/src/main'),
+        (repos.MAGISK, 'native/src/boot'),
+        (repos.MAGISK, 'native/src/external/lz4/programs'),
+        (repos.OBS, ''),
+        (repos.OBS, 'plugins/obs-websocket/docs/comments'),
+        (repos.OBS, 'shared/qt'),
+        (repos.POWERSHELL, ''),
+        (repos.POWERSHELL, 'src'),
         (repos.POWERSHELL, 'tools'),
         (repos.POWERSHELL, 'tools/packaging'),
-        (repos.POWERSHELL, 'src'),
+        (repos.TYPESCRIPT, ''),
+        (repos.TYPESCRIPT, 'src/jsTyping'),
         (repos.VUEJS, ''),
+        (repos.VUEJS, 'scripts'),
     ],
     ids=str
 )
-def test_listing_repo(repo: repos.Repo, target: str) -> None:
+def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
     data_dir = f'{PROJECT_ROOT}/test/data/.cloned'
     os.makedirs(data_dir, exist_ok=True)
 
@@ -53,12 +77,15 @@ def test_listing_repo(repo: repos.Repo, target: str) -> None:
     elif repo.needs_case_mix and not repo.supports_case_mix(data_dir):
         pytest.skip('Skipping repo with case-mixed files')
 
-    path = f'{git.clone_lean(repo.source, repo.branch, data_dir)}/{target}'
-    assert list_glug(path) == list_git(path)
+    clone = git.Clone.clone_lean(repo.source, repo.branch, data_dir)
+    if os.path.isfile(os.path.join(clone.cwd, '.gitmodules')):
+        # TODO: #64 - Glug should ignore submodules by default
+        pytest.skip('Issue: #64 - submodules')
+    assert list_glug(clone, subdir) == list_git(clone, subdir)
 
 
 @pytest.mark.parametrize(
-    'target',
+    'subdir',
     [
         '',
         'src',
@@ -70,6 +97,6 @@ def test_listing_repo(repo: repos.Repo, target: str) -> None:
     ],
     ids=str
 )
-def test_listing_self(target: str) -> None:
-    path = f'{PROJECT_ROOT}/{target}'
-    assert list_glug(path) == list_git(path)
+def test_listing_self(subdir: str) -> None:
+    clone = git.Clone(PROJECT_ROOT)
+    assert list_glug(clone, subdir) == list_git(clone, subdir)

@@ -63,15 +63,16 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: test/data/.cloned
-          key: ${{ runner.os }}-${{ hashFiles('test/parity/repos.py') }}
+      # Has to be run before cache restore, otherwise Windows fails on long paths and/or symlinks
       - uses: actions/setup-python@v6
         with:
           python-version: 3.13
           cache: pip
       - run: pip install -r requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: test/data/.cloned
+          key: ${{ runner.os }}-${{ hashFiles('tools/git.py', 'test/parity/repos.py') }}
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'

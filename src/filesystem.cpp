@@ -8,6 +8,7 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -125,15 +126,27 @@ void explorer_impl::populate(storage& stack, const fs::path& path) {
         return;
     }
 
-    const auto is_gitignore = [](const auto& entry) {
-        return entry.path().filename() == ".gitignore";
+    const auto is_named = [](const auto& filename) {
+        return [filename](const auto& entry) {
+            return entry.path().filename() == filename;
+        };
     };
-    const auto gitignore
-            = std::find_if(entries.begin(), entries.end(), is_gitignore);
+    const bool is_root
+            = std::any_of(entries.begin(), entries.end(), is_named(".git"));
+    const bool already_rooted = std::any_of(
+            stack.begin(), stack.end(), std::mem_fn(&level::is_root)
+    );
+    if (is_root && already_rooted) {
+        return;
+    }
+
+    const auto gitignore = std::find_if(
+            entries.begin(), entries.end(), is_named(".gitignore")
+    );
     auto filter = gitignore != entries.end() ? make_filter(gitignore->path())
                                              : glob::filter{};
     // GCOVR_EXCL_START: Move cannot throw
-    stack.push_back({ std::move(filter), std::move(entries) });
+    stack.push_back({ std::move(filter), std::move(entries), is_root });
     // GCOVR_EXCL_STOP
     filter_and_sort(stack);
 }  // GCOVR_EXCL_LINE: Unknown exceptional branch

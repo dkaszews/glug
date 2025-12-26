@@ -49,11 +49,13 @@ class explorer {
         glob::filter filter{};
         // PERF: Try using just iterator, without sorting whole directory
         std::deque<std::filesystem::directory_entry> entries{};
+        bool is_root{};
 
         friend bool operator==(const level& lhs, const level& rhs) {
             // Don't compare filters as they are transient cache.
             // Identical entries must have encountered the same filters,
             // which could be found again from a set of entry parents.
+            // `is_root` is also ignored as more of a filter property.
             return lhs.entries == rhs.entries;
         }
     };

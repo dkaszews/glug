@@ -363,6 +363,77 @@ static const auto explorer_cases = std::vector<explorer_param>{
         },
         "outer_with_git_barrier/middle/inner",
     },
+    {
+        dir{
+            "repo_with_submodule",
+            {
+                dir{ ".git" },
+                file{ ".gitignore", "*.log" },
+                file{ "excluded.log" },
+                file{ "included.txt" },
+                dir{
+                    "submodules",
+                    {
+                        dir{ ".git" },
+                        file{ ".gitignore", "*.txt" },
+                        file{ "excluded.txt" },
+                        file{ "included.log" },
+                    },
+                },
+            },
+        },
+        {
+            "repo_with_submodule/.gitignore",
+            "repo_with_submodule/included.txt",
+        },
+    },
+    {
+        dir{
+            "projects_directory",
+            {
+                file{ ".gitignore", "*.log" },
+                dir{
+                    "first",
+                    {
+                        dir{ ".git" },
+                        file{ ".gitignore", "*.log" },
+                        file{ "README.md" },
+                        file{ "excluded.log" },
+                    },
+                },
+                dir{
+                    "second",
+                    {
+                        dir{ ".git" },
+                        file{ "README.md" },
+                        file{ "included.log" },
+                    },
+                },
+                dir{
+                    "third",
+                    {
+                        dir{ ".git" },
+                        file{ "README.md" },
+                        dir{
+                            "submodules",
+                            {
+                                dir{ ".git" },
+                                file{ "README.md" },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "projects_directory/.gitignore",
+            "projects_directory/first/.gitignore",
+            "projects_directory/first/README.md",
+            "projects_directory/second/README.md",
+            "projects_directory/second/included.log",
+            "projects_directory/third/README.md",
+        },
+    },
 };
 
 // NOLINTNEXTLINE

@@ -21,22 +21,23 @@ namespace glug::filesystem {
 // Allows adding helpers with private access without modifying header
 class explorer_impl {
     public:
-    using level = explorer::level;
-    using storage = decltype(explorer::stack);
+    // Transient helper, storing references to avoid passing to all functions
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+    decltype(explorer::stack)& stack;
 
-    static explorer::reference front(const storage& stack) noexcept;
-    static void add_outer_filters(storage& stack, const fs::path& path);
-    static void populate(storage& stack, const fs::path& path);
-    static void recurse(storage& stack);
-    static glob::decision
-    filter_entry(const glob::filter& filter, const fs::directory_entry& entry);
-    static void filter_and_sort(storage& stack);
-    static void next(storage& stack);
+    // `const` methods cannot construct instance without dropping qualifiers
+    [[nodiscard]] static const auto&
+    front(const std::vector<explorer::level>& stack) noexcept {
+        return stack.back().entries.front();
+    }
+    [[nodiscard]] const auto& front() const noexcept { return front(stack); }
+    void add_outer_filters(const fs::path& path);
+    void populate(const fs::path& path);
+    void recurse();
+    bool filter_entry(const fs::directory_entry& entry);
+    void filter_and_sort();
+    void next();
 };
-
-explorer::reference explorer_impl::front(const storage& stack) noexcept {
-    return stack.back().entries.front();
-}
 
 namespace {
 
@@ -60,7 +61,7 @@ auto read_lines(const fs::path& path) {
     return lines;
 }
 
-glob::filter make_filter(const fs::path& path) {
+filter::ignore make_filter(const fs::path& path) {
     auto globs = std::vector<glob::decomposition>{};
     auto lines = read_lines(path);
     for (const auto& line : lines) {
@@ -83,7 +84,7 @@ auto is_root(const fs::path& path) {
 
 }  // namespace
 
-void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
+void explorer_impl::add_outer_filters(const fs::path& path) {
     if (fs::is_directory(path / ".git")) {
         return;
     }
@@ -98,7 +99,7 @@ void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
             continue;
         }
 
-        auto filter = has_gitignore ? make_filter(gitignore) : glob::filter{};
+        auto filter = has_gitignore ? make_filter(gitignore) : filter::ignore{};
         stack.push_back({ std::move(filter), {}, is_root });
         if (is_root) {
             break;
@@ -107,7 +108,7 @@ void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
     std::reverse(stack.begin(), stack.end());
 };  // GCOVR_EXCL_LINE: Unknown exceptional path
 
-void explorer_impl::populate(storage& stack, const fs::path& path) {
+void explorer_impl::populate(const fs::path& path) {
     auto entries = std::deque<fs::directory_entry>{
         fs::directory_iterator{ path },
         fs::directory_iterator{},
@@ -124,7 +125,7 @@ void explorer_impl::populate(storage& stack, const fs::path& path) {
     const bool is_root
             = std::any_of(entries.begin(), entries.end(), is_named(".git"));
     const bool already_rooted = std::any_of(
-            stack.begin(), stack.end(), std::mem_fn(&level::is_root)
+            stack.begin(), stack.end(), std::mem_fn(&explorer::level::is_root)
     );
     if (is_root && already_rooted) {
         return;
@@ -134,48 +135,47 @@ void explorer_impl::populate(storage& stack, const fs::path& path) {
             entries.begin(), entries.end(), is_named(".gitignore")
     );
     auto filter = gitignore != entries.end() ? make_filter(gitignore->path())
-                                             : glob::filter{};
+                                             : filter::ignore{};
     // GCOVR_EXCL_START: Move cannot throw
     stack.push_back({ std::move(filter), std::move(entries), is_root });
     // GCOVR_EXCL_STOP
-    filter_and_sort(stack);
+    filter_and_sort();
 }  // GCOVR_EXCL_LINE: Unknown exceptional branch
 
-glob::decision explorer_impl::filter_entry(
-        const glob::filter& filter, const fs::directory_entry& entry
-) {
+bool explorer_impl::filter_entry(const fs::directory_entry& entry) {
     // GCOVR_EXCL_START: Special file types not testable on all OS
     // `is_directory() || is_file()` returns value for symlink target
     if (entry.is_symlink()) {
-        return glob::decision::ignored;
+        return true;
     }
 
     if (!entry.is_directory() && !entry.is_regular_file()) {
-        return glob::decision::ignored;
+        return true;
     }
     // GCOVR_EXCL_STOP
 
     if (entry.path().filename() == ".git") {
-        return glob::decision::ignored;
+        return true;
     }
 
-    return filter.is_ignored(entry);
-}
+    for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
+        const auto decision = it->filter.is_ignored(entry);
+        if (it->is_root || decision != filter::decision::undecided) {
+            return decision == filter::decision::excluded;
+        }
+    }
+    return false;
+};
 
 // NOLINTNEXTLINE(readability-function-size): Nesting counts lambda as level
-void explorer_impl::filter_and_sort(storage& stack) {
+void explorer_impl::filter_and_sort() {
     auto& entries = stack.back().entries;
-    const auto predicate = [&stack](const auto& entry) {
-        for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-            const auto decision = filter_entry(it->filter, entry);
-            if (it->is_root || decision != glob::decision::undecided) {
-                return decision == glob::decision::ignored;
-            }
-        }
-        return false;
-    };
     entries.erase(
-            std::remove_if(entries.begin(), entries.end(), predicate),
+            std::remove_if(
+                    entries.begin(),
+                    entries.end(),
+                    [this](const auto& entry) { return filter_entry(entry); }
+            ),
             entries.end()
     );
     if (entries.empty()) {
@@ -188,35 +188,36 @@ void explorer_impl::filter_and_sort(storage& stack) {
                                                         : lhs < rhs;
     };
     std::sort(entries.begin(), entries.end(), files_first);
-    recurse(stack);
+    recurse();
 }
 
-void explorer_impl::recurse(storage& stack) {
-    if (stack.empty() || !front(stack).is_directory()) {
+void explorer_impl::recurse() {
+    if (stack.empty() || !front().is_directory()) {
         return;
     }
 
-    const auto dir = front(stack).path();
+    const auto dir = front().path();
     stack.back().entries.pop_front();
-    populate(stack, dir);
+    populate(dir);
 
     while (!stack.empty() && stack.back().entries.empty()) {
         stack.pop_back();
     }
-    recurse(stack);
+    recurse();
 }
 
-void explorer_impl::next(storage& stack) {
+void explorer_impl::next() {
     stack.back().entries.pop_front();
     while (!stack.empty() && stack.back().entries.empty()) {
         stack.pop_back();
     }
-    recurse(stack);
+    recurse();
 }
 
 explorer::explorer(const std::filesystem::path& root) {
-    explorer_impl::add_outer_filters(stack, root);
-    explorer_impl::populate(stack, root);
+    auto impl = explorer_impl{ stack };
+    impl.add_outer_filters(root);
+    impl.populate(root);
 }
 
 explorer::reference explorer::operator*() const {
@@ -226,7 +227,7 @@ explorer::reference explorer::operator*() const {
 explorer::pointer explorer::operator->() const { return &**this; }
 
 explorer& explorer::operator++() {
-    explorer_impl::next(stack);
+    explorer_impl{ stack }.next();
     return *this;
 }
 

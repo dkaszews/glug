@@ -5,20 +5,21 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <iterator>
 #include <ostream>
 #include <string_view>
 #include <type_traits>
 #include <vector>
 
-namespace glug::glob {
+namespace glug::filter {
 
 std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     switch (value) {  // GCOVR_EXCL_LINE: enum out of range is UB
         case decision::undecided:
             return os << "undecided";
-        case decision::ignored:
-            return os << "ignored";
+        case decision::excluded:
+            return os << "excluded";
         case decision::included:
             return os << "included";
     }
@@ -40,10 +41,10 @@ decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
 
 }  // namespace
 
-filter::filter(
+ignore::ignore(
         const std::vector<glob::decomposition>& globs,
         const std::filesystem::path& source
-) noexcept {
+) {
     // PERF: Lazy
     // GCOVR_EXCL_START - Unknown exception paths
     const auto anchor = source.has_parent_path()
@@ -73,34 +74,39 @@ filter::filter(
     }
 }
 
-filter::filter(
+namespace {
+
+auto decompose_globs(const std::vector<std::string_view>& globs) {
+    auto result = std::vector<glob::decomposition>{};
+    result.reserve(globs.size());
+    std::transform(
+            globs.begin(),
+            globs.end(),
+            std::back_inserter(result),
+            &glob::decompose
+    );
+    return result;
+}  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
+
+}  // namespace
+
+ignore::ignore(
         const std::vector<std::string_view>& globs,
         const std::filesystem::path& source
-) noexcept :
-    filter{
-        [&globs]() {
-            // PERF: Temporary vector created
-            auto result = std::vector<glob::decomposition>{};
-            result.reserve(globs.size());
-            std::transform(
-                    globs.begin(),
-                    globs.end(),
-                    std::back_inserter(result),
-                    &glob::decompose
-            );
-            return result;
-        }(),
+) :
+    ignore{
+        decompose_globs(globs),
         source,
     } {}
 
-decision filter::is_ignored(
+decision ignore::is_ignored(
         const std::filesystem::directory_entry& entry
 ) const noexcept {
     const auto make_decision = [&items = items](const auto& it) {
         if (it == items.rend()) {
             return decision::undecided;
         }
-        return it->is_negative ? decision::included : decision::ignored;
+        return it->is_negative ? decision::included : decision::excluded;
     };
 
     // PERF: Move to caller to deduplicate calculations with multi-level ignore
@@ -115,5 +121,5 @@ decision filter::is_ignored(
     return make_decision(std::find_if(items.rbegin(), items.rend(), match));
 }
 
-}  // namespace glug::glob
+}  // namespace glug::filter
 

@@ -46,7 +46,7 @@ class explorer {
     friend class explorer_impl;
 
     struct level {
-        glob::filter filter{};
+        filter::ignore filter{};
         // PERF: Try using just iterator, without sorting whole directory
         std::deque<std::filesystem::directory_entry> entries{};
         bool is_root{};

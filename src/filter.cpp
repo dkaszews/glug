@@ -46,31 +46,28 @@ filter::filter(
 ) noexcept {
     // PERF: Lazy
     // GCOVR_EXCL_START - Unknown exception paths
-    auto anchor = source.has_parent_path()
+    const auto anchor = source.has_parent_path()
             ? glob::glob_escape(
                       fix_path_separator(source.parent_path()).string()
               ) + "/"
             : "";
     // GCOVR_EXCL_STOP
 
+    auto anchored_pattern = std::string{};
     items.reserve(globs.size());
     for (const auto& glob : globs) {
-        // PERF: non-anchored patterns with no fixup can skip string convert
-        auto s = std::string{ glob.pattern };
-        if (glob::decomposed_pattern_fixup_required(s)) {
-            s = glob::decomposed_pattern_fixup(s);
-        }
+        auto pattern = glob.pattern;
         if (glob.is_anchored) {
-            // False positive, this is prepend instead of append
-            // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-            s = anchor + s;
+            anchored_pattern = anchor;
+            anchored_pattern.append(pattern);
+            pattern = anchored_pattern;
         }
         items.push_back(
                 ignore_item{
                     glob.is_negative,
                     glob.is_anchored,
                     glob.is_directory,
-                    regex::engine{ glob::to_regex(s) },
+                    regex::engine{ glob::to_regex(pattern) },
                 }
         );
     }

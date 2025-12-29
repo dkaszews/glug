@@ -74,6 +74,24 @@ static const auto filter_cases = std::vector<filter_param>{
     },
     {
         ".gitignore",
+        { "mid space", "escaped\\ space" },
+        {
+            { "mid space"_f, decision::ignored },
+            { "escaped space"_f, decision::ignored },
+            { "escaped\\ space"_f, decision::undecided },
+        },
+    },
+    {
+        ".gitignore",
+        { "mid,comma", "escaped\\,comma" },
+        {
+            { "mid,comma"_f, decision::ignored },
+            { "escaped,comma"_f, decision::ignored },
+            { "escaped\\,comma"_f, decision::undecided },
+        },
+    },
+    {
+        ".gitignore",
         { "file_only", "!file_only/" },
         {
             { "file_only"_f, decision::ignored },

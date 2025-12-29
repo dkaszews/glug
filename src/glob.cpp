@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 using namespace std::string_literals;
 
@@ -54,6 +55,44 @@ decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
     }
 
     return { glob, is_negative, is_anchored, is_directory };
+}
+
+std::vector<std::string_view> split(std::string_view globs, char delimiter) {
+    if (globs.empty()) {
+        return {};
+    }
+
+    auto result = std::vector<std::string_view>{};
+    result.reserve(std::count(globs.begin(), globs.end(), delimiter));
+
+    auto current_offset = size_t{ 0 };
+    auto current_size = size_t{ 0 };
+    auto escaped = false;
+    for (const auto c : globs) {
+        if (c == '\\') {
+            current_size++;
+            escaped = !escaped;
+            continue;
+        }
+
+        if (escaped || c != delimiter) {
+            current_size++;
+            escaped = false;
+            continue;
+        }
+
+        if (current_size != 0) {
+            result.push_back(globs.substr(current_offset, current_size));
+        }
+
+        current_offset += current_size + 1;
+        current_size = 0;
+    }
+    if (current_size != 0) {
+        result.push_back(globs.substr(current_offset, current_size));
+    }
+
+    return result;
 }
 
 namespace {

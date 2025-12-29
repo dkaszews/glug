@@ -1,8 +1,10 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace glug::glob {
 
@@ -21,7 +23,7 @@ struct decomposition {
  * Determines which mode should be used for decomposing patterns.
  * @see decompose
  */
-enum decompose_mode {
+enum class decompose_mode : std::uint8_t {
     /**
      * Use exact gitignore rules.
      */
@@ -59,6 +61,13 @@ enum decompose_mode {
 [[nodiscard]] decomposition decompose(
         std::string_view glob_line, decompose_mode mode = decompose_mode::ignore
 ) noexcept;
+
+/**
+ * Splits input across unescaped occurences of given delimiter, ommiting empty
+ * results.
+ */
+[[nodiscard]] std::vector<std::string_view>
+split(std::string_view globs, char delimiter = ',');
 
 /**
  * Converts glob pattern to equivalent regular expression per gitignore rules.

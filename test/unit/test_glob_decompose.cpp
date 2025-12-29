@@ -4,6 +4,7 @@
 #include "parametrized.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -176,15 +177,61 @@ INSTANTIATE_TEST_SUITE_P(
         select_mode,
         decompose_test,
         values_in<decompose_param>({
-            { "abc", "abc", false, false, false, decompose_mode::select },
-            { "#abc", "#abc", false, false, false, decompose_mode::select },
-            { "!abc", "!abc", false, false, false, decompose_mode::select },
-            { "-abc", "abc", true, false, false, decompose_mode::select },
-            { "/abc", "abc", false, true, false, decompose_mode::select },
-            { "abc/", "abc", false, false, true, decompose_mode::select },
-            { "-/abc", "abc", true, true, false, decompose_mode::select },
-            { "-abc/", "abc", true, false, true, decompose_mode::select },
-            { "-/abc/", "abc", true, true, true, decompose_mode::select },
+            { "abc", { "abc", false, false, false }, decompose_mode::select },
+            { "#abc", { "#abc", false, false, false }, decompose_mode::select },
+            { "!abc", { "!abc", false, false, false }, decompose_mode::select },
+            { "-abc", { "abc", true, false, false }, decompose_mode::select },
+            { "/abc", { "abc", false, true, false }, decompose_mode::select },
+            { "abc/", { "abc", false, false, true }, decompose_mode::select },
+            { "-/abc", { "abc", true, true, false }, decompose_mode::select },
+            { "-abc/", { "abc", true, false, true }, decompose_mode::select },
+            { "-/abc/", { "abc", true, true, true }, decompose_mode::select },
+        })
+);
+
+struct split_param {
+    std::string input{};
+    std::vector<std::string_view> expected{};
+    char delimiter{ ',' };
+};
+
+class split_test : public testing::TestWithParam<split_param> {};
+
+// NOLINTNEXTLINE
+TEST_P(split_test, test) {
+    const auto actual = split(GetParam().input, GetParam().delimiter);
+    EXPECT_EQ(actual, GetParam().expected);
+}
+
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(
+        split_test,
+        split_test,
+        values_in<split_param>({
+            { "", {} },
+            { "a", { "a" } },
+            { "abc", { "abc" } },
+            { "abc,def", { "abc", "def" } },
+            { "abc,def,xyz", { "abc", "def", "xyz" } },
+            { "abc,", { "abc" } },
+            { ",abc", { "abc" } },
+            { ",abc,,xyz,", { "abc", "xyz" } },
+            { "\\abc", { "\\abc" } },
+            { "abc\\", { "abc\\" } },
+            { "\\abc\\", { "\\abc\\" } },
+            { "abc\\,xyz", { "abc\\,xyz" } },
+            { "abc\\\\,xyz", { "abc\\\\", "xyz" } },
+            { "abc\\\\\\,xyz", { "abc\\\\\\,xyz" } },
+            { "abc\\ ,xyz", { "abc\\ ", "xyz" } },
+            { "abc\\\\ ,xyz", { "abc\\\\ ", "xyz" } },
+            { "abc\\\\\\ ,xyz", { "abc\\\\\\ ", "xyz" } },
+            { "abc\\ \\,xyz", { "abc\\ \\,xyz" } },
+            { "abc\\ \\\\,xyz", { "abc\\ \\\\", "xyz" } },
+            { "abc,def", { "abc,def" }, ':' },
+            { "abc:def", { "abc", "def" }, ':' },
+            { "abc,def:xyz", { "abc,def", "xyz" }, ':' },
+            { "abc\\:xyz", { "abc\\:xyz" }, ':' },
+            { "abc\\\\:xyz", { "abc\\\\", "xyz" }, ':' },
         })
 );
 

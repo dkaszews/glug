@@ -72,14 +72,16 @@ ignore::ignore(
 
 namespace {
 
-auto decompose_globs(const std::vector<std::string_view>& globs) {
+auto decompose_globs(
+        const std::vector<std::string_view>& globs, glob::decompose_mode mode
+) {
     auto result = std::vector<glob::decomposition>{};
     result.reserve(globs.size());
     std::transform(
             globs.begin(),
             globs.end(),
             std::back_inserter(result),
-            &glob::decompose
+            [mode](auto glob) { return glob::decompose(glob, mode); }
     );
     return result;
 }  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
@@ -91,7 +93,7 @@ ignore::ignore(
         const std::filesystem::path& anchor
 ) :
     ignore{
-        decompose_globs(globs),
+        decompose_globs(globs, glob::decompose_mode::ignore),
         anchor,
     } {}
 

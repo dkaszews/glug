@@ -20,12 +20,16 @@ constexpr bool has_suffix(std::string_view s, std::string_view suffix) {
 
 }  // namespace
 
-decomposition decompose(std::string_view glob) noexcept {
-    if (glob.empty() || glob.front() == '#') {
+decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
+    if (glob.empty()) {
+        return {};
+    }
+    if (mode == decompose_mode::ignore && glob.front() == '#') {
         return {};
     }
 
-    const bool is_negative = glob.front() == '!';
+    const char negation_char = mode == decompose_mode::ignore ? '!' : '-';
+    const bool is_negative = glob.front() == negation_char;
     glob.remove_prefix(static_cast<size_t>(glob.front() == '\\'));
     glob.remove_prefix(static_cast<size_t>(is_negative));
 

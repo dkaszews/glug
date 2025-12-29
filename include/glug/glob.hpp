@@ -20,11 +20,7 @@ struct decomposition {
 /**
  * Decomposes glob line into constituent parts per gitignore rules.
  *
- * All unescaped trailing whitespace is ignored, while escaped trailing
- * whitespace requires a call to `decomposed_pattern_fixup`.
- * This is done as an optimization, since trailing whitespace is the only
- * case where resulting pattern is not a substring of the glob line,
- * requiring a separate allocation.
+ * All unescaped trailing whitespace is ignored.
  *
  * Values starting with unescaped '#' are treated as empty.
  *
@@ -36,30 +32,8 @@ struct decomposition {
  *
  * Values containing '/' as the last character are marked as directory-only,
  * meaning they should not be used for regular files.
- *
- * @see decomposed_pattern_fixup_required
- * @see decomposed_pattern_fixup
  */
 [[nodiscard]] decomposition decompose(std::string_view glob_line) noexcept;
-
-/**
- * Checks if pattern obtained from `decompose` contains trailing whitespace
- * and therefore requires a pass through `decomposed_pattern_fixup`.
- *
- * @see decompose
- * @see decomposed_pattern_fixup
- */
-[[nodiscard]] bool
-decomposed_pattern_fixup_required(std::string_view pattern) noexcept;
-
-/**
- * Unescapes all escaped trailing whitespace to obtain a valid glob pattern.
- *
- * @see decompose
- * @see decomposed_pattern_fixup_required
- */
-[[nodiscard]] std::string
-decomposed_pattern_fixup(std::string_view pattern) noexcept;
 
 /**
  * Converts glob pattern to equivalent regular expression per gitignore rules.

@@ -52,20 +52,6 @@ decomposition decompose(std::string_view glob) noexcept {
     return { glob, is_negative, is_anchored, is_directory };
 }
 
-bool decomposed_pattern_fixup_required(std::string_view pattern) noexcept {
-    return !pattern.empty() && pattern.back() == ' ';
-}
-
-std::string decomposed_pattern_fixup(std::string_view pattern) noexcept {
-    auto s = std::string{ pattern };
-    auto trail = size_t{ 0 };
-    while (has_suffix(s, "\\ ")) {
-        s.resize(s.size() - 2);
-        trail++;
-    }
-    return s + std::string(trail, ' ');
-}
-
 namespace {
 
 auto regex_meta(char c, bool hyphen = true) noexcept {

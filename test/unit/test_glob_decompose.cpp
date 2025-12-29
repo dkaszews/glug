@@ -3,7 +3,6 @@
 
 #include "parametrized.hpp"
 
-#include <optional>
 #include <string>
 #include <tuple>
 
@@ -168,36 +167,6 @@ INSTANTIATE_TEST_SUITE_P(
             { "!/a/", "a", true, true, true },
             { "!/abc/", "abc", true, true, true },
             { "!/a/b/c/", "a/b/c", true, true, true },
-        })
-);
-
-using fixup_param = std::tuple<std::string, std::optional<std::string>>;
-
-class fixup_test : public testing::TestWithParam<fixup_param> {};
-
-// NOLINTNEXTLINE
-TEST_P(fixup_test, test) {
-    const auto [pattern, fixup] = GetParam();
-    if (fixup.has_value()) {
-        EXPECT_TRUE(decomposed_pattern_fixup_required(pattern));
-        EXPECT_EQ(decomposed_pattern_fixup(pattern), *fixup);
-    } else {
-        EXPECT_FALSE(decomposed_pattern_fixup_required(pattern));
-        EXPECT_EQ(decomposed_pattern_fixup(pattern), pattern);
-    }
-}
-
-// NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(
-        fixup_test,
-        fixup_test,
-        values_in<fixup_param>({
-            { "", std::nullopt },
-            { "abc", std::nullopt },
-            { "ab c", std::nullopt },
-            { "abc\\ ", "abc " },
-            { "abc\\ \\ ", "abc  " },
-            { "ab c\\ ", "ab c " },
         })
 );
 

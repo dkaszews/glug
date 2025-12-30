@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <iterator>
 #include <ostream>
 #include <string_view>
@@ -117,6 +118,81 @@ decision ignore::is_ignored(
                 : item.regex(path.string());
     };
     return make_decision(std::find_if(items.rbegin(), items.rend(), match));
+}
+
+select_filter::select_filter(
+        const std::vector<glob::decomposition>& globs,
+        const std::filesystem::path& anchor
+) {
+    const auto anchor_prefix
+            = glob::glob_escape(fix_path_separator(anchor).string());
+
+    dirs.reserve(
+            std::count_if(
+                    globs.begin(),
+                    globs.end(),
+                    std::mem_fn(&glob::decomposition::is_directory)
+            )
+    );
+    files.reserve(globs.size() - dirs.size());
+
+    auto anchored_pattern = std::string{};
+    for (const auto& glob : globs) {
+        auto pattern = glob.pattern;
+        if (glob.is_anchored) {
+            anchored_pattern = anchor;
+            anchored_pattern.append(pattern);
+            pattern = anchored_pattern;
+        }
+        auto& items = glob.is_directory ? dirs : files;
+        items.push_back(
+                ignore_item{
+                    glob.is_negative,
+                    glob.is_anchored,
+                    regex::engine{ glob::to_regex(pattern) },
+                }
+        );
+    }
+}
+
+select_filter::select_filter(
+        const std::vector<std::string_view>& globs,
+        const std::filesystem::path& anchor
+) :
+    select_filter{
+        decompose_globs(globs, glob::decompose_mode::select),
+        anchor,
+    } {}
+
+select_filter::select_filter(
+        std::string_view globs, const std::filesystem::path& anchor
+) :
+    select_filter{ glob::split(globs), anchor } {}
+
+decision select_filter::is_ignored(
+        const std::filesystem::directory_entry& entry
+) const noexcept {
+    auto& items = entry.is_directory() ? dirs : files;
+    if (items.empty()) {
+        return decision::undecided;
+    }
+
+    const auto& full = fix_path_separator(entry.path());
+    const auto& file = entry.path().filename();
+    const auto match = [&full, &file](const auto& item) noexcept {
+        const auto& path = item.is_anchored ? full : file;
+        return item.regex(path.string());
+    };
+    const auto it = std::find_if(items.rbegin(), items.rend(), match);
+    if (it != items.rend()) {
+        return it->is_negative ? decision::excluded : decision::included;
+    }
+
+    // TODO: Cache in class
+    const auto positives = !std::all_of(
+            items.begin(), items.end(), std::mem_fn(&ignore_item::is_negative)
+    );
+    return positives ? decision::excluded : decision::undecided;
 }
 
 }  // namespace glug::filter

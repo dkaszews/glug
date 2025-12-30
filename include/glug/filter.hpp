@@ -60,6 +60,7 @@ class ignore {
 
     /**
      * Check a file or directory against the list of globs.
+     *
      * @see decision
      */
     [[nodiscard]] decision
@@ -74,6 +75,62 @@ class ignore {
     };
 
     std::vector<ignore_item> items{};
+};
+
+/**
+ * Allows for additional filtering of files and directories.
+ *
+ * @see glug::glob::decompose_mode::select_mode
+ */
+class select_filter {
+    public:
+    select_filter() noexcept = default;
+
+    explicit select_filter(const std::vector<glob::decomposition>& globs) :
+        select_filter{ globs, "" } {}
+
+    explicit select_filter(const std::vector<std::string_view>& globs) :
+        select_filter{ globs, "" } {}
+
+    explicit select_filter(std::string_view globs) :
+        select_filter{ globs, "" } {}
+
+    select_filter(
+            const std::vector<glob::decomposition>& globs,
+            const std::filesystem::path& anchor
+    );
+
+    select_filter(
+            const std::vector<std::string_view>& globs,
+            const std::filesystem::path& anchor
+    );
+
+    select_filter(std::string_view globs, const std::filesystem::path& anchor);
+
+    /**
+     * Check a file or directory against the list of globs.
+     *
+     * Files and directories are treated as separate types, with no overlap.
+     *
+     * If last matching glob is negative, returns `decision::ignored`.
+     * Else, if last matching glob is positive, returns `decision::included`.
+     * Else, if at least one positive glob exists, returns `decision::ignored`.
+     * Else, returns `decision::undecided`.
+     *
+     * @see decision
+     */
+    [[nodiscard]] decision
+    is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
+
+    private:
+    struct ignore_item {
+        bool is_negative{};
+        bool is_anchored{};
+        regex::engine regex{};
+    };
+
+    std::vector<ignore_item> files{};
+    std::vector<ignore_item> dirs{};
 };
 
 }  // namespace glug::filter

@@ -140,7 +140,7 @@ select_filter::select_filter(
     for (const auto& glob : globs) {
         auto pattern = glob.pattern;
         if (glob.is_anchored) {
-            anchored_pattern = anchor;
+            anchored_pattern = anchor_prefix;
             anchored_pattern.append(pattern);
             pattern = anchored_pattern;
         }

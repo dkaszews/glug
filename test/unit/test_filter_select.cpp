@@ -48,6 +48,14 @@ TEST_P(select_test, test) {
 
 static const auto select_cases = std::vector<select_param>{
     {
+        "",
+        {
+            { "README.md"_f, decision::undecided },
+            { "main.cpp"_f, decision::undecided },
+            { "src"_d, decision::undecided },
+        },
+    },
+    {
         "*.md",
         {
             { "README.md"_f, decision::included },

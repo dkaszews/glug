@@ -29,6 +29,7 @@ struct explorer_param {
     glug::unit_test::node tree;
     std::vector<std::filesystem::path> expected{};
     std::optional<std::filesystem::path> target{};
+    std::optional<std::string_view> select{};
 
     friend std::ostream&
     operator<<(std::ostream& os, const explorer_param& param) {
@@ -68,7 +69,7 @@ TEST_F(explorer_test, dereference) {
 
 // NOLINTNEXTLINE
 TEST_P(explorer_test, test) {
-    const auto& [tree, expected, target] = GetParam();
+    const auto& [tree, expected, target, select] = GetParam();
     const auto temp = temp_fs{};
     try {
         tree.materialize(temp);
@@ -77,7 +78,10 @@ TEST_P(explorer_test, test) {
     }
 
     const auto resolved_target = temp / target.value_or(tree.path());
-    auto exp = explorer{ resolved_target };
+    const auto options = explorer_options{
+        filter::select_filter{ select.value_or(""), resolved_target },
+    };
+    auto exp = explorer{ resolved_target, options };
     auto relative = std::vector<std::filesystem::path>{};
     std::transform(
             exp,
@@ -466,7 +470,105 @@ static const auto explorer_cases = std::vector<explorer_param>{
             "submodule_target_middle/submodules/README.md",
         },
         "submodule_target_middle/submodules",
-    }
+    },
+    {
+        dir{
+            "select_cpp",
+            {
+                file{ ".gitignore", "*.generated.*" },
+                dir{
+                    "src",
+                    {
+                        "main.cpp"_f,
+                        "foo.cpp"_f,
+                    },
+                },
+                dir{
+                    "include",
+                    {
+                        "foo.hpp"_f,
+                        "foo.generated.hpp"_f,
+                    },
+                },
+            },
+        },
+        {
+            "select_cpp/include/foo.hpp",
+            "select_cpp/src/foo.cpp",
+        },
+        std::nullopt,
+        "*.cpp,*.hpp,-main.*",
+    },
+    {
+        dir{
+            "select_dir",
+            {
+                file{ ".gitignore", "*.log" },
+                dir{
+                    "test",
+                    {
+                        "data"_d / "curl.py"_f,
+                        "run.py"_f,
+                        "results.log"_f,
+                    },
+                },
+                file{ "run_tests.py" },
+            },
+        },
+        {
+            // Selecting directory does not prevent searching root
+            "select_dir/.gitignore",
+            "select_dir/run_tests.py",
+            "select_dir/test/run.py",
+        },
+        std::nullopt,
+        "test/",
+    },
+    {
+        dir{
+            "select_dir_content",
+            {
+                file{ ".gitignore", "*.log" },
+                dir{
+                    "test",
+                    {
+                        "data"_d / "curl.py"_f,
+                        "run.py"_f,
+                        "results.log"_f,
+                    },
+                },
+                file{ "run_tests.py" },
+            },
+        },
+        {
+            "select_dir_content/test/run.py",
+        },
+        std::nullopt,
+        "test/*",
+    },
+    {
+        dir{
+            "select_dir_content_recursive",
+            {
+                file{ ".gitignore", "*.log" },
+                dir{
+                    "test",
+                    {
+                        "data"_d / "curl.py"_f,
+                        "run.py"_f,
+                        "results.log"_f,
+                    },
+                },
+                file{ "run_tests.py" },
+            },
+        },
+        {
+            "select_dir_content_recursive/test/run.py",
+            "select_dir_content_recursive/test/data/curl.py",
+        },
+        std::nullopt,
+        "test/**/*",
+    },
 };
 
 // NOLINTNEXTLINE

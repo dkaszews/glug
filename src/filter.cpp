@@ -125,7 +125,7 @@ select_filter::select_filter(
         const std::filesystem::path& anchor
 ) {
     const auto anchor_prefix
-            = glob::glob_escape(fix_path_separator(anchor).string());
+            = glob::glob_escape(fix_path_separator(anchor).string()) + "/";
 
     dirs.reserve(
             std::count_if(

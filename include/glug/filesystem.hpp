@@ -11,6 +11,10 @@
 
 namespace glug::filesystem {
 
+struct explorer_options {
+    filter::select_filter select{};
+};
+
 /**
  * Recursively lists directory contents, respecting .gitignore rules.
  *
@@ -28,7 +32,12 @@ class explorer {
     using iterator_category = std::input_iterator_tag;
 
     explorer() noexcept = default;
-    explicit explorer(const std::filesystem::path& root);
+    explicit explorer(const std::filesystem::path& root) :
+        explorer(root, {}) {}
+
+    explorer(
+            const std::filesystem::path& root, const explorer_options& options
+    );
 
     [[nodiscard]] explorer begin() const noexcept { return *this; }
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static): interface
@@ -61,6 +70,7 @@ class explorer {
     };
 
     std::vector<level> stack{};
+    explorer_options options{};
 };
 
 }  // namespace glug::filesystem

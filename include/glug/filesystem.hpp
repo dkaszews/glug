@@ -11,8 +11,16 @@
 
 namespace glug::filesystem {
 
+/**
+ * Provides additional options to explorer.
+ */
 struct explorer_options {
-    filter::select_filter select{};
+    /**
+     * Extra filters to specify files and/or directories should be returned.
+     *
+     * @see glug::filter::select
+     */
+    filter::select select{};
 };
 
 /**

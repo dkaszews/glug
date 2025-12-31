@@ -13,7 +13,7 @@ int main(int argc, const char** argv) {
     const auto dir = args.size() > 1 ? args[1] : "."sv;
     const auto select = args.size() > 2 ? args[2] : ""sv;
     const auto explorer = glug::filesystem::explorer{
-        dir, { glug::filter::select_filter{ select, dir } }
+        dir, { glug::filter::select{ select, dir } }
     };
 
     const auto trim_dot = dir == "." ? 2 : 0;

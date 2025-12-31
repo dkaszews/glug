@@ -60,7 +60,6 @@ class ignore {
 
     /**
      * Check a file or directory against the list of globs.
-     *
      * @see decision
      */
     [[nodiscard]] decision
@@ -82,30 +81,26 @@ class ignore {
  *
  * @see glug::glob::decompose_mode::select_mode
  */
-class select_filter {
+class select {
     public:
-    select_filter() noexcept = default;
+    select() noexcept = default;
 
-    explicit select_filter(const std::vector<glob::decomposition>& globs) :
-        select_filter{ globs, "" } {}
+    explicit select(const std::vector<glob::decomposition>& globs) :
+        select{ globs, "" } {}
 
-    explicit select_filter(const std::vector<std::string_view>& globs) :
-        select_filter{ globs, "" } {}
+    explicit select(const std::vector<std::string_view>& globs) :
+        select{ globs, "" } {}
 
-    explicit select_filter(std::string_view globs) :
-        select_filter{ globs, "" } {}
+    explicit select(std::string_view globs) :
+        select{ globs, "" } {}
 
-    select_filter(
-            const std::vector<glob::decomposition>& globs,
-            const std::filesystem::path& anchor
-    );
+    select(const std::vector<glob::decomposition>& globs,
+           const std::filesystem::path& anchor);
 
-    select_filter(
-            const std::vector<std::string_view>& globs,
-            const std::filesystem::path& anchor
-    );
+    select(const std::vector<std::string_view>& globs,
+           const std::filesystem::path& anchor);
 
-    select_filter(std::string_view globs, const std::filesystem::path& anchor);
+    select(std::string_view globs, const std::filesystem::path& anchor);
 
     /**
      * Check a file or directory against the list of globs.

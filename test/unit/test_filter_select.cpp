@@ -39,7 +39,7 @@ TEST_P(select_test, test) {
         const glug::unit_test::temp_fs temp{};
         node.materialize(temp);
         const auto anchor = !param.anchor.empty() ? temp / param.anchor : temp;
-        const auto filter = select_filter{ param.globs, anchor };
+        const auto filter = filter::select{ param.globs, anchor };
         excluded = filter.is_ignored(
                 std::filesystem::directory_entry{ temp / node.leaf().path() }
         );

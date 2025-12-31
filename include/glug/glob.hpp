@@ -31,7 +31,7 @@ enum class decompose_mode : std::uint8_t {
     /**
      * Similar to gitignore rules, but uses '-' instead of '!' for negation
      * and patterns without trailing '/' are not applied to directories.
-     * @see select_filter
+     * @see glug::filter::select
      */
     select,
 };

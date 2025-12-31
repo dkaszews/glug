@@ -120,7 +120,7 @@ decision ignore::is_ignored(
     return make_decision(std::find_if(items.rbegin(), items.rend(), match));
 }
 
-select_filter::select_filter(
+select::select(
         const std::vector<glob::decomposition>& globs,
         const std::filesystem::path& anchor
 ) {
@@ -155,21 +155,19 @@ select_filter::select_filter(
     }
 }
 
-select_filter::select_filter(
+select::select(
         const std::vector<std::string_view>& globs,
         const std::filesystem::path& anchor
 ) :
-    select_filter{
+    select{
         decompose_globs(globs, glob::decompose_mode::select),
         anchor,
     } {}
 
-select_filter::select_filter(
-        std::string_view globs, const std::filesystem::path& anchor
-) :
-    select_filter{ glob::split(globs), anchor } {}
+select::select(std::string_view globs, const std::filesystem::path& anchor) :
+    select{ glob::split(globs), anchor } {}
 
-decision select_filter::is_ignored(
+decision select::is_ignored(
         const std::filesystem::directory_entry& entry
 ) const noexcept {
     auto& items = entry.is_directory() ? dirs : files;

@@ -79,7 +79,7 @@ TEST_P(explorer_test, test) {
 
     const auto resolved_target = temp / target.value_or(tree.path());
     const auto options = explorer_options{
-        filter::select_filter{ select.value_or(""), resolved_target },
+        filter::select{ select.value_or(""), resolved_target },
     };
     auto exp = explorer{ resolved_target, options };
     auto relative = std::vector<std::filesystem::path>{};

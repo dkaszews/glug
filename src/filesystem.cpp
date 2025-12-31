@@ -34,7 +34,7 @@ class explorer_impl {
     void add_outer_filters(const fs::path& path);
     void populate(const fs::path& path);
     void recurse();
-    bool filter_entry(const fs::directory_entry& entry);
+    [[nodiscard]] bool filter_entry(const fs::directory_entry& entry) const;
     void filter_and_sort();
     void next();
 };
@@ -142,7 +142,7 @@ void explorer_impl::populate(const fs::path& path) {
     filter_and_sort();
 }  // GCOVR_EXCL_LINE: Unknown exceptional branch
 
-bool explorer_impl::filter_entry(const fs::directory_entry& entry) {
+bool explorer_impl::filter_entry(const fs::directory_entry& entry) const {
     // GCOVR_EXCL_START: Special file types not testable on all OS
     // `is_directory() || is_file()` returns value for symlink target
     if (entry.is_symlink()) {

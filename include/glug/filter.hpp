@@ -46,7 +46,7 @@ class ignore {
     public:
     ignore() noexcept = default;
 
-    // TODO: #70 - Replace `source` with `anchor`
+    // TODO(#70): Replace `source` with `anchor`
     explicit ignore(const std::vector<glob::decomposition>& globs) :
         ignore{ globs, "" } {}
 

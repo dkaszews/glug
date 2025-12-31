@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <functional>
 #include <iterator>
 #include <ostream>
 #include <string_view>

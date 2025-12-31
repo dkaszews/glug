@@ -87,6 +87,7 @@ jobs:
         shell: powershell  # To silence actionlint shellcheck errors
         run: |
           git config --global core.longpaths true
+          git config --global core.ignorecase false
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v ACP -d 65001 -f
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v OEMCP -d 65001 -f
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v MACCP -d 65001 -f

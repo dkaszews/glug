@@ -88,11 +88,11 @@ auto decompose_globs(const std::vector<std::string_view>& globs) {
 
 ignore::ignore(
         const std::vector<std::string_view>& globs,
-        const std::filesystem::path& source
+        const std::filesystem::path& anchor
 ) :
     ignore{
         decompose_globs(globs),
-        source,
+        anchor,
     } {}
 
 decision ignore::is_ignored(

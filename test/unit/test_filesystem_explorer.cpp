@@ -471,50 +471,62 @@ static const auto explorer_cases = std::vector<explorer_param>{
         },
         "submodule_target_middle/submodules",
     },
-    {
-        dir{
-            "select_cpp",
-            {
-                file{ ".gitignore", "*.generated.*" },
-                dir{
-                    "src",
-                    {
-                        "main.cpp"_f,
-                        "foo.cpp"_f,
-                    },
-                },
-                dir{
-                    "include",
-                    {
-                        "foo.hpp"_f,
-                        "foo.generated.hpp"_f,
-                    },
+};
+
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(
+        explorer_test,
+        explorer_test,
+        testing::ValuesIn(explorer_cases),
+        [](const auto& info) { return info.param.tree.name().string(); }
+);
+
+auto make_select_case_tree(std::string_view root_name) {
+    return dir{
+        root_name,
+        {
+            file{ ".gitignore", "*.generated.*\n*.log" },
+            dir{
+                "src",
+                {
+                    "main.cpp"_f,
+                    "foo.cpp"_f,
                 },
             },
+            dir{
+                "include",
+                {
+                    "foo.hpp"_f,
+                    "foo.generated.hpp"_f,
+                    "detail"_d / "impl.hpp"_f,
+                },
+            },
+            dir{
+                "test",
+                {
+                    "data"_d / "curl.py"_f,
+                    "run.py"_f,
+                    "results.log"_f,
+                },
+            },
+            file{ "run_tests.py" },
         },
+    };
+}
+
+const auto select_cases = std::vector<explorer_param>({
+    {
+        make_select_case_tree("select_cpp"),
         {
             "select_cpp/include/foo.hpp",
+            "select_cpp/include/detail/impl.hpp",
             "select_cpp/src/foo.cpp",
         },
         std::nullopt,
         "*.cpp,*.hpp,-main.*",
     },
     {
-        dir{
-            "select_dir",
-            {
-                file{ ".gitignore", "*.log" },
-                dir{
-                    "test",
-                    {
-                        "data"_d / "curl.py"_f,
-                        "run.py"_f,
-                        "results.log"_f,
-                    },
-                },
-                file{ "run_tests.py" },
-            },
-        },
+        make_select_case_tree("select_dir"),
         {
             // Selecting directory does not prevent searching root
             "select_dir/.gitignore",
@@ -525,21 +537,7 @@ static const auto explorer_cases = std::vector<explorer_param>{
         "test/",
     },
     {
-        dir{
-            "select_dir_content",
-            {
-                file{ ".gitignore", "*.log" },
-                dir{
-                    "test",
-                    {
-                        "data"_d / "curl.py"_f,
-                        "run.py"_f,
-                        "results.log"_f,
-                    },
-                },
-                file{ "run_tests.py" },
-            },
-        },
+        make_select_case_tree("select_dir_content"),
         {
             "select_dir_content/test/run.py",
         },
@@ -547,35 +545,21 @@ static const auto explorer_cases = std::vector<explorer_param>{
         "test/*",
     },
     {
-        dir{
-            "select_dir_content_recursive",
-            {
-                file{ ".gitignore", "*.log" },
-                dir{
-                    "test",
-                    {
-                        "data"_d / "curl.py"_f,
-                        "run.py"_f,
-                        "results.log"_f,
-                    },
-                },
-                file{ "run_tests.py" },
-            },
-        },
+        make_select_case_tree("select_dir_content_recursive"),
         {
             "select_dir_content_recursive/test/run.py",
             "select_dir_content_recursive/test/data/curl.py",
         },
         std::nullopt,
-        "test/**/*",
+        "test/**",
     },
-};
+});
 
 // NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
+        select_test,
         explorer_test,
-        explorer_test,
-        testing::ValuesIn(explorer_cases),
+        testing::ValuesIn(select_cases),
         [](const auto& info) { return info.param.tree.name().string(); }
 );
 

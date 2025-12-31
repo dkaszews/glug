@@ -70,6 +70,8 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
         (repos.TYPESCRIPT, 'src/jsTyping'),
         (repos.VUEJS, ''),
         (repos.VUEJS, 'scripts'),
+        (repos.YCM, ''),
+        (repos.YCM, 'test'),
     ],
     ids=str
 )

@@ -48,3 +48,7 @@ VUEJS = Repo('https://github.com/vuejs/core.git', 'v3.5.22')
 MAGISK = Repo('https://github.com/topjohnwu/Magisk.git', 'v30.6', True)
 JQ = Repo('https://github.com/jqlang/jq.git', 'jq-1.8.1', True, True)
 OBS = Repo('https://github.com/obsproject/obs-studio.git', '32.0.4', True)
+YCM = Repo(
+    'https://github.com/ycm-core/YouCompleteMe.git',
+    '79b7e5466564b17a1d4f36aa9e11e3fadc12ab1c'
+)

@@ -434,6 +434,32 @@ static const auto explorer_cases = std::vector<explorer_param>{
             "projects_directory/third/README.md",
         },
     },
+    {
+        dir{
+            "submodule_target_middle",
+            {
+                dir{ ".git" },
+                file{ "README.md" },
+                dir{
+                    "submodules",
+                    {
+                        file{ "README.md" },
+                        dir{
+                            "dependency",
+                            {
+                                ".git"_d,
+                                "README.md"_f,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "submodule_target_middle/submodules/README.md",
+        },
+        "submodule_target_middle/submodules",
+    }
 };
 
 // NOLINTNEXTLINE

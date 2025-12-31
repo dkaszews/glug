@@ -481,6 +481,8 @@ INSTANTIATE_TEST_SUITE_P(
         [](const auto& info) { return info.param.tree.name().string(); }
 );
 
+namespace {
+
 auto make_select_case_tree(std::string_view root_name) {
     return dir{
         root_name,
@@ -513,6 +515,8 @@ auto make_select_case_tree(std::string_view root_name) {
         },
     };
 }
+
+}  // namespace
 
 const auto select_cases = std::vector<explorer_param>({
     {

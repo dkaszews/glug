@@ -152,6 +152,10 @@ select::select(
                     regex::engine{ glob::to_regex(pattern) },
                 }
         );
+        if (!glob.is_negative) {
+            auto& fallback = glob.is_directory ? dirs_fallback : files_fallback;
+            fallback = decision::excluded;
+        }
     }
 }
 
@@ -170,7 +174,7 @@ select::select(std::string_view globs, const std::filesystem::path& anchor) :
 decision select::is_ignored(
         const std::filesystem::directory_entry& entry
 ) const noexcept {
-    auto& items = entry.is_directory() ? dirs : files;
+    const auto& items = entry.is_directory() ? dirs : files;
     if (items.empty()) {
         return decision::undecided;
     }
@@ -182,15 +186,11 @@ decision select::is_ignored(
         return item.regex(path.string());
     };
     const auto it = std::find_if(items.rbegin(), items.rend(), match);
-    if (it != items.rend()) {
-        return it->is_negative ? decision::excluded : decision::included;
+    if (it == items.rend()) {
+        return entry.is_directory() ? dirs_fallback : files_fallback;
     }
 
-    // TODO: Cache in class
-    const auto positives = !std::all_of(
-            items.begin(), items.end(), std::mem_fn(&ignore_item::is_negative)
-    );
-    return positives ? decision::excluded : decision::undecided;
+    return it->is_negative ? decision::excluded : decision::included;
 }
 
 }  // namespace glug::filter

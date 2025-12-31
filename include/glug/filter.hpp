@@ -126,6 +126,8 @@ class select {
 
     std::vector<ignore_item> files{};
     std::vector<ignore_item> dirs{};
+    decision files_fallback{};
+    decision dirs_fallback{};
 };
 
 }  // namespace glug::filter

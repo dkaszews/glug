@@ -127,7 +127,7 @@ struct impl {
 }  // namespace detail
 
 engine::engine(std::string_view pattern) {
-    // TODO(#15): backport std::out_ptr
+    // TODO: #15 - backport std::out_ptr
     auto db = backport::type_identity_t<hs_database*>{};
     auto error = backport::type_identity_t<hs_compile_error*>{};
     [[maybe_unused]] auto result = hs_compile(

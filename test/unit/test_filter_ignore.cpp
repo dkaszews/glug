@@ -4,9 +4,10 @@
 #include "tree.hpp"
 
 #include <filesystem>
+#include <optional>
 #include <ostream>
-#include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -18,39 +19,39 @@ namespace glug::filter::unit_test {
 using glug::unit_test::operator""_d;
 using glug::unit_test::operator""_f;
 
-struct filter_param {
-    std::filesystem::path source{};
-    std::vector<std::string> globs{};
+struct ignore_param {
+    std::vector<std::string_view> globs{};
     std::vector<std::pair<glug::unit_test::node, decision>> cases{};
+    std::optional<std::filesystem::path> anchor{};
 
-    std::ostream& operator<<(std::ostream& os) const { return os; }
+    friend std::ostream&
+    operator<<(std::ostream& os, const ignore_param& param) {
+        std::ignore = param;
+        return os;
+    }
 };
 
-class filter_test : public testing::TestWithParam<filter_param> {};
+class ignore_test : public testing::TestWithParam<ignore_param> {};
 
 // NOLINTNEXTLINE
-TEST_P(filter_test, test) {
-    const auto& param = GetParam();
-    const auto globs = std::vector<std::string_view>{
-        param.globs.begin(),
-        param.globs.end(),
-    };
+TEST_P(ignore_test, test) {
+    const auto& [globs, cases, anchor] = GetParam();
 
-    auto actual = param.cases;
+    auto actual = cases;
     for (auto& [node, ignored] : actual) {
         const glug::unit_test::temp_fs temp{};
         node.materialize(temp);
-        const auto filter = filter::ignore{ globs, temp / param.source };
+        const auto resolved_anchor = anchor ? temp / *anchor : temp;
+        const auto filter = filter::ignore{ globs, resolved_anchor };
         ignored = filter.is_ignored(
                 std::filesystem::directory_entry{ temp / node.leaf().path() }
         );
     }
-    EXPECT_THAT(actual, testing::ElementsAreArray(param.cases));
+    EXPECT_THAT(actual, testing::ElementsAreArray(cases));
 }
 
-static const auto filter_cases = std::vector<filter_param>{
+static const auto ignore_cases = std::vector<ignore_param>{
     {
-        ".gitignore",
         { "dir_only/" },
         {
             { "dir_only"_f, decision::undecided },
@@ -63,7 +64,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        ".gitignore",
         { "nofixup ", "fixup\\ " },
         {
             { "nofixup"_f, decision::excluded },
@@ -73,7 +73,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        ".gitignore",
         { "mid space", "escaped\\ space" },
         {
             { "mid space"_f, decision::excluded },
@@ -82,7 +81,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        ".gitignore",
         { "mid,comma", "escaped\\,comma" },
         {
             { "mid,comma"_f, decision::excluded },
@@ -91,7 +89,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        ".gitignore",
         { "file_only", "!file_only/" },
         {
             { "file_only"_f, decision::excluded },
@@ -101,7 +98,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        ".gitignore",
         { "anchored/exact" },
         {
             { "anchored"_d / "exact"_f, decision::excluded },
@@ -109,7 +105,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        "sub/.gitignore",
         { "/anchored", "unanchored" },
         {
             { "sub"_d / "anchored"_f, decision::excluded },
@@ -117,9 +112,9 @@ static const auto filter_cases = std::vector<filter_param>{
             { "sub"_d / "unanchored"_f, decision::excluded },
             { "sub"_d / ("deeper"_d / "unanchored"_f), decision::excluded },
         },
+        "sub",
     },
     {
-        ".gitignore",
         { "test_*", "!*.[ch]pp", "_*" },
         {
             { "README.md"_f, decision::undecided },
@@ -130,7 +125,6 @@ static const auto filter_cases = std::vector<filter_param>{
         },
     },
     {
-        ".gitignore",
         { "*.[1-9]" },
         {
             { "a.0"_f, decision::undecided },
@@ -142,7 +136,6 @@ static const auto filter_cases = std::vector<filter_param>{
     },
     {
         // https://github.com/python/cpython/issues/130942
-        ".gitignore",
         { "a[%-0]c" },
         {
             { "a.c"_f, decision::excluded },
@@ -152,7 +145,7 @@ static const auto filter_cases = std::vector<filter_param>{
 };
 
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(test, filter_test, testing::ValuesIn(filter_cases));
+INSTANTIATE_TEST_SUITE_P(test, ignore_test, testing::ValuesIn(ignore_cases));
 
 // NOLINTNEXTLINE
 TEST(decision, to_string) {

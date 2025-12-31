@@ -42,15 +42,12 @@ decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
 
 ignore::ignore(
         const std::vector<glob::decomposition>& globs,
-        const std::filesystem::path& source
+        const std::filesystem::path& anchor
 ) {
     // PERF: Lazy
     // GCOVR_EXCL_START - Unknown exception paths
-    const auto anchor = source.has_parent_path()
-            ? glob::glob_escape(
-                      fix_path_separator(source.parent_path()).string()
-              ) + "/"
-            : "";
+    const auto anchor_prefix
+            = glob::glob_escape(fix_path_separator(anchor).string()) + "/";
     // GCOVR_EXCL_STOP
 
     auto anchored_pattern = std::string{};
@@ -58,7 +55,7 @@ ignore::ignore(
     for (const auto& glob : globs) {
         auto pattern = glob.pattern;
         if (glob.is_anchored) {
-            anchored_pattern = anchor;
+            anchored_pattern = anchor_prefix;
             anchored_pattern.append(pattern);
             pattern = anchored_pattern;
         }

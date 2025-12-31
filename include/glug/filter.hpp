@@ -46,7 +46,6 @@ class ignore {
     public:
     ignore() noexcept = default;
 
-    // TODO(#70): Replace `source` with `anchor`
     explicit ignore(const std::vector<glob::decomposition>& globs) :
         ignore{ globs, "" } {}
 
@@ -54,10 +53,10 @@ class ignore {
         ignore{ globs, "" } {}
 
     ignore(const std::vector<glob::decomposition>& globs,
-           const std::filesystem::path& source);
+           const std::filesystem::path& anchor);
 
     ignore(const std::vector<std::string_view>& globs,
-           const std::filesystem::path& source);
+           const std::filesystem::path& anchor);
 
     /**
      * Check a file or directory against the list of globs.

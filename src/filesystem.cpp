@@ -70,7 +70,7 @@ filter::ignore make_filter(const fs::path& path) {
             globs.pop_back();
         }
     }
-    return { globs, path };
+    return { globs, path.parent_path() };
 }
 
 auto is_root(const fs::path& path) {

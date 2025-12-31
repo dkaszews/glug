@@ -105,7 +105,7 @@ void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
         }
     }
     std::reverse(stack.begin(), stack.end());
-}
+};  // GCOVR_EXCL_LINE: Unknown exceptional path
 
 void explorer_impl::populate(storage& stack, const fs::path& path) {
     auto entries = std::deque<fs::directory_entry>{

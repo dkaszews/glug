@@ -15,10 +15,15 @@ PROJECT_ROOT = os.path.abspath(f'{os.path.dirname(__file__)}/../..')
 def list_git(clone: git.Clone, subdir: str | None = None) -> set[str]:
     files = set(clone.get_tracked(subdir))
     files -= set(clone.get_tracked_ignored(subdir))
+
+    def is_link_or_submodule(file: str) -> bool:
+        full = os.path.join(clone.cwd, subdir or '', file)
+        return os.path.islink(full) or os.path.isdir(full)
+
     return {
         file
         for file in files
-        if not os.path.islink(os.path.join(clone.cwd, subdir or '', file))
+        if not is_link_or_submodule(file)
     }
 
 
@@ -46,7 +51,7 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
         (repos.JQ, 'config/m4'),
         (repos.JQ, 'tests/torture'),
         (repos.JQ, 'vendor/oniguruma'),
-        (repos.JQ, 'vendor/oniguruma/harness'),
+        (repos.JQ, 'vendor/oniguruma/harnesses'),
         (repos.LINUX, ''),
         (repos.LINUX, 'rust/kernel/alloc'),
         (repos.LINUX, 'drivers/gpu/drm/amd'),
@@ -78,9 +83,6 @@ def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
         pytest.skip('Skipping repo with case-mixed files')
 
     clone = git.Clone.clone_lean(repo.source, repo.branch, data_dir)
-    if os.path.isfile(os.path.join(clone.cwd, '.gitmodules')):
-        # TODO: #64 - Glug should ignore submodules by default
-        pytest.skip('Issue: #64 - submodules')
     assert list_glug(clone, subdir) == list_git(clone, subdir)
 
 

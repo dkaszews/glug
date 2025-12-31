@@ -81,40 +81,30 @@ auto is_root(const fs::path& path) {
     return path == path.parent_path();
 }
 
-std::vector<fs::path> gather_gitignores(const fs::path& path) {
-    if (fs::is_directory(path / ".git")) {
-        return {};
-    }
-
-    auto current = fs::canonical(path);
-    auto result = std::vector<fs::path>{};
-
-    while (!is_root(current)) {
-        current = current.parent_path();
-        const auto gitignore = current / ".gitignore";
-        if (fs::exists(gitignore)) {
-            result.push_back(gitignore);
-        }
-        if (fs::is_directory(current / ".git")) {
-            return result;
-        }
-    }
-    return result;
-}
-
 }  // namespace
 
 void explorer_impl::add_outer_filters(storage& stack, const fs::path& path) {
-    const auto gitignores = gather_gitignores(path);
-    const auto make_storage = [](const auto& path) {
-        return level{ make_filter(path), {} };
-    };  // GCOVR_EXCL_LINE: Unknown exceptional path
-    std::transform(
-            gitignores.rbegin(),
-            gitignores.rend(),
-            std::back_inserter(stack),
-            make_storage
-    );
+    if (fs::is_directory(path / ".git")) {
+        return;
+    }
+
+    auto current = fs::canonical(path);
+    while (!is_root(current)) {
+        current = current.parent_path();
+        const auto gitignore = current / ".gitignore";
+        const auto has_gitignore = fs::is_regular_file(gitignore);
+        const auto is_root = fs::is_directory(current / ".git");
+        if (!has_gitignore && !is_root) {
+            continue;
+        }
+
+        auto filter = has_gitignore ? make_filter(gitignore) : glob::filter{};
+        stack.push_back({ std::move(filter), {}, is_root });
+        if (is_root) {
+            break;
+        }
+    }
+    std::reverse(stack.begin(), stack.end());
 }
 
 void explorer_impl::populate(storage& stack, const fs::path& path) {

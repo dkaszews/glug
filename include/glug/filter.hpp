@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-namespace glug::glob {
+namespace glug::filter {
 
 /**
  * Represents a filter decision about an entry (file or directory).
@@ -26,7 +26,7 @@ enum class decision : uint8_t {
     /**
      * Filter ignores the entry.
      */
-    ignored,
+    excluded,
     /**
      * Filter explicitly includes the entry.
      *
@@ -42,21 +42,21 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept;
  *
  * The source's parent is used as a base for anchored filters.
  */
-class filter {
+class ignore {
     public:
-    filter() noexcept = default;
+    ignore() noexcept = default;
 
-    explicit filter(const std::vector<glob::decomposition>& globs) noexcept :
-        filter{ globs, "" } {}
+    explicit ignore(const std::vector<glob::decomposition>& globs) :
+        ignore{ globs, "" } {}
 
-    explicit filter(const std::vector<std::string_view>& globs) noexcept :
-        filter{ globs, "" } {}
+    explicit ignore(const std::vector<std::string_view>& globs) noexcept :
+        ignore{ globs, "" } {}
 
-    filter(const std::vector<glob::decomposition>& globs,
-           const std::filesystem::path& source) noexcept;
+    ignore(const std::vector<glob::decomposition>& globs,
+           const std::filesystem::path& anchor);
 
-    filter(const std::vector<std::string_view>& globs,
-           const std::filesystem::path& source) noexcept;
+    ignore(const std::vector<std::string_view>& globs,
+           const std::filesystem::path& anchor);
 
     /**
      * Check a file or directory against the list of globs.
@@ -76,5 +76,5 @@ class filter {
     std::vector<ignore_item> items{};
 };
 
-}  // namespace glug::glob
+}  // namespace glug::filter
 

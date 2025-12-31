@@ -8,6 +8,8 @@
 #include <iterator>
 #include <optional>
 #include <ostream>
+#include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <gmock/gmock.h>
@@ -28,7 +30,11 @@ struct explorer_param {
     std::vector<std::filesystem::path> expected{};
     std::optional<std::filesystem::path> target{};
 
-    std::ostream& operator<<(std::ostream& os) const { return os; }
+    friend std::ostream&
+    operator<<(std::ostream& os, const explorer_param& param) {
+        std::ignore = param;
+        return os;
+    }
 };
 
 class explorer_test : public testing::TestWithParam<explorer_param> {};
@@ -70,7 +76,8 @@ TEST_P(explorer_test, test) {
         GTEST_SKIP() << e.what();
     }
 
-    auto exp = explorer{ temp / target.value_or(tree.path()) };
+    const auto resolved_target = temp / target.value_or(tree.path());
+    auto exp = explorer{ resolved_target };
     auto relative = std::vector<std::filesystem::path>{};
     std::transform(
             exp,

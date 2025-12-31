@@ -11,14 +11,14 @@
 #include <type_traits>
 #include <vector>
 
-namespace glug::glob {
+namespace glug::filter {
 
 std::ostream& operator<<(std::ostream& os, decision value) noexcept {
     switch (value) {  // GCOVR_EXCL_LINE: enum out of range is UB
         case decision::undecided:
             return os << "undecided";
-        case decision::ignored:
-            return os << "ignored";
+        case decision::excluded:
+            return os << "excluded";
         case decision::included:
             return os << "included";
     }
@@ -40,17 +40,14 @@ decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
 
 }  // namespace
 
-filter::filter(
+ignore::ignore(
         const std::vector<glob::decomposition>& globs,
-        const std::filesystem::path& source
-) noexcept {
+        const std::filesystem::path& anchor
+) {
     // PERF: Lazy
     // GCOVR_EXCL_START - Unknown exception paths
-    const auto anchor = source.has_parent_path()
-            ? glob::glob_escape(
-                      fix_path_separator(source.parent_path()).string()
-              ) + "/"
-            : "";
+    const auto anchor_prefix
+            = glob::glob_escape(fix_path_separator(anchor).string()) + "/";
     // GCOVR_EXCL_STOP
 
     auto anchored_pattern = std::string{};
@@ -58,7 +55,7 @@ filter::filter(
     for (const auto& glob : globs) {
         auto pattern = glob.pattern;
         if (glob.is_anchored) {
-            anchored_pattern = anchor;
+            anchored_pattern = anchor_prefix;
             anchored_pattern.append(pattern);
             pattern = anchored_pattern;
         }
@@ -73,34 +70,39 @@ filter::filter(
     }
 }
 
-filter::filter(
+namespace {
+
+auto decompose_globs(const std::vector<std::string_view>& globs) {
+    auto result = std::vector<glob::decomposition>{};
+    result.reserve(globs.size());
+    std::transform(
+            globs.begin(),
+            globs.end(),
+            std::back_inserter(result),
+            &glob::decompose
+    );
+    return result;
+}  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
+
+}  // namespace
+
+ignore::ignore(
         const std::vector<std::string_view>& globs,
-        const std::filesystem::path& source
-) noexcept :
-    filter{
-        [&globs]() {
-            // PERF: Temporary vector created
-            auto result = std::vector<glob::decomposition>{};
-            result.reserve(globs.size());
-            std::transform(
-                    globs.begin(),
-                    globs.end(),
-                    std::back_inserter(result),
-                    &glob::decompose
-            );
-            return result;
-        }(),
-        source,
+        const std::filesystem::path& anchor
+) :
+    ignore{
+        decompose_globs(globs),
+        anchor,
     } {}
 
-decision filter::is_ignored(
+decision ignore::is_ignored(
         const std::filesystem::directory_entry& entry
 ) const noexcept {
     const auto make_decision = [&items = items](const auto& it) {
         if (it == items.rend()) {
             return decision::undecided;
         }
-        return it->is_negative ? decision::included : decision::ignored;
+        return it->is_negative ? decision::included : decision::excluded;
     };
 
     // PERF: Move to caller to deduplicate calculations with multi-level ignore
@@ -115,5 +117,5 @@ decision filter::is_ignored(
     return make_decision(std::find_if(items.rbegin(), items.rend(), match));
 }
 
-}  // namespace glug::glob
+}  // namespace glug::filter
 

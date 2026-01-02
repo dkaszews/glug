@@ -33,11 +33,11 @@ jobs:
           package-cache: true
           package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
           project-path: glug
-      - name: Configure
-        run: >
+      - run: >
           xmake config -vy
           --toolchain=${{ matrix.toolchain }}
           --mode=${{ matrix.mode }}
+          --engine=${{ matrix.engine }}
           ${{ (contains(matrix.os, 'windows') && !contains(matrix.toolchain, 'msvc')) && '--plat=mingw' || '' }}
       - run: xmake build -v unit_test
       - run: xmake test -v unit_test/default

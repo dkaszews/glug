@@ -4,11 +4,11 @@
 #include <memory>
 #include <string_view>
 
-#if defined(ENGINE_PCRE2)
+#if defined(GLUG_REGEX_PCRE2)
 #include <pcre2.h>
-#elif defined(ENGINE_RE2)
+#elif defined(GLUG_REGEX_RE2)
 #include <re2/re2.h>
-#elif defined(ENGINE_HYPERSCAN)
+#elif defined(GLUG_REGEX_HYPERSCAN)
 #include <cassert>
 #include <string>
 
@@ -21,7 +21,7 @@
 
 namespace glug::regex {
 
-#if defined(ENGINE_PCRE2)
+#if defined(GLUG_REGEX_PCRE2)
 
 namespace detail {
 
@@ -86,7 +86,7 @@ bool engine::match(std::string_view s) const {
     return matches >= 0;
 }
 
-#elif defined(ENGINE_RE2)
+#elif defined(GLUG_REGEX_RE2)
 
 namespace detail {
 
@@ -106,7 +106,7 @@ bool engine::match(std::string_view s) const {
     return pimpl && re2::RE2::FullMatch(s, pimpl->regex);
 }
 
-#elif defined(ENGINE_HYPERSCAN)
+#elif defined(GLUG_REGEX_HYPERSCAN)
 
 namespace detail {
 

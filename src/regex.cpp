@@ -1,25 +1,27 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/regex.hpp"
 
 #include <memory>
 #include <string_view>
 
-#if defined(ENGINE_PCRE2)
+#if defined(GLUG_REGEX_PCRE2)
 #include <pcre2.h>
-#elif defined(ENGINE_RE2)
+#elif defined(GLUG_REGEX_RE2)
 #include <re2/re2.h>
-#elif defined(ENGINE_HYPERSCAN)
-#include <hs/hs.h>
-
+#elif defined(GLUG_REGEX_HYPERSCAN)
 #include <cassert>
 #include <string>
+
+#include <hs/hs.h>
+
+#include "glug/detail/backport/type_traits.hpp"
 #else
 #include <regex>
 #endif
 
 namespace glug::regex {
 
-#if defined(ENGINE_PCRE2)
+#if defined(GLUG_REGEX_PCRE2)
 
 namespace detail {
 
@@ -84,7 +86,7 @@ bool engine::match(std::string_view s) const {
     return matches >= 0;
 }
 
-#elif defined(ENGINE_RE2)
+#elif defined(GLUG_REGEX_RE2)
 
 namespace detail {
 
@@ -104,7 +106,7 @@ bool engine::match(std::string_view s) const {
     return pimpl && re2::RE2::FullMatch(s, pimpl->regex);
 }
 
-#elif defined(ENGINE_HYPERSCAN)
+#elif defined(GLUG_REGEX_HYPERSCAN)
 
 namespace detail {
 
@@ -157,7 +159,8 @@ bool engine::match(std::string_view s) const {
     };
     auto db = pimpl->db.get();
     auto scratch = pimpl->scratch.get();
-    hs_scan(db, s.data(), s.size(), 0, scratch, handler, &found);
+    const auto size = static_cast<unsigned int>(s.size());
+    hs_scan(db, s.data(), size, 0, scratch, handler, &found);
     return found;
 }
 

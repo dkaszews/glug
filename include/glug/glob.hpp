@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace glug::glob {
@@ -88,6 +89,34 @@ split(std::string_view globs, char delimiter = ',');
  * Escapes a string literal into a glob expression matching only the literal.
  */
 [[nodiscard]] std::string glob_escape(std::string_view s) noexcept;
+
+/**
+ * Database of known typetags, expanding select mode tags into multiple globs.
+ */
+class typetag_database {
+    public:
+    typetag_database() noexcept = default;
+
+    explicit typetag_database(
+            const std::unordered_map<std::string_view, std::string_view>& tags
+    );
+
+    // Allows for initialization without extra pair of parentheses
+    explicit typetag_database(
+            std::initializer_list<
+                    std::pair<const std::string_view, std::string_view>> tags
+    ) :
+        typetag_database{
+            std::unordered_map<std::string_view, std::string_view>{ tags }
+        } {}
+
+    std::vector<std::string_view>
+    expand(const std::vector<std::string_view> globs) const;
+
+    std::vector<std::string_view> expand(std::string_view globs) const {
+        return expand(split(globs));
+    }
+};
 
 }  // namespace glug::glob
 

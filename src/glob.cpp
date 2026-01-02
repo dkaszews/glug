@@ -262,5 +262,18 @@ std::string glob_escape(std::string_view s) noexcept {
     return result;
 }
 
+typetag_database::typetag_database(
+        const std::unordered_map<std::string_view, std::string_view>& tags
+) {
+    // TODO: Implement
+    std::ignore = tags;
+}
+
+std::vector<std::string_view>
+typetag_database::expand(const std::vector<std::string_view> globs) const {
+    // TODO: Implement
+    return globs;
+}
+
 }  // namespace glug::glob
 

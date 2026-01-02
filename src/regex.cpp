@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/regex.hpp"
 
 #include <memory>
@@ -9,10 +9,12 @@
 #elif defined(ENGINE_RE2)
 #include <re2/re2.h>
 #elif defined(ENGINE_HYPERSCAN)
-#include <hs/hs.h>
-
 #include <cassert>
 #include <string>
+
+#include <hs/hs.h>
+
+#include "glug/detail/backport/type_traits.hpp"
 #else
 #include <regex>
 #endif

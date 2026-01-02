@@ -26,7 +26,8 @@ option_end()
 add_requires('gtest >= 1.16.0')
 if engines[get_config('engine')] then
     local engine = get_config('engine')
-    add_requires(engine .. ' ' .. engines[engine])
+    local config = { configs = { shared = is_kind('shared') } }
+    add_requires(engine .. ' ' .. engines[engine], config)
 end
 
 -- Windows assumes all strings are ANSI code pages, garbling output

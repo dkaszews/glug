@@ -25,9 +25,11 @@ jobs:
           # Linker failure, debug flags mismatch
           - { os: windows-latest, toolchain: clang }
           # Linker issues
-          - { os: macos-latest, engine: hyperscan }
+          - { os: windows-latest, toolchain: gcc, engine: hyperscan }
+          - { os: macos-latest, toolchain: gcc, engine: hyperscan }
+          - { os: macos-latest, toolchain: clang, engine: hyperscan }
           # Hyperscan v5.4.2 - unqualified call to 'std::move'
-          - { toolchain: clang, engine: hyperscan }
+          - { os: ubuntu-latest, toolchain: clang, engine: hyperscan }
     runs-on: ${{ matrix.os }}
     # Hyperscan takes long time to compile
     timeout-minutes: ${{ matrix.engine == 'hyperscan' && 30 || 10 }}
@@ -45,7 +47,7 @@ jobs:
           --toolchain=${{ matrix.toolchain }}
           --mode=${{ matrix.mode }}
           --engine=${{ matrix.engine }}
-          ${{ (contains(matrix.os, 'windows') && !contains(matrix.toolchain, 'msvc')) && '--plat=mingw' || '' }}
+          ${{ (matrix.os == 'windows-latest' && matrix.toolchain != 'msvc') && '--plat=mingw' || '' }}
       - run: xmake build -v unit_test
       - run: xmake test -v unit_test/default
       - uses: threeal/gcovr-action@v1.2.0

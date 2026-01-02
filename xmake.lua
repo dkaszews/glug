@@ -1,4 +1,4 @@
--- Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+-- Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 set_version('3.0.1')
 
 add_rules('mode.release', 'mode.releasedbg', 'mode.debug',  'mode.coverage')
@@ -26,7 +26,6 @@ option_end()
 add_requires('gtest >= 1.16.0')
 if regex_engines[get_config('regex')] then
     local engine = get_config('regex')
-    print('DKASZEWS: regex=' .. engine)
     add_requires(engine .. ' ' .. regex_engines[engine])
 end
 

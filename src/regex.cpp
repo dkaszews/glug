@@ -159,7 +159,8 @@ bool engine::match(std::string_view s) const {
     };
     auto db = pimpl->db.get();
     auto scratch = pimpl->scratch.get();
-    hs_scan(db, s.data(), s.size(), 0, scratch, handler, &found);
+    const auto size = static_cast<unsigned int>(s.size());
+    hs_scan(db, s.data(), size, 0, scratch, handler, &found);
     return found;
 }
 

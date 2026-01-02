@@ -63,11 +63,16 @@ class ignore {
      * @see decision
      */
     [[nodiscard]] decision
-    is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
+    apply(const std::filesystem::directory_entry& entry) const noexcept;
+
+    [[nodiscard]] decision
+    operator()(const std::filesystem::directory_entry& entry) const noexcept {
+        return apply(entry);
+    }
 
     private:
     struct ignore_item {
-        bool is_negative{};
+        bool is_inverted{};
         bool is_anchored{};
         bool is_directory{};
         regex::engine regex{};
@@ -115,11 +120,16 @@ class select {
      * @see decision
      */
     [[nodiscard]] decision
-    is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
+    apply(const std::filesystem::directory_entry& entry) const noexcept;
+
+    [[nodiscard]] decision
+    operator()(const std::filesystem::directory_entry& entry) const noexcept {
+        return apply(entry);
+    }
 
     private:
     struct ignore_item {
-        bool is_negative{};
+        bool is_inverted{};
         bool is_anchored{};
         regex::engine regex{};
     };

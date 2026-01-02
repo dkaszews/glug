@@ -34,12 +34,12 @@ class select_test : public testing::TestWithParam<select_param> {};
 TEST_P(select_test, test) {
     const auto& param = GetParam();
     auto actual = param.cases;
-    for (auto& [node, excluded] : actual) {
+    for (auto& [node, decision] : actual) {
         const glug::unit_test::temp_fs temp{};
         node.materialize(temp);
         const auto anchor = !param.anchor.empty() ? temp / param.anchor : temp;
         const auto filter = filter::select{ param.globs, anchor };
-        excluded = filter.is_ignored(
+        decision = filter(
                 std::filesystem::directory_entry{ temp / node.leaf().path() }
         );
     }

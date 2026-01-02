@@ -29,10 +29,10 @@ decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
         return {};
     }
 
-    const char negation_char = mode == decompose_mode::ignore ? '!' : '-';
-    const bool is_negative = glob.front() == negation_char;
+    const char inversion_char = mode == decompose_mode::ignore ? '!' : '-';
+    const bool is_inverted = glob.front() == inversion_char;
     glob.remove_prefix(static_cast<size_t>(glob.front() == '\\'));
-    glob.remove_prefix(static_cast<size_t>(is_negative));
+    glob.remove_prefix(static_cast<size_t>(is_inverted));
 
     while (has_suffix(glob, " ") && !has_suffix(glob, "\\ ")) {
         glob.remove_suffix(1);
@@ -54,7 +54,7 @@ decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
         return {};
     }
 
-    return { glob, is_negative, is_anchored, is_directory };
+    return { glob, is_inverted, is_anchored, is_directory };
 }
 
 std::vector<std::string_view> split(std::string_view globs, char delimiter) {

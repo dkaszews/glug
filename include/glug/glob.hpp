@@ -14,7 +14,7 @@ namespace glug::glob {
  */
 struct decomposition {
     std::string_view pattern{};
-    bool is_negative{};
+    bool is_inverted{};
     bool is_anchored{};
     bool is_directory{};
 };
@@ -37,15 +37,17 @@ enum class decompose_mode : std::uint8_t {
 };
 
 /**
- * Decomposes glob line into constituent parts per gitignore rules.
+ * Decomposes glob line into constituent parts.
  *
  * All unescaped trailing whitespace is ignored.
  *
- * In ignore mode, values starting with unescaped '#' are treated as empty.
+ * Ignore mode follows .gitignore rules. Values are negative by default, meaning
+ * they cause matching files or directories to be excluded, and can be inverted
+ * to positive and include previously excluded entries with '!'. Values starting
+ * with unescaped '#' are comments and treated as empty.
  *
- * Values starting with unescaped '!' or '-' in ignore or select mode
- * respectively are marked as negative, meaning they unignore previously ignored
- * files and directories.
+ * In select mode, values are positive by default and are inverted to negative
+ * with '-' instead.
  *
  * Values containing '/' before the last character are marked as anchored,
  * meaning they match relative to directory containing the .gitignore file,
@@ -63,7 +65,7 @@ enum class decompose_mode : std::uint8_t {
 ) noexcept;
 
 /**
- * Splits input across unescaped occurences of given delimiter, ommiting empty
+ * Splits input across unescaped occurences of given delimiter, omitting empty
  * results.
  */
 [[nodiscard]] std::vector<std::string_view>

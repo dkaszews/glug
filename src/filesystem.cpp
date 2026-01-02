@@ -160,12 +160,12 @@ bool explorer_impl::filter_entry(const fs::directory_entry& entry) const {
         return true;
     }
 
-    if (options.select.is_ignored(entry) == filter::decision::excluded) {
+    if (options.select(entry) == filter::decision::excluded) {
         return true;
     }
 
     for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-        const auto decision = it->filter.is_ignored(entry);
+        const auto decision = it->filter(entry);
         if (it->is_root || decision != filter::decision::undecided) {
             return decision == filter::decision::excluded;
         }

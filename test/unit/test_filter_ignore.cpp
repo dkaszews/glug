@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filter.hpp"
 
 #include "tree.hpp"
@@ -38,12 +38,12 @@ TEST_P(ignore_test, test) {
     const auto& [globs, cases, anchor] = GetParam();
 
     auto actual = cases;
-    for (auto& [node, ignored] : actual) {
+    for (auto& [node, decision] : actual) {
         const glug::unit_test::temp_fs temp{};
         node.materialize(temp);
         const auto resolved_anchor = anchor ? temp / *anchor : temp;
         const auto filter = filter::ignore{ globs, resolved_anchor };
-        ignored = filter.is_ignored(
+        decision = filter(
                 std::filesystem::directory_entry{ temp / node.leaf().path() }
         );
     }

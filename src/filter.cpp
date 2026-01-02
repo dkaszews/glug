@@ -62,7 +62,7 @@ ignore::ignore(
         }
         items.push_back(
                 ignore_item{
-                    glob.is_negative,
+                    glob.is_inverted,
                     glob.is_anchored,
                     glob.is_directory,
                     regex::engine{ glob::to_regex(pattern) },
@@ -98,14 +98,13 @@ ignore::ignore(
         anchor,
     } {}
 
-decision ignore::is_ignored(
-        const std::filesystem::directory_entry& entry
-) const noexcept {
+decision
+ignore::apply(const std::filesystem::directory_entry& entry) const noexcept {
     const auto make_decision = [&items = items](const auto& it) {
         if (it == items.rend()) {
             return decision::undecided;
         }
-        return it->is_negative ? decision::included : decision::excluded;
+        return it->is_inverted ? decision::included : decision::excluded;
     };
 
     // PERF: Move to caller to deduplicate calculations with multi-level ignore
@@ -147,12 +146,12 @@ select::select(
         auto& items = glob.is_directory ? dirs : files;
         items.push_back(
                 ignore_item{
-                    glob.is_negative,
+                    glob.is_inverted,
                     glob.is_anchored,
                     regex::engine{ glob::to_regex(pattern) },
                 }
         );
-        if (!glob.is_negative) {
+        if (!glob.is_inverted) {
             auto& fallback = glob.is_directory ? dirs_fallback : files_fallback;
             fallback = decision::excluded;
         }
@@ -171,9 +170,8 @@ select::select(
 select::select(std::string_view globs, const std::filesystem::path& anchor) :
     select{ glob::split(globs), anchor } {}
 
-decision select::is_ignored(
-        const std::filesystem::directory_entry& entry
-) const noexcept {
+decision
+select::apply(const std::filesystem::directory_entry& entry) const noexcept {
     const auto& items = entry.is_directory() ? dirs : files;
     if (items.empty()) {
         return decision::undecided;
@@ -190,7 +188,7 @@ decision select::is_ignored(
         return entry.is_directory() ? dirs_fallback : files_fallback;
     }
 
-    return it->is_negative ? decision::excluded : decision::included;
+    return it->is_inverted ? decision::excluded : decision::included;
 }
 
 }  // namespace glug::filter

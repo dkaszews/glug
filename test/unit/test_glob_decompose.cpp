@@ -27,10 +27,10 @@ TEST_P(decompose_test, pattern) {
 }
 
 // NOLINTNEXTLINE
-TEST_P(decompose_test, is_negative) {
+TEST_P(decompose_test, is_inverted) {
     const auto& [glob, expected, mode] = GetParam();
-    EXPECT_EQ(decompose(glob, mode).is_negative, expected.is_negative);
-    EXPECT_EQ(decompose(glob + " ", mode).is_negative, expected.is_negative);
+    EXPECT_EQ(decompose(glob, mode).is_inverted, expected.is_inverted);
+    EXPECT_EQ(decompose(glob + " ", mode).is_inverted, expected.is_inverted);
 }
 
 // NOLINTNEXTLINE

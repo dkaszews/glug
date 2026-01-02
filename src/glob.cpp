@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/glob.hpp"
 
 #include <algorithm>
@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 using namespace std::string_literals;
 
@@ -20,14 +21,18 @@ constexpr bool has_suffix(std::string_view s, std::string_view suffix) {
 
 }  // namespace
 
-decomposition decompose(std::string_view glob) noexcept {
-    if (glob.empty() || glob.front() == '#') {
+decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
+    if (glob.empty()) {
+        return {};
+    }
+    if (mode == decompose_mode::ignore && glob.front() == '#') {
         return {};
     }
 
-    const bool is_negative = glob.front() == '!';
+    const char inversion_char = mode == decompose_mode::ignore ? '!' : '-';
+    const bool is_inverted = glob.front() == inversion_char;
     glob.remove_prefix(static_cast<size_t>(glob.front() == '\\'));
-    glob.remove_prefix(static_cast<size_t>(is_negative));
+    glob.remove_prefix(static_cast<size_t>(is_inverted));
 
     while (has_suffix(glob, " ") && !has_suffix(glob, "\\ ")) {
         glob.remove_suffix(1);
@@ -49,7 +54,45 @@ decomposition decompose(std::string_view glob) noexcept {
         return {};
     }
 
-    return { glob, is_negative, is_anchored, is_directory };
+    return { glob, is_inverted, is_anchored, is_directory };
+}
+
+std::vector<std::string_view> split(std::string_view globs, char delimiter) {
+    if (globs.empty()) {
+        return {};
+    }
+
+    auto result = std::vector<std::string_view>{};
+    result.reserve(std::count(globs.begin(), globs.end(), delimiter));
+
+    auto current_offset = size_t{ 0 };
+    auto current_size = size_t{ 0 };
+    auto escaped = false;
+    for (const auto c : globs) {
+        if (c == '\\') {
+            current_size++;
+            escaped = !escaped;
+            continue;
+        }
+
+        if (escaped || c != delimiter) {
+            current_size++;
+            escaped = false;
+            continue;
+        }
+
+        if (current_size != 0) {
+            result.push_back(globs.substr(current_offset, current_size));
+        }
+
+        current_offset += current_size + 1;
+        current_size = 0;
+    }
+    if (current_size != 0) {
+        result.push_back(globs.substr(current_offset, current_size));
+    }
+
+    return result;
 }
 
 namespace {

@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filesystem.hpp"
 
 #include "tree.hpp"
@@ -29,6 +29,7 @@ struct explorer_param {
     glug::unit_test::node tree;
     std::vector<std::filesystem::path> expected{};
     std::optional<std::filesystem::path> target{};
+    std::optional<std::string_view> select{};
 
     friend std::ostream&
     operator<<(std::ostream& os, const explorer_param& param) {
@@ -68,7 +69,7 @@ TEST_F(explorer_test, dereference) {
 
 // NOLINTNEXTLINE
 TEST_P(explorer_test, test) {
-    const auto& [tree, expected, target] = GetParam();
+    const auto& [tree, expected, target, select] = GetParam();
     const auto temp = temp_fs{};
     try {
         tree.materialize(temp);
@@ -77,7 +78,10 @@ TEST_P(explorer_test, test) {
     }
 
     const auto resolved_target = temp / target.value_or(tree.path());
-    auto exp = explorer{ resolved_target };
+    const auto options = explorer_options{
+        filter::select{ select.value_or(""), resolved_target },
+    };
+    auto exp = explorer{ resolved_target, options };
     auto relative = std::vector<std::filesystem::path>{};
     std::transform(
             exp,
@@ -466,7 +470,7 @@ static const auto explorer_cases = std::vector<explorer_param>{
             "submodule_target_middle/submodules/README.md",
         },
         "submodule_target_middle/submodules",
-    }
+    },
 };
 
 // NOLINTNEXTLINE
@@ -474,6 +478,92 @@ INSTANTIATE_TEST_SUITE_P(
         explorer_test,
         explorer_test,
         testing::ValuesIn(explorer_cases),
+        [](const auto& info) { return info.param.tree.name().string(); }
+);
+
+namespace {
+
+auto make_select_case_tree(std::string_view root_name) {
+    return dir{
+        root_name,
+        {
+            file{ ".gitignore", "*.generated.*\n*.log" },
+            dir{
+                "src",
+                {
+                    "main.cpp"_f,
+                    "foo.cpp"_f,
+                },
+            },
+            dir{
+                "include",
+                {
+                    "foo.hpp"_f,
+                    "foo.generated.hpp"_f,
+                    "detail"_d / "impl.hpp"_f,
+                },
+            },
+            dir{
+                "test",
+                {
+                    "data"_d / "curl.py"_f,
+                    "run.py"_f,
+                    "results.log"_f,
+                },
+            },
+            file{ "run_tests.py" },
+        },
+    };
+}
+
+}  // namespace
+
+const auto select_cases = std::vector<explorer_param>({
+    {
+        make_select_case_tree("select_cpp"),
+        {
+            "select_cpp/include/foo.hpp",
+            "select_cpp/include/detail/impl.hpp",
+            "select_cpp/src/foo.cpp",
+        },
+        std::nullopt,
+        "*.cpp,*.hpp,-main.*",
+    },
+    {
+        make_select_case_tree("select_dir"),
+        {
+            // Selecting directory does not prevent searching root
+            "select_dir/.gitignore",
+            "select_dir/run_tests.py",
+            "select_dir/test/run.py",
+        },
+        std::nullopt,
+        "test/",
+    },
+    {
+        make_select_case_tree("select_dir_content"),
+        {
+            "select_dir_content/test/run.py",
+        },
+        std::nullopt,
+        "test/*",
+    },
+    {
+        make_select_case_tree("select_dir_content_recursive"),
+        {
+            "select_dir_content_recursive/test/run.py",
+            "select_dir_content_recursive/test/data/curl.py",
+        },
+        std::nullopt,
+        "test/**",
+    },
+});
+
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(
+        select_test,
+        explorer_test,
+        testing::ValuesIn(select_cases),
         [](const auto& info) { return info.param.tree.name().string(); }
 );
 

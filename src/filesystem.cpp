@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filesystem.hpp"
 
 #include "glug/filter.hpp"
@@ -24,6 +24,8 @@ class explorer_impl {
     // Transient helper, storing references to avoid passing to all functions
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     decltype(explorer::stack)& stack;
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const explorer_options& options;
 
     // `const` methods cannot construct instance without dropping qualifiers
     [[nodiscard]] static const auto&
@@ -158,8 +160,12 @@ bool explorer_impl::filter_entry(const fs::directory_entry& entry) const {
         return true;
     }
 
+    if (options.select(entry) == filter::decision::excluded) {
+        return true;
+    }
+
     for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-        const auto decision = it->filter.is_ignored(entry);
+        const auto decision = it->filter(entry);
         if (it->is_root || decision != filter::decision::undecided) {
             return decision == filter::decision::excluded;
         }
@@ -214,8 +220,11 @@ void explorer_impl::next() {
     recurse();
 }
 
-explorer::explorer(const std::filesystem::path& root) {
-    auto impl = explorer_impl{ stack };
+explorer::explorer(
+        const std::filesystem::path& root, const explorer_options& options
+) :
+    options{ options } {
+    auto impl = explorer_impl{ stack, options };
     impl.add_outer_filters(root);
     impl.populate(root);
 }
@@ -227,7 +236,7 @@ explorer::reference explorer::operator*() const {
 explorer::pointer explorer::operator->() const { return &**this; }
 
 explorer& explorer::operator++() {
-    explorer_impl{ stack }.next();
+    explorer_impl{ stack, options }.next();
     return *this;
 }
 

@@ -1,9 +1,10 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/glob.hpp"
 
 #include "parametrized.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -13,36 +14,37 @@ namespace glug::glob::unit_test {
 struct decompose_param {
     std::string glob{};
     decomposition expected{};
+    decompose_mode mode{};
 };
 
 class decompose_test : public testing::TestWithParam<decompose_param> {};
 
 // NOLINTNEXTLINE
 TEST_P(decompose_test, pattern) {
-    const auto& [glob, expected] = GetParam();
-    EXPECT_EQ(decompose(glob).pattern, expected.pattern);
-    EXPECT_EQ(decompose(glob + " ").pattern, expected.pattern);
+    const auto& [glob, expected, mode] = GetParam();
+    EXPECT_EQ(decompose(glob, mode).pattern, expected.pattern);
+    EXPECT_EQ(decompose(glob + " ", mode).pattern, expected.pattern);
 }
 
 // NOLINTNEXTLINE
-TEST_P(decompose_test, is_negative) {
-    const auto& [glob, expected] = GetParam();
-    EXPECT_EQ(decompose(glob).is_negative, expected.is_negative);
-    EXPECT_EQ(decompose(glob + " ").is_negative, expected.is_negative);
+TEST_P(decompose_test, is_inverted) {
+    const auto& [glob, expected, mode] = GetParam();
+    EXPECT_EQ(decompose(glob, mode).is_inverted, expected.is_inverted);
+    EXPECT_EQ(decompose(glob + " ", mode).is_inverted, expected.is_inverted);
 }
 
 // NOLINTNEXTLINE
 TEST_P(decompose_test, is_anchored) {
-    const auto& [glob, expected] = GetParam();
-    EXPECT_EQ(decompose(glob).is_anchored, expected.is_anchored);
-    EXPECT_EQ(decompose(glob + " ").is_anchored, expected.is_anchored);
+    const auto& [glob, expected, mode] = GetParam();
+    EXPECT_EQ(decompose(glob, mode).is_anchored, expected.is_anchored);
+    EXPECT_EQ(decompose(glob + " ", mode).is_anchored, expected.is_anchored);
 }
 
 // NOLINTNEXTLINE
 TEST_P(decompose_test, is_directory) {
-    const auto& [glob, expected] = GetParam();
-    EXPECT_EQ(decompose(glob).is_directory, expected.is_directory);
-    EXPECT_EQ(decompose(glob + " ").is_directory, expected.is_directory);
+    const auto& [glob, expected, mode] = GetParam();
+    EXPECT_EQ(decompose(glob, mode).is_directory, expected.is_directory);
+    EXPECT_EQ(decompose(glob + " ", mode).is_directory, expected.is_directory);
 }
 
 // NOLINTNEXTLINE
@@ -167,6 +169,69 @@ INSTANTIATE_TEST_SUITE_P(
             { "!/a/", { "a", true, true, true } },
             { "!/abc/", { "abc", true, true, true } },
             { "!/a/b/c/", { "a/b/c", true, true, true } },
+        })
+);
+
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(
+        select_mode,
+        decompose_test,
+        values_in<decompose_param>({
+            { "abc", { "abc", false, false, false }, decompose_mode::select },
+            { "#abc", { "#abc", false, false, false }, decompose_mode::select },
+            { "!abc", { "!abc", false, false, false }, decompose_mode::select },
+            { "-abc", { "abc", true, false, false }, decompose_mode::select },
+            { "/abc", { "abc", false, true, false }, decompose_mode::select },
+            { "abc/", { "abc", false, false, true }, decompose_mode::select },
+            { "-/abc", { "abc", true, true, false }, decompose_mode::select },
+            { "-abc/", { "abc", true, false, true }, decompose_mode::select },
+            { "-/abc/", { "abc", true, true, true }, decompose_mode::select },
+        })
+);
+
+struct split_param {
+    std::string input{};
+    std::vector<std::string_view> expected{};
+    char delimiter{ ',' };
+};
+
+class split_test : public testing::TestWithParam<split_param> {};
+
+// NOLINTNEXTLINE
+TEST_P(split_test, test) {
+    const auto actual = split(GetParam().input, GetParam().delimiter);
+    EXPECT_EQ(actual, GetParam().expected);
+}
+
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(
+        split_test,
+        split_test,
+        values_in<split_param>({
+            { "", {} },
+            { "a", { "a" } },
+            { "abc", { "abc" } },
+            { "abc,def", { "abc", "def" } },
+            { "abc,def,xyz", { "abc", "def", "xyz" } },
+            { "abc,", { "abc" } },
+            { ",abc", { "abc" } },
+            { ",abc,,xyz,", { "abc", "xyz" } },
+            { "\\abc", { "\\abc" } },
+            { "abc\\", { "abc\\" } },
+            { "\\abc\\", { "\\abc\\" } },
+            { "abc\\,xyz", { "abc\\,xyz" } },
+            { "abc\\\\,xyz", { "abc\\\\", "xyz" } },
+            { "abc\\\\\\,xyz", { "abc\\\\\\,xyz" } },
+            { "abc\\ ,xyz", { "abc\\ ", "xyz" } },
+            { "abc\\\\ ,xyz", { "abc\\\\ ", "xyz" } },
+            { "abc\\\\\\ ,xyz", { "abc\\\\\\ ", "xyz" } },
+            { "abc\\ \\,xyz", { "abc\\ \\,xyz" } },
+            { "abc\\ \\\\,xyz", { "abc\\ \\\\", "xyz" } },
+            { "abc,def", { "abc,def" }, ':' },
+            { "abc:def", { "abc", "def" }, ':' },
+            { "abc,def:xyz", { "abc,def", "xyz" }, ':' },
+            { "abc\\:xyz", { "abc\\:xyz" }, ':' },
+            { "abc\\\\:xyz", { "abc\\\\", "xyz" }, ':' },
         })
 );
 

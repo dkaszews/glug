@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #pragma once
 
 #include "glug/glob.hpp"
@@ -63,17 +63,81 @@ class ignore {
      * @see decision
      */
     [[nodiscard]] decision
-    is_ignored(const std::filesystem::directory_entry& entry) const noexcept;
+    apply(const std::filesystem::directory_entry& entry) const noexcept;
+
+    [[nodiscard]] decision
+    operator()(const std::filesystem::directory_entry& entry) const noexcept {
+        return apply(entry);
+    }
 
     private:
     struct ignore_item {
-        bool is_negative{};
+        bool is_inverted{};
         bool is_anchored{};
         bool is_directory{};
         regex::engine regex{};
     };
 
     std::vector<ignore_item> items{};
+};
+
+/**
+ * Allows for additional filtering of files and directories.
+ *
+ * @see glug::glob::decompose_mode::select_mode
+ */
+class select {
+    public:
+    select() noexcept = default;
+
+    explicit select(const std::vector<glob::decomposition>& globs) :
+        select{ globs, "" } {}
+
+    explicit select(const std::vector<std::string_view>& globs) :
+        select{ globs, "" } {}
+
+    explicit select(std::string_view globs) :
+        select{ globs, "" } {}
+
+    select(const std::vector<glob::decomposition>& globs,
+           const std::filesystem::path& anchor);
+
+    select(const std::vector<std::string_view>& globs,
+           const std::filesystem::path& anchor);
+
+    select(std::string_view globs, const std::filesystem::path& anchor);
+
+    /**
+     * Check a file or directory against the list of globs.
+     *
+     * Files and directories are treated as separate types, with no overlap.
+     *
+     * If last matching glob is negative, returns `decision::ignored`.
+     * Else, if last matching glob is positive, returns `decision::included`.
+     * Else, if at least one positive glob exists, returns `decision::ignored`.
+     * Else, returns `decision::undecided`.
+     *
+     * @see decision
+     */
+    [[nodiscard]] decision
+    apply(const std::filesystem::directory_entry& entry) const noexcept;
+
+    [[nodiscard]] decision
+    operator()(const std::filesystem::directory_entry& entry) const noexcept {
+        return apply(entry);
+    }
+
+    private:
+    struct ignore_item {
+        bool is_inverted{};
+        bool is_anchored{};
+        regex::engine regex{};
+    };
+
+    std::vector<ignore_item> files{};
+    std::vector<ignore_item> dirs{};
+    decision files_fallback{};
+    decision dirs_fallback{};
 };
 
 }  // namespace glug::filter

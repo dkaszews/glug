@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #pragma once
 
 #include "glug/filter.hpp"
@@ -10,6 +10,18 @@
 #include <vector>
 
 namespace glug::filesystem {
+
+/**
+ * Provides additional options to explorer.
+ */
+struct explorer_options {
+    /**
+     * Extra filters to specify files and/or directories to be returned.
+     *
+     * @see glug::filter::select
+     */
+    filter::select select{};
+};
 
 /**
  * Recursively lists directory contents, respecting .gitignore rules.
@@ -28,7 +40,12 @@ class explorer {
     using iterator_category = std::input_iterator_tag;
 
     explorer() noexcept = default;
-    explicit explorer(const std::filesystem::path& root);
+    explicit explorer(const std::filesystem::path& root) :
+        explorer(root, {}) {}
+
+    explorer(
+            const std::filesystem::path& root, const explorer_options& options
+    );
 
     [[nodiscard]] explorer begin() const noexcept { return *this; }
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static): interface
@@ -61,6 +78,7 @@ class explorer {
     };
 
     std::vector<level> stack{};
+    explorer_options options{};
 };
 
 }  // namespace glug::filesystem

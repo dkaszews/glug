@@ -40,7 +40,7 @@ jobs:
           xmake-version: '>=3.0.1'
           actions-cache-folder: .xmake-cache
           package-cache: true
-          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}
+          package-cache-key: ${{ matrix.os }}.${{ matrix.toolchain }}.${{ matrix.mode }}.${{ matrix.engine }}
           project-path: glug
       - run: >
           xmake config -vy

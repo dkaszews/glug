@@ -101,14 +101,11 @@ class typetag_database {
             const std::unordered_map<std::string_view, std::string_view>& tags
     );
 
-    // Allows for initialization without extra pair of parentheses
-    explicit typetag_database(
+    typetag_database(
             std::initializer_list<
                     std::pair<const std::string_view, std::string_view>> tags
     ) :
-        typetag_database{
-            std::unordered_map<std::string_view, std::string_view>{ tags }
-        } {}
+        typetag_database{ { tags } } {}
 
     /**
      * Expand known tags into multiple globs.
@@ -116,7 +113,7 @@ class typetag_database {
      * Non-tag values and unknown tags are left as-is.
      */
     std::vector<std::string_view>
-    expand(const std::vector<std::string_view> globs) const noexcept;
+    expand(const std::vector<std::string_view>& globs) const noexcept;
 
     std::vector<std::string_view>
     expand(std::string_view globs) const noexcept {

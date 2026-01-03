@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 using namespace std::string_literals;
@@ -273,7 +274,7 @@ typetag_database::typetag_database(
     const auto negate = [](const auto& positive) noexcept {
         auto negative = positive;
         for (auto& value : negative) {
-            value = "-" + value;
+            value = std::string{ "-" }.append(value);
         }
         return negative;
     };
@@ -287,7 +288,7 @@ typetag_database::typetag_database(
 }  // GCOVR_EXCL_LINE: Unknown exceptional path
 
 std::vector<std::string_view> typetag_database::expand(
-        const std::vector<std::string_view> globs
+        const std::vector<std::string_view>& globs
 ) const noexcept {
     constexpr auto starts_with
             = [](std::string_view s, std::string_view prefix) {

@@ -12,7 +12,6 @@
 namespace glug::glob::unit_test {
 
 struct typetag_param {
-    typetag_database db = {};
     std::string_view globs = {};
     std::vector<std::string_view> expected = {};
 
@@ -27,24 +26,75 @@ class typetag_test : public testing::TestWithParam<typetag_param> {};
 
 // NOLINTNEXTLINE
 TEST_P(typetag_test, test) {
-    const auto& [db, globs, expected] = GetParam();
+    const auto db = typetag_database{
+        { "cpp", "*.cpp,*.cxx,*.hpp,*.hxx" },
+        { "hpp", "*.hpp,*.hxx" },
+        { "c", "*.c,*.h" },
+        { "make", "[mM]akefile,*.mk,*.mak,*.make" },
+        { "cmake", "[cC][mM]ake[lL]ists,*.cmake" },
+    };
+
+    const auto& [globs, expected] = GetParam();
     EXPECT_EQ(db.expand(globs), expected);
 }
 
 const auto typetag_cases = std::vector<typetag_param>{
-    typetag_param{
-        typetag_database{
-            { "cpp", "*.cpp,*.hpp" },
-        },
-        "#cpp",
-        { "*.cpp", "*.hpp" },
+    {
+        "",
+        {},
     },
+    {
+        "*",
+        { "*" },
+    },
+    {
+        "#",
+        { "#" },
+    },
+    {
+        "*.py",
+        { "*.py" },
+    },
+    {
+        "*,-*.py",
+        { "*", "-*.py" },
+    },
+    {
+        "#cpp",
+        { "*.cpp", "*.cxx", "*.hpp", "*.hxx" },
+    },
+    {
+        "-#cpp",
+        { "-*.cpp", "-*.cxx", "-*.hpp", "-*.hxx" },
+    },
+    {
+        "#cpp,-*.cpp",
+        { "*.cpp", "*.cxx", "*.hpp", "*.hxx", "-*.cpp" },
+    },
+    {
+        "#cpp,-#hpp",
+        { "*.cpp", "*.cxx", "*.hpp", "*.hxx", "-*.hpp", "-*.hxx" },
+    },
+    {
+        "\\#comment",
+        { "\\#comment" },
+    },
+    {
+        "#unknown",
+        { "#unknown" },
+    }
 };
 
 // NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         typetag_test, typetag_test, values_in<typetag_param>(typetag_cases)
 );
+
+// Cases use `split` which removes empty ones, still a risk in vector overload
+TEST_F(typetag_test, empty_glob) {
+    using v = std::vector<std::string_view>;
+    EXPECT_EQ(typetag_database{}.expand(v{ "" }), v{ "" });
+}
 
 }  // namespace glug::glob::unit_test
 

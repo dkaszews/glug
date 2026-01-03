@@ -110,12 +110,25 @@ class typetag_database {
             std::unordered_map<std::string_view, std::string_view>{ tags }
         } {}
 
+    /**
+     * Expand known tags into multiple globs.
+     *
+     * Non-tag values and unknown tags are left as-is.
+     */
     std::vector<std::string_view>
-    expand(const std::vector<std::string_view> globs) const;
+    expand(const std::vector<std::string_view> globs) const noexcept;
 
-    std::vector<std::string_view> expand(std::string_view globs) const {
+    std::vector<std::string_view>
+    expand(std::string_view globs) const noexcept {
         return expand(split(globs));
     }
+
+    private:
+    struct mapping {
+        std::vector<std::string> positive{};
+        std::vector<std::string> negative{};
+    };
+    std::unordered_map<std::string_view, mapping> map{};
 };
 
 }  // namespace glug::glob

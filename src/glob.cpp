@@ -265,14 +265,56 @@ std::string glob_escape(std::string_view s) noexcept {
 typetag_database::typetag_database(
         const std::unordered_map<std::string_view, std::string_view>& tags
 ) {
-    // TODO: Implement
-    std::ignore = tags;
-}
+    const auto stringify = [](const auto& views) {
+        auto result = std::vector<std::string>{ views.begin(), views.end() };
+        return result;
+    };
 
-std::vector<std::string_view>
-typetag_database::expand(const std::vector<std::string_view> globs) const {
-    // TODO: Implement
-    return globs;
+    const auto negate = [](const auto& positive) noexcept {
+        auto negative = positive;
+        for (auto& value : negative) {
+            value = "-" + value;
+        }
+        return negative;
+    };
+
+    map.reserve(tags.size());
+    for (const auto& [key, value] : tags) {
+        const auto positive = stringify(split(value));
+        const auto negative = negate(positive);
+        map[key] = { positive, negative };
+    }
+}  // GCOVR_EXCL_LINE: Unknown exceptional path
+
+std::vector<std::string_view> typetag_database::expand(
+        const std::vector<std::string_view> globs
+) const noexcept {
+    constexpr auto starts_with
+            = [](std::string_view s, std::string_view prefix) {
+                  return s.size() >= prefix.size()
+                          && s.substr(0, prefix.size()) == prefix;
+              };
+
+    auto result = std::vector<std::string_view>{};
+    for (auto glob : globs) {
+        if (!starts_with(glob, "#") && !starts_with(glob, "-#")) {
+            result.push_back(glob);
+            continue;
+        }
+
+        const auto inverted = glob.front() == '-';
+        const auto tag = glob.substr(static_cast<size_t>(inverted) + 1);
+        const auto it = map.find(tag);
+        if (it == map.end()) {
+            result.push_back(glob);
+            continue;
+        }
+
+        const auto& values
+                = inverted ? it->second.negative : it->second.positive;
+        result.insert(result.end(), values.begin(), values.end());
+    }
+    return result;
 }
 
 }  // namespace glug::glob

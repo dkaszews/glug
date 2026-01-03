@@ -30,8 +30,6 @@ TEST_P(typetag_test, test) {
         { "cpp", "*.cpp,*.cxx,*.hpp,*.hxx" },
         { "hpp", "*.hpp,*.hxx" },
         { "c", "*.c,*.h" },
-        { "make", "[mM]akefile,*.mk,*.mak,*.make" },
-        { "cmake", "[cC][mM]ake[lL]ists,*.cmake" },
     };
 
     const auto& [globs, expected] = GetParam();
@@ -66,6 +64,10 @@ const auto typetag_cases = std::vector<typetag_param>{
     {
         "-#cpp",
         { "-*.cpp", "-*.cxx", "-*.hpp", "-*.hxx" },
+    },
+    {
+        "#c,#cpp",
+        { "*.c", "*.h", "*.cpp", "*.cxx", "*.hpp", "*.hxx" },
     },
     {
         "#cpp,-*.cpp",

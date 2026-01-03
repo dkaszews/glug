@@ -6,6 +6,7 @@
 #include <ostream>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -37,54 +38,21 @@ TEST_P(typetag_test, test) {
 }
 
 const auto typetag_cases = std::vector<typetag_param>{
-    {
-        "",
-        {},
-    },
-    {
-        "*",
-        { "*" },
-    },
-    {
-        "#",
-        { "#" },
-    },
-    {
-        "*.py",
-        { "*.py" },
-    },
-    {
-        "*,-*.py",
-        { "*", "-*.py" },
-    },
-    {
-        "#cpp",
-        { "*.cpp", "*.cxx", "*.hpp", "*.hxx" },
-    },
-    {
-        "-#cpp",
-        { "-*.cpp", "-*.cxx", "-*.hpp", "-*.hxx" },
-    },
-    {
-        "#c,#cpp",
-        { "*.c", "*.h", "*.cpp", "*.cxx", "*.hpp", "*.hxx" },
-    },
-    {
-        "#cpp,-*.cpp",
-        { "*.cpp", "*.cxx", "*.hpp", "*.hxx", "-*.cpp" },
-    },
+    { "", {} },
+    { "*", { "*" } },
+    { "#", { "#" } },
+    { "*.py", { "*.py" } },
+    { "*,-*.py", { "*", "-*.py" } },
+    { "#cpp", { "*.cpp", "*.cxx", "*.hpp", "*.hxx" } },
+    { "-#cpp", { "-*.cpp", "-*.cxx", "-*.hpp", "-*.hxx" } },
+    { "#c,#cpp", { "*.c", "*.h", "*.cpp", "*.cxx", "*.hpp", "*.hxx" } },
+    { "#cpp,-*.cpp", { "*.cpp", "*.cxx", "*.hpp", "*.hxx", "-*.cpp" } },
     {
         "#cpp,-#hpp",
         { "*.cpp", "*.cxx", "*.hpp", "*.hxx", "-*.hpp", "-*.hxx" },
     },
-    {
-        "\\#comment",
-        { "\\#comment" },
-    },
-    {
-        "#unknown",
-        { "#unknown" },
-    }
+    { "\\#comment", { "\\#comment" } },
+    { "#unknown", { "#unknown" } }
 };
 
 // NOLINTNEXTLINE
@@ -93,6 +61,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 // Cases use `split` which removes empty ones, still a risk in vector overload
+// NOLINTNEXTLINE
 TEST_F(typetag_test, empty_glob) {
     using v = std::vector<std::string_view>;
     EXPECT_EQ(typetag_database{}.expand(v{ "" }), v{ "" });

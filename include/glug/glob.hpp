@@ -105,7 +105,9 @@ class typetag_database {
             std::initializer_list<
                     std::pair<const std::string_view, std::string_view>> tags
     ) :
-        typetag_database{ { tags } } {}
+        typetag_database{
+            std::unordered_map<std::string_view, std::string_view>{ tags }
+        } {}
 
     /**
      * Expand known tags into multiple globs.

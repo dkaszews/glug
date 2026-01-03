@@ -1,0 +1,57 @@
+name: Release
+on:
+  # TODO: Version param
+  workflow_dispatch:
+  # TODO: Remove, testing only
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        kind: [ static, shared ]
+        mode: [ release ]
+        regex: [ stl, pcre2, re2, hyperscan ]
+        # exclude:
+          # - { regex: stl, kind: static }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ matrix.os }}.${{ matrix.kind }}.${{ matrix.mode }}.${{ matrix.regex }}
+          project-path: glug
+      - run: >
+          xmake config -vy
+          --kind=${{ matrix.kind }}
+          --mode=${{ matrix.mode }}
+          --regex=${{ matrix.regex }}
+      - run: xmake build -v glug
+      # TODO: Add version and arch, maybe rename with a script parsing `xmake config -v` instead
+      - run: mv build/latest/glug build/latest/glug-${{ matrix.os }}-${{ matrix.kind }}-${{ matrix.regex }}-${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}.${{ matrix.kind }}.${{ matrix.mode }}.${{ matrix.regex }}
+          path: 'build/latest/*'
+          retention-days: 1
+
+  gather:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+      - run: ls -R artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          path: artifacts/*
+

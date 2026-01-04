@@ -91,6 +91,7 @@ bool engine::match(std::string_view s) const {
 namespace detail {
 
 struct impl {
+    // NOLINTNEXTLINE: Desired implicit wrapper
     impl(std::string_view pattern) :
         regex{ pattern } {}
 

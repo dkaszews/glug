@@ -9,25 +9,41 @@
 #include <vector>
 
 #if defined(GLUG_REGEX_PCRE2)
+
 #include "glug/generated/licenses/pcre2.hpp"
+namespace {
 void print_regex_license() {
     std::cout << "--- pcre2 license ---\n\n";
     std::cout << glug::generated::licenses::pcre2::data;
 }
+}  // namespace
+
 #elif defined(GLUG_REGEX_RE2)
+
 #include "glug/generated/licenses/re2.hpp"
+namespace {
 void print_regex_license() {
     std::cout << "--- re2 license ---\n\n";
     std::cout << glug::generated::licenses::re2::data;
 }
+}  // namespace
+
 #elif defined(GLUG_REGEX_HYPERSCAN)
+
 #include "glug/generated/licenses/hyperscan.hpp"
+namespace {
 void print_regex_license() {
     std::cout << "--- hyperscan license ---\n\n";
     std::cout << glug::generated::licenses::hyperscan::data;
 }
+}  // namespace
+
 #else
+
+namespace {
 void print_regex_license() {}
+}  // namespace
+
 #endif
 
 const auto db = glug::glob::typetag_database{
@@ -46,6 +62,8 @@ const auto db = glug::glob::typetag_database{
     { "shell", "*.sh,*.bash,*.csh,*.tcsh,*.ksh,*.zsh,*.fish" },
     { "vim", "*.vim" },
 };
+
+namespace {
 
 int print_help() {
     std::cout << "TODO: help!\n";
@@ -68,6 +86,8 @@ int print_tags() {
     std::cout << "TODO: tags\n";
     return 0;
 }
+
+}  // namespace
 
 int main(int argc, const char** argv) {
     using namespace std::string_view_literals;

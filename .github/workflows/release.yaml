@@ -1,0 +1,93 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version
+        required: true
+        type: string
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        kind: [ static, shared ]
+        mode: [ release ]
+        regex: [ stl, pcre2, re2, hyperscan ]
+        exclude:
+          # Unsupported ARM architecture
+          - { os: macos-latest, regex: hyperscan }
+          # STL static and shared are the same thing, use "shared" to skip suffix
+          - { kind: static, regex: stl }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ${{ matrix.os }}.${{ matrix.kind }}.${{ matrix.mode }}.${{ matrix.regex }}
+          project-path: glug
+      - run: >
+          xmake config -vy
+          --kind=${{ matrix.kind }}
+          --mode=${{ matrix.mode }}
+          --regex=${{ matrix.regex }}
+          --version=${{ github.event.inputs.version }}
+      - run: xmake build -v glug
+      - run: |
+          echo "SUFFIX=$(xmake suffix)" >> "$GITHUB_ENV"
+          echo "EXT=${{ matrix.os == 'windows-latest' && '.exe' || '' }}" >> "$GITHUB_ENV"
+        shell: bash
+      # Permission loss - https://github.com/actions/upload-artifact/issues/38
+      - run: |
+          mkdir artifacts
+          mv "build/latest/glug${EXT}" "artifacts/glug-${SUFFIX}${EXT}"
+          tar -cvzf "artifacts/glug-${SUFFIX}.tar.gz" "artifacts/glug-${SUFFIX}${EXT}"
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glug-${{ env.SUFFIX }}
+          path: artifacts/*.tar.gz
+          retention-days: 1
+
+  licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # Double-zip so that final archive contains a zip
+      - run: zip licenses.zip licenses/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: licenses
+          path: licenses.zip
+          retention-days: 1
+
+  gather:
+    needs:
+      - build
+      - licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+      - run: |
+          for file in artifacts/*.tar.gz; do
+            tar -xvzf "$file"
+            rm "$file"
+          done
+          echo '---'
+          tar -cvzf artifacts.tar.gz artifacts/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts.tar.gz
+

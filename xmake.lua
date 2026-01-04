@@ -23,10 +23,26 @@ option('regex')
     end)
 option_end()
 
+option('version')
+    set_description('Binary version tag')
+    set_default('')  -- nil causes `after_check` to be skipped
+    set_showmenu(true)
+
+    after_check(function (option)
+        local version = option:value()
+        if version == '' then
+            local head, _ = os.iorunv('git', { 'rev-parse', 'HEAD' })
+            version = '0.0.0+' .. head:sub(0, 12)
+        end
+        option:add('defines', 'GLUG_VERSION="' .. version .. '"')
+    end)
+option_end()
+
 add_requires('gtest >= 1.16.0')
 if regex_engines[get_config('regex')] then
     local engine = get_config('regex')
-    add_requires(engine .. ' ' .. regex_engines[engine])
+    local config = { configs = { shared = is_kind('shared') } }
+    add_requires(engine .. ' ' .. regex_engines[engine], config)
 end
 
 -- Windows assumes all strings are ANSI code pages, garbling output
@@ -57,7 +73,7 @@ target('glug')
     add_files('src/**.cpp')
     add_includedirs('include')
     add_packages(get_config('regex'))
-    add_options('regex')
+    add_options('regex', 'version')
     after_build(copy_latest)
 target_end()
 
@@ -68,7 +84,7 @@ target('unit_test')
     add_includedirs('include', 'test')
     add_defines('UNIT_TEST=1')
     add_packages('gtest', get_config('regex'))
-    add_options('regex')
+    add_options('regex', 'version')
     after_build(copy_latest)
 target_end()
 
@@ -100,6 +116,35 @@ task('coverage')
             '--json',
             'coverage_report.json'
         })
+    end)
+    set_menu {}
+task_end()
+
+task('suffix')
+    on_run(function (target)
+        import('core.project.config')
+        import('core.base.option')
+        config.load()
+
+        local version = config.get('version')
+        if version == '' then
+            local head, _ = os.iorunv('git', { 'rev-parse', 'HEAD' })
+            version = '0.0.0+' .. head:sub(0, 12)
+        end
+
+        local name = version
+        function append_if_not(value, skip)
+            if value ~= skip then
+                name = name .. '-' .. value
+            end
+        end
+
+        append_if_not(config.get('plat'), nil)
+        append_if_not(config.get('arch'), nil)
+        append_if_not(config.get('mode'), 'release')
+        append_if_not(config.get('kind'), 'shared')
+        append_if_not(config.get('regex'), 'stl')
+        print(name)
     end)
     set_menu {}
 task_end()

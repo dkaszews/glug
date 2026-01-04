@@ -37,7 +37,7 @@ jobs:
           --kind=${{ matrix.kind }}
           --mode=${{ matrix.mode }}
           --regex=${{ matrix.regex }}
-          --version=${{ github.event.inputs.version }}
+          --tag=${{ github.event.inputs.version }}
       - run: xmake build -v glug
       - run: |
           echo "SUFFIX=$(xmake suffix)" >> "$GITHUB_ENV"

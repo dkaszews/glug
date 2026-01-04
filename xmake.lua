@@ -139,11 +139,11 @@ task('suffix')
             end
         end
 
-        append_if_not(config.get('regex'), 'stl')
         append_if_not(config.get('plat'), nil)
         append_if_not(config.get('arch'), nil)
         append_if_not(config.get('mode'), 'release')
         append_if_not(config.get('kind'), 'shared')
+        append_if_not(config.get('regex'), 'stl')
         print(name)
     end)
     set_menu {}

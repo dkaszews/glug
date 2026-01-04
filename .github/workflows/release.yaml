@@ -67,8 +67,10 @@ jobs:
           path: artifacts
           merge-multiple: true
       - run: |
-          tar -xvzf artifacts/*.tar.gz
-          rm artifacts/*.tar.gz
+          for file in artifacts/*.tar.gz; do
+            tar -xvzf "$file"
+            rm "$file"
+          done
           tar -cvzf artifacts.tar.gz artifacts/*
       - uses: actions/upload-artifact@v4
         with:

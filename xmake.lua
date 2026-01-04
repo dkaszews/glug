@@ -132,7 +132,7 @@ task('suffix')
             version = '0.0.0+' .. head:sub(0, 12)
         end
 
-        local name = '-' .. version
+        local name = version
         function append_if_not(value, skip)
             if value ~= skip then
                 name = name .. '-' .. value

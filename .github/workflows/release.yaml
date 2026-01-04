@@ -41,16 +41,20 @@ jobs:
           --regex=${{ matrix.regex }}
           --version=${{ github.event.inputs.version }}
       - run: xmake build -v glug
-      - run: echo "SUFFIX=$(xmake suffix)" >> $GITHUB_ENV
+      - run: |
+          echo "SUFFIX=$(xmake suffix)" >> "$GITHUB_ENV"
+          echo "EXT=${{ matrix.os == 'windows-latest' && '.exe' || '' }}" >> "$GITHUB_ENV"
         shell: bash
-      - run: mv build/latest/glug${EXT} build/latest/glug-${SUFFIX}${EXT}
+      # Permission loss - https://github.com/actions/upload-artifact/issues/38
+      - run: |
+          mkdir artifacts
+          mv "build/latest/glug${EXT}" "artifacts/glug-${SUFFIX}${EXT}"
+          tar -cvzf "artifacts/glug-${SUFFIX}.tar.gz" "artifacts/glug-${SUFFIX}${EXT}"
         shell: bash
-        env:
-          EXT: ${{ matrix.os == 'windows-latest' && '.exe' || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: glug-${{ env.SUFFIX }}
-          path: 'build/latest/*'
+          path: artifacts/*.tar.gz
           retention-days: 1
 
   gather:
@@ -62,8 +66,11 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
-      - run: ls -R artifacts
+      - run: |
+          tar -xvzf artifacts/*.tar.gz
+          rm artifacts/*.tar.gz
+          tar -cvzf artifacts.tar.gz artifacts/*
       - uses: actions/upload-artifact@v4
         with:
-          path: artifacts/*
+          path: artifacts.tar.gz
 

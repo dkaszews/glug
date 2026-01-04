@@ -62,6 +62,39 @@ if is_mode('debug') and is_os('linux') then
     end
 end
 
+function generate_licenses(target)
+    function gen(input)
+        local base = input:sub(1, -path.extension(input):len() - 1):lower()
+        local output = 'include/glug/generated/' .. base .. '.hpp'
+        local outfile = io.open(output, 'w')
+
+        local namespace = base:gsub('/', '::')
+        outfile:write('#pragma once\n')
+        outfile:write('\n')
+        outfile:write('namespace glug::generated::' .. namespace .. ' {\n')
+        outfile:write('\n')
+        outfile:write('static constexpr const char* data =\n')
+        outfile:write('R"---(')
+
+        local infile = io.open(input, 'r')
+        for line in infile:lines() do
+            outfile:write(line .. '\n')
+        end
+        infile:close()
+
+        outfile:write(')---";\n')
+        outfile:write('\n')
+        outfile:write('}\n')
+        outfile:write('\n')
+        outfile:close()
+    end
+
+    gen('LICENSE.md')
+    for _, license in ipairs(os.files('licenses/*.md')) do
+        gen(license)
+    end
+end
+
 function copy_latest(target)
     destination = 'build/latest/'
     os.mkdir(destination)
@@ -74,6 +107,7 @@ target('glug')
     add_includedirs('include')
     add_packages(get_config('regex'))
     add_options('regex', 'version')
+    before_build(generate_licenses)
     after_build(copy_latest)
 target_end()
 

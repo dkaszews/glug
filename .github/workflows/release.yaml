@@ -1,7 +1,11 @@
 name: Release
 on:
-  # TODO: Version param
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release version
+        required: true
+        type: string
   # TODO: Remove, testing only
   pull_request:
 
@@ -14,8 +18,11 @@ jobs:
         kind: [ static, shared ]
         mode: [ release ]
         regex: [ stl, pcre2, re2, hyperscan ]
-        # exclude:
-          # - { regex: stl, kind: static }
+        exclude:
+          # Unsupported ARM architecture
+          - { os: macos-latest, regex: hyperscan }
+          # STL static and shared are the same thing, use "shared" to skip suffix
+          - { regex: stl, kind: static }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -32,12 +39,17 @@ jobs:
           --kind=${{ matrix.kind }}
           --mode=${{ matrix.mode }}
           --regex=${{ matrix.regex }}
+          --version=${{ github.event.inputs.version }}
       - run: xmake build -v glug
-      # TODO: Add version and arch, maybe rename with a script parsing `xmake config -v` instead
-      - run: mv build/latest/glug build/latest/glug-${{ matrix.os }}-${{ matrix.kind }}-${{ matrix.regex }}-${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+      - run: echo "SUFFIX=$(xmake suffix)" >> $GITHUB_ENV
+        shell: bash
+      - run: mv build/latest/glug${EXT} build/latest/glug-${SUFFIX}${EXT}
+        shell: bash
+        env:
+          EXT: ${{ matrix.os == 'windows-latest' && '.exe' || '' }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}.${{ matrix.kind }}.${{ matrix.mode }}.${{ matrix.regex }}
+          name: glug-${{ env.SUFFIX }}
           path: 'build/latest/*'
           retention-days: 1
 

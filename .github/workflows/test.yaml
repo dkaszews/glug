@@ -48,7 +48,7 @@ jobs:
           --mode=${{ matrix.mode }}
           --regex=${{ matrix.regex }}
           ${{ (matrix.os == 'windows-latest' && matrix.toolchain != 'msvc') && '--plat=mingw' || '' }}
-      - run: xmake build -v unit_test
+      - run: xmake build -v
       - run: xmake test -v unit_test/default
       - uses: threeal/gcovr-action@v1.2.0
         if: matrix.mode == 'coverage'

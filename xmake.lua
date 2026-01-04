@@ -23,7 +23,8 @@ option('regex')
     end)
 option_end()
 
-option('version')
+-- Naming it `--version` interferes with package versions
+option('tag')
     set_description('Binary version tag')
     set_default('')  -- nil causes `after_check` to be skipped
     set_showmenu(true)
@@ -62,6 +63,41 @@ if is_mode('debug') and is_os('linux') then
     end
 end
 
+function generate_licenses(target)
+    function gen(input)
+        local base = input:sub(1, -path.extension(input):len() - 1):lower()
+        local output = 'include/glug/generated/' .. base .. '.hpp'
+        local outfile = io.open(output, 'w')
+
+        local namespace = base:gsub(path.sep(), '::')
+        outfile:write('#pragma once\n')
+        outfile:write('// NOLINTBEGIN\n')
+        outfile:write('\n')
+        outfile:write('namespace glug::generated::' .. namespace .. ' {\n')
+        outfile:write('\n')
+        outfile:write('static constexpr const char* data =\n')
+        outfile:write('R"---(')
+
+        local infile = io.open(input, 'r')
+        for line in infile:lines() do
+            outfile:write(line .. '\n')
+        end
+        infile:close()
+
+        outfile:write(')---";\n')
+        outfile:write('\n')
+        outfile:write('}\n')
+        outfile:write('// NOLINTEND\n')
+        outfile:write('\n')
+        outfile:close()
+    end
+
+    gen('LICENSE.md')
+    for _, license in ipairs(os.files('licenses/*.md')) do
+        gen(license)
+    end
+end
+
 function copy_latest(target)
     destination = 'build/latest/'
     os.mkdir(destination)
@@ -73,7 +109,8 @@ target('glug')
     add_files('src/**.cpp')
     add_includedirs('include')
     add_packages(get_config('regex'))
-    add_options('regex', 'version')
+    add_options('regex', 'tag')
+    before_build(generate_licenses)
     after_build(copy_latest)
 target_end()
 
@@ -84,7 +121,7 @@ target('unit_test')
     add_includedirs('include', 'test')
     add_defines('UNIT_TEST=1')
     add_packages('gtest', get_config('regex'))
-    add_options('regex', 'version')
+    add_options('regex', 'tag')
     after_build(copy_latest)
 target_end()
 
@@ -126,7 +163,7 @@ task('suffix')
         import('core.base.option')
         config.load()
 
-        local version = config.get('version')
+        local version = config.get('tag')
         if version == '' then
             local head, _ = os.iorunv('git', { 'rev-parse', 'HEAD' })
             version = '0.0.0+' .. head:sub(0, 12)

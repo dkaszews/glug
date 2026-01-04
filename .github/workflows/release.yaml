@@ -3,8 +3,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release version
-        required: true
+        description: Release version, defaults to 0.0.0+githash
+        required: false
         type: string
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
           --kind=${{ matrix.kind }}
           --mode=${{ matrix.mode }}
           --regex=${{ matrix.regex }}
-          --version=${{ github.event.inputs.version }}
+          --tag=${{ github.event.inputs.version }}
       - run: xmake build -v glug
       - run: |
           echo "SUFFIX=$(xmake suffix)" >> "$GITHUB_ENV"

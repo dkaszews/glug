@@ -22,7 +22,7 @@ jobs:
           # Unsupported ARM architecture
           - { os: macos-latest, regex: hyperscan }
           # STL static and shared are the same thing, use "shared" to skip suffix
-          - { regex: stl, kind: static }
+          - { kind: static, regex: stl }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -57,8 +57,22 @@ jobs:
           path: artifacts/*.tar.gz
           retention-days: 1
 
+  licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: zip licenses.zip licenses/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: licenses
+          path: licenses.zip
+          retention-days: 1
+
   gather:
-    needs: build
+    needs:
+      - build
+      - licenses
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -71,8 +85,10 @@ jobs:
             tar -xvzf "$file"
             rm "$file"
           done
+          echo '---'
           tar -cvzf artifacts.tar.gz artifacts/*
       - uses: actions/upload-artifact@v4
         with:
+          name: artifacts
           path: artifacts.tar.gz
 

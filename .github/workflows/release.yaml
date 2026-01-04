@@ -6,8 +6,6 @@ on:
         description: Release version
         required: true
         type: string
-  # TODO: Remove, testing only
-  pull_request:
 
 jobs:
   build:
@@ -62,6 +60,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      # Double-zip so that final archive contains a zip
       - run: zip licenses.zip licenses/*
       - uses: actions/upload-artifact@v4
         with:

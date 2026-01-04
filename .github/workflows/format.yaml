@@ -33,6 +33,8 @@ jobs:
           project-path: glug
       - run: pip install -r requirements.txt
       - run: xmake config -vy
+      # Required to generate files
+      - run: xmake build -v
       - run: xmake project -k compile_commands
       - run: wget 'https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-21.1.6/clang-tools-extra/clang-tidy/tool/run-clang-tidy.py'
       - run: python3 ./run-clang-tidy.py

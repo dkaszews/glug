@@ -68,7 +68,7 @@ function generate_licenses(target)
         local output = 'include/glug/generated/' .. base .. '.hpp'
         local outfile = io.open(output, 'w')
 
-        local namespace = base:gsub('/', '::')
+        local namespace = base:gsub(path.sep(), '::')
         outfile:write('#pragma once\n')
         outfile:write('// NOLINTBEGIN\n')
         outfile:write('\n')

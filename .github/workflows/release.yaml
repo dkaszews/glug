@@ -3,8 +3,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release version
-        required: true
+        description: Release version, defaults to 0.0.0+githash
+        required: false
         type: string
 
 jobs:

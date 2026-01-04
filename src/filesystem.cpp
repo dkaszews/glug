@@ -81,7 +81,9 @@ auto is_root(const fs::path& path) {
         return true;
     }
 #endif
+    // GCOVR_EXCL_START: Spurious missing branch on Windows
     return path == path.parent_path();
+    // GCOVR_EXCL_STOP
 }
 
 }  // namespace

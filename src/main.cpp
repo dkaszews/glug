@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #if defined(GLUG_REGEX_PCRE2)
@@ -46,7 +47,7 @@ void print_regex_license() {}
 
 #endif
 
-const auto db = glug::glob::typetag_database{
+const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "asm", "*.asm,*.[sS]" },
     { "cpp", "*.cpp,*.cc,*.cxx,*.m,*.hpp,*.hh,*.h,*.hxx" },
     { "batch", "*.bat,*.cmd" },
@@ -65,8 +66,29 @@ const auto db = glug::glob::typetag_database{
 
 namespace {
 
+constexpr auto help = std::string_view{ R"(
+usage: glug [options] [root] [filter]
+
+Search files respecting .gitignore and given filter.
+
+Positional arguments:
+  root         Search root, defaults to current directory
+  filter       Comma-separated list of allowed globs and tags, defaults to all
+
+Options:
+  -h, --help   show this help message and exit
+  --version    print glug version
+  --license    print license of glug and third-party libraries, if any
+  --help-tags  print builtin tag expansions
+
+Examples:
+  glug . '*.cpp'               # Search all '*.cpp' files
+  glug include '-generated/*'  # Omit files in generated directory
+  glug test '#cpp,-#hpp'       # Search all cpp-related files except headers
+)" };
+
 int print_help() {
-    std::cout << "TODO: help!\n";
+    std::cout << help.substr(1);
     return 0;
 }
 
@@ -83,7 +105,16 @@ int print_license() {
 }
 
 int print_tags() {
-    std::cout << "TODO: tags\n";
+    const auto max_elem = std::max_element(
+            tags.begin(), tags.end(), [](const auto& lhs, const auto& rhs) {
+                return lhs.first.size() < rhs.first.size();
+            }
+    );
+    const auto pad = max_elem->first.size() + 2;
+
+    for (const auto& [tag, globs] : tags) {
+        std::cout << tag << std::string(pad - tag.size(), ' ') << globs << "\n";
+    }
     return 0;
 }
 
@@ -115,6 +146,7 @@ int main(int argc, const char** argv) {
 
     const auto dir = args.size() > 1 ? args[1] : "."sv;
     const auto select = args.size() > 2 ? args[2] : ""sv;
+    const auto db = glug::glob::typetag_database{ tags };
     const auto explorer = glug::filesystem::explorer{
         dir, { glug::filter::select{ db.expand(select), dir } }
     };

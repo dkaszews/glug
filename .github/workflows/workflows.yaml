@@ -15,17 +15,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: raven-actions/actionlint@v2
-  required:
+
+  # Hand-roll polling script, because `re-actors/alls-green@release/v1`
+  # and other `needs`-based solutions have trouble blocking while in progress.
+  all-green:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 60
     if: always()
-    needs:
-      - actionlint
     steps:
       - uses: actions/checkout@v4
-      - uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
+      - run: |
+          function any-checks {
+            gh pr checks --json 'name,state' \
+              | jq -r '.[] | select(.name != "all-green") | .state' \
+              | grep -qi "$1"
+          }
 
-
+          sleep 10
+          gh pr checks --json 'name,state'
+          while any-checks 'in_progress'; do sleep 10; done
+          if any-checks 'failed'; then exit 1; fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 

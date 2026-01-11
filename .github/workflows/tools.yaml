@@ -24,16 +24,4 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: tools/${{ matrix.tool }}.py
-  required:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: always()
-    needs:
-      - tools
-    steps:
-      - uses: actions/checkout@v4
-      - uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
-
 

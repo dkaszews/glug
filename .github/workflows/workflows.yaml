@@ -40,8 +40,12 @@ jobs:
               return results;
           };
 
-          while (await jobs(j => j.status !== 'completed')) { await sleep(10) };
+          while ((await jobs(j => j.status !== 'completed')).length) {
+              await sleep(10);
+          }
           core.info('Done waiting');
-          const failed = await get_jobs(j => j.conclusion[0] !== 's');  // success, skipped
-          if (failed) { core.setFailed(`Failed: ${failed.map(j => j.name).join(', ')}`); }
+          const failed = await jobs(j => j.conclusion[0] !== 's');  // success, skipped
+          if (failed.length) {
+              core.setFailed(`Failed: ${failed.map(j => j.name).join(', ')}`);
+          }
 

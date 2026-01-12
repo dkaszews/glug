@@ -18,14 +18,16 @@ jobs:
     if: ${{ always() }}
     permissions: { actions: read }
     steps:
-    - uses: actions/github-script@v7
-      with:
-        script: |
-          const results = await github.paginate(
-              'GET /repos/{owner}/{repo}/commits/{ref}/check-runs',
-              { ...context.repo, ref: context.sha, per_page: 100 }
-          );
-          core.info('<debug>')
-          core.info(JSON.stringify(results, null, 2));
-          core.info('</debug>')
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            core.info('<debug>')
+            core.info(JSON.stringify(github.rest), null, 2);
+            core.info(context.sha);
+            const results = await github.paginate(
+                'GET /repos/{owner}/{repo}/commits/{ref}/check-runs',
+                { ...context.repo, ref: context.sha, per_page: 100 }
+            );
+            core.info(JSON.stringify(results, null, 2));
+            core.info('</debug>')
 

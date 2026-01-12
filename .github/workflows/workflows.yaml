@@ -18,6 +18,7 @@ jobs:
 
   required:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: ${{ always() }}
     permissions: { actions: read }
     steps:
@@ -26,12 +27,17 @@ jobs:
         script: |
           const sleep = (s) => new Promise(r => setTimeout(r, 1000 * s));
           const jobs = async (predicate) => {
-              const results = await github.paginate(
+              let results = await github.paginate(
                   github.rest.actions.listJobsForWorkflowRun,
                   { ...context.repo, run_id: context.runId, per_page: 100 }
               );
+              results = results.filter(j => j.name !== 'required');
+              core.info('All:');
               core.info(results.map(j => `${j.name}:${j.status}:${j.conclusion}`).join(', '));
-              return results.filter(j => j.name !== 'required' && predicate(j));
+              results = results.filter(predicate);
+              core.info('Filtered:');
+              core.info(results.map(j => `${j.name}:${j.status}:${j.conclusion}`).join(', '));
+              return results;
           };
 
           while (await jobs(j => j.status !== 'completed')) { await sleep(10) };

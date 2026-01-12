@@ -16,25 +16,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: raven-actions/actionlint@v2
 
-  # Hand-roll polling script, because `re-actors/alls-green@release/v1`
-  # and other `needs`-based solutions have trouble blocking while in progress.
-  all-green:
+  required:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    if: always()
+    if: ${{ always() }}
+    permissions: { actions: read }
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          function any-checks {
-            gh pr checks --json 'name,state' \
-              | jq -r '.[] | select(.name != "all-green") | .state' \
-              | grep -qi "$1"
-          }
+    - uses: actions/github-script@v7
+      with:
+        script: |
+          const sleep = (s) => new Promise(r => setTimeout(r, 1000 * s));
+          const jobs = async (predicate) => {
+              const results = await github.paginate(
+                  github.rest.actions.listJobsForWorkflowRun,
+                  { ...context.repo, run_id: context.runId, per_page: 100 }
+              );
+              core.debug(results);
+              return results.filter(j => j.name !== 'required' && predicate(j));
+          };
 
-          sleep 10
-          gh pr checks --json 'name,state'
-          while any-checks 'in_progress'; do sleep 10; done
-          if any-checks 'failed'; then exit 1; fi
-        env:
-          GH_TOKEN: ${{ github.token }}
+          while (await jobs(j => j.status !== 'completed')) { await sleep(10) };
+          const failed = await get_jobs(j => j.conclusion[0] !== 's');  // success, skipped
+          if (failed) { core.setFailed(`Failed: ${failed.map(j => j.name).join(', ')}`); }
 

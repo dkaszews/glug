@@ -14,19 +14,33 @@ jobs:
 
   required:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
-    if: ${{ always() }}
+    timeout-minutes: 10
     permissions: { actions: read }
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            core.info('<debug>')
-            const ref = context.payload.pull_request.head.sha;
-            const results = await github.paginate(
-                github.rest.checks.listForRef,
-                { ...context.repo, ref, per_page: 100 }
-            );
-            core.info(JSON.stringify(results, null, 2));
-            core.info('</debug>')
+            while (true) {
+                const ref = context.payload.after;
+                const jobs = await github.paginate(
+                    github.rest.checks.listForRef,
+                    { ...context.repo, ref, per_page: 100 }
+                );
+                const others = jobs.filter(j => j.name !== context.job);
+                const completed = others.filter(j => j.status === 'completed');
+                const failed = completed.filter(j => j.conclusion[0] !== 's');
+
+                core.info(`jobs: ${jobs.length}`);
+                core.info(`others: ${others.length}`);
+                core.info(`completed: ${completed.length}`);
+                core.info(`failed: ${failed.length}`);
+
+                if (failed.length) {
+                    core.setFailed(`Failed: ${failed.map(j => j.name).join(', ')}`);
+                    break;
+                } else if (completed.length == others.length) {
+                    break;
+                }
+                await new Promise((r) => setTimeout(r, 10 * 1000));
+            }
 

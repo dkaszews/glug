@@ -30,7 +30,7 @@ jobs:
                   github.rest.actions.listJobsForWorkflowRun,
                   { ...context.repo, run_id: context.runId, per_page: 100 }
               );
-              core.info(results);
+              core.info(results.map(j => `${j.name}:${j.status}:${j.conclusion}`).join(', '));
               return results.filter(j => j.name !== 'required' && predicate(j));
           };
 

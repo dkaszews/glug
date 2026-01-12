@@ -2,10 +2,6 @@
 # so please make sure it still runs after you modify it!
 name: Workflows
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
   pull_request:
 
 jobs:
@@ -25,5 +21,11 @@ jobs:
     - uses: actions/github-script@v7
       with:
         script: |
-          core.info(JSON.stringify(context))
+          const results = await github.paginate(
+              'GET /repos/{owner}/{repo}/commits/{ref}/check-runs',
+              { ...context.repo, ref: context.sha, per_page: 100 }
+          );
+          core.info('<debug>')
+          core.info(JSON.stringify(results, null, 2));
+          core.info('</debug>')
 

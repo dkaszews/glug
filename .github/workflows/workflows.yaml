@@ -22,11 +22,11 @@ jobs:
         with:
           script: |
             core.info('<debug>')
-            core.info(context.sha);
+            const ref = context.payload.pull_request.head.sha;
             const results = await github.paginate(
                 github.rest.checks.listForRef,
-                { ...context.repo, ref: context.sha, per_page: 100 }
+                { ...context.repo, ref, per_page: 100 }
             );
-            core.info(JSON.stringify(results));
+            core.info(JSON.stringify(results, null, 2));
             core.info('</debug>')
 

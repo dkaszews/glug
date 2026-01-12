@@ -30,11 +30,12 @@ jobs:
                   github.rest.actions.listJobsForWorkflowRun,
                   { ...context.repo, run_id: context.runId, per_page: 100 }
               );
-              core.debug(results);
+              core.info(results);
               return results.filter(j => j.name !== 'required' && predicate(j));
           };
 
           while (await jobs(j => j.status !== 'completed')) { await sleep(10) };
+          core.info('Done waiting');
           const failed = await get_jobs(j => j.conclusion[0] !== 's');  // success, skipped
           if (failed) { core.setFailed(`Failed: ${failed.map(j => j.name).join(', ')}`); }
 

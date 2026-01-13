@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm, riscv64 ]
+        os: [ ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm ]
         toolchain: [ gcc, clang, msvc ]
         mode: [ debug ]
         regex: [ stl, pcre2, re2, hyperscan ]
@@ -23,27 +23,20 @@ jobs:
           - { os: ubuntu-latest, toolchain: msvc }
           - { os: macos-latest, toolchain: msvc }
           - { os: ubuntu-24.04-arm, toolchain: msvc }
-          - { os: riscv64, toolchain: msvc }
           # Linker failure, debug flags mismatch
           - { os: windows-latest, toolchain: clang }
           # Linker issues
           - { os: windows-latest, toolchain: gcc, regex: hyperscan }
-          # Unsupported architecture
+          # Unsupported ARM architecture
           - { os: macos-latest, regex: hyperscan }
           - { os: ubuntu-24.04-arm, regex: hyperscan }
-          - { os: riscv64, regex: hyperscan }
           # Hyperscan v5.4.2 - unqualified call to 'std::move'
           - { os: ubuntu-latest, toolchain: clang, regex: hyperscan }
-    runs-on: ${{ matrix.os != 'riscv64' && matrix.os || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os }}
     # Hyperscan takes long time to compile
     timeout-minutes: ${{ matrix.regex == 'hyperscan' && 30 || 10 }}
     steps:
       - uses: actions/checkout@v4
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        if: matrix.os == 'riscv64'
-        with:
-          packages: gcc-riscv64-linux-gnu
-          version: 1.0
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'
@@ -57,17 +50,8 @@ jobs:
           --mode=${{ matrix.mode }}
           --regex=${{ matrix.regex }}
           ${{ (matrix.os == 'windows-latest' && matrix.toolchain != 'msvc') && '--plat=mingw' || '' }}
-          ${{ matrix.os == 'riscv64' && '--plat=cross --target_os=linux --arch=riscv64 --cross=riscv64-linux-gnu-' || '' }}
       - run: xmake build -v
       - run: xmake test -v unit_test/default
-        if: matrix.os != 'riscv64'
-      - uses: uraimo/run-on-arch-action@v3
-        with:
-          arch: riscv64
-          distro: ubuntu_latest
-          dockerRunArgs: --volume "${PWD}/build:/build"
-          run: /build/latest/unit_test
-        if: matrix.os == 'riscv64'
       - uses: threeal/gcovr-action@v1.2.0
         if: matrix.mode == 'coverage'
         with:
@@ -81,6 +65,50 @@ jobs:
         with:
           name: coverage_${{ matrix.os }}
           path: 'coverage_report.*'
+
+  cross-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ riscv64 ]
+        mode: [ debug ]
+        regex: [ stl, pcre2, re2, hyperscan ]
+        exclude:
+          # Unsupported architecture
+          - { arch: riscv64, regex: hyperscan }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: gcc-${{ matrix.arch }}-linux-gnu
+          version: 1.0
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ubuntu-latest.cross-${{ matrix.arch }}.${{ matrix.mode }}.${{ matrix.regex }}
+          project-path: glug
+      - run: >
+          xmake config -vy
+          --plat=cross
+          --target_os=linux
+          --mode=${{ matrix.mode }}
+          --regex=${{ matrix.regex }}
+          --arch=${{ matrix.arch }}
+          --cross=${{ matrix.arch }}-linux-gnu-
+      - run: xmake build -v
+      - run: file build/latest/*
+      - uses: uraimo/run-on-arch-action@v3
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ubuntu_latest
+          dockerRunArgs: --volume "${PWD}/build:/build"
+          run: |
+            ls /
+            find /build
+            /build/latest/unit_test
 
   parity-test:
     strategy:

@@ -103,7 +103,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu_latest
-          install: apt-get update -qy && apt-get install -qy libasan8
+          install: apt-get update -qy && apt-get install -qy libasan8 libubsan1
           dockerRunArgs: --volume "${PWD}/build:/build"
           run: |
             ldd /build/latest/unit_test

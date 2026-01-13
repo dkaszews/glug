@@ -23,6 +23,7 @@ jobs:
           - { os: ubuntu-latest, toolchain: msvc }
           - { os: macos-latest, toolchain: msvc }
           - { os: ubuntu-24.04-arm, toolchain: msvc }
+          - { os: riscv64, toolchain: msvc }
           # Linker failure, debug flags mismatch
           - { os: windows-latest, toolchain: clang }
           # Linker issues
@@ -38,6 +39,11 @@ jobs:
     timeout-minutes: ${{ matrix.regex == 'hyperscan' && 30 || 10 }}
     steps:
       - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        if: matrix.os == 'riscv64'
+        with:
+          packages: gcc-riscv64-linux-gnu
+          version: 1.0
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'
@@ -52,18 +58,13 @@ jobs:
           --regex=${{ matrix.regex }}
           ${{ (matrix.os == 'windows-latest' && matrix.toolchain != 'msvc') && '--plat=mingw' || '' }}
           ${{ matrix.os == 'riscv64' && '--plat=cross --target_os=linux --arch=riscv64 --cross=riscv64-linux-gnu-' || '' }}
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        if: matrix.os == 'riscv64'
-        with:
-          packages: gcc-riscv64-linux-gnu
-          version: 1.0
       - run: xmake build -v
       - run: xmake test -v unit_test/default
         if: matrix.os != 'riscv64'
       - uses: uraimo/run-on-arch-action@v3
         with:
           arch: riscv64
-          distro: ubuntu-latest
+          distro: ubuntu_latest
           dockerRunArgs: --volume "${PWD}/build:/build"
           run: /build/latest/unit_test
         if: matrix.os == 'riscv64'

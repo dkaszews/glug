@@ -83,7 +83,6 @@ jobs:
         with:
           packages: g++-${{ matrix.arch }}-linux-gnu
           version: 1.0
-      - run: which riscv64-linux-gnu-g++
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'
@@ -100,15 +99,14 @@ jobs:
           --arch=${{ matrix.arch }}
           --cross=${{ matrix.arch }}-linux-gnu-
       - run: xmake build -v
-      - run: file build/latest/*
       - uses: uraimo/run-on-arch-action@v3
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu_latest
+          install: apt-get update -qy && apt-get install -qy libasan8
           dockerRunArgs: --volume "${PWD}/build:/build"
           run: |
-            ls /
-            find /build
+            ldd /build/latest/unit_test
             /build/latest/unit_test
 
   parity-test:

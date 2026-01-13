@@ -43,10 +43,6 @@ add_requires('gtest >= 1.16.0')
 if regex_engines[get_config('regex')] then
     local engine = get_config('regex')
     local config = { configs = { shared = is_kind('shared') } }
-    -- https://github.com/xmake-io/xmake-repo/pull/9088
-    if engine == 're2' then
-        add_requires('abseil 20250814.1', config)
-    end
     add_requires(engine .. ' ' .. regex_engines[engine], config)
 end
 

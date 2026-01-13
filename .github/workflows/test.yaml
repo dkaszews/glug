@@ -108,6 +108,7 @@ jobs:
           run: |
             ldd /build/latest/unit_test
             /build/latest/unit_test
+            false
 
   parity-test:
     strategy:

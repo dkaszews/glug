@@ -81,8 +81,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: gcc-${{ matrix.arch }}-linux-gnu
+          packages: g++-${{ matrix.arch }}-linux-gnu
           version: 1.0
+      - run: which riscv64-linux-gnu-g++
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'

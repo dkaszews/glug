@@ -7,7 +7,7 @@ set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
 local regex_engines = {
-    re2 = '== 2025.08.12',
+    re2 = '>= 2025.08.12',
     pcre2 = '>= 10.44',
     hyperscan = '>= 5.4.2',
 }
@@ -43,6 +43,10 @@ add_requires('gtest >= 1.16.0')
 if regex_engines[get_config('regex')] then
     local engine = get_config('regex')
     local config = { configs = { shared = is_kind('shared') } }
+    -- https://github.com/xmake-io/xmake-repo/pull/9088
+    if engine == 're2' then
+        add_requires('abseil 20250814.1', config)
+    end
     add_requires(engine .. ' ' .. regex_engines[engine], config)
 end
 

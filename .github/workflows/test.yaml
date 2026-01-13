@@ -105,10 +105,7 @@ jobs:
           arch: ${{ matrix.arch }}
           distro: ubuntu_latest
           dockerRunArgs: --volume "${PWD}/build:/build"
-          run: |
-            ldd /build/latest/unit_test
-            /build/latest/unit_test
-            false
+          run: /build/latest/unit_test
 
   parity-test:
     strategy:

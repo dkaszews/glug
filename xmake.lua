@@ -7,7 +7,7 @@ set_languages('c++17')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
 local regex_engines = {
-    re2 = '>= 2025.08.12',
+    re2 = '== 2025.08.12',
     pcre2 = '>= 10.44',
     hyperscan = '>= 5.4.2',
 }

@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm ]
         toolchain: [ gcc, clang, msvc ]
         mode: [ debug ]
         regex: [ stl, pcre2, re2, hyperscan ]
@@ -22,12 +22,14 @@ jobs:
           # MSVC only on Windows
           - { os: ubuntu-latest, toolchain: msvc }
           - { os: macos-latest, toolchain: msvc }
+          - { os: ubuntu-24.04-arm, toolchain: msvc }
           # Linker failure, debug flags mismatch
           - { os: windows-latest, toolchain: clang }
           # Linker issues
           - { os: windows-latest, toolchain: gcc, regex: hyperscan }
-          - { os: macos-latest, toolchain: gcc, regex: hyperscan }
-          - { os: macos-latest, toolchain: clang, regex: hyperscan }
+          # Unsupported ARM architecture
+          - { os: macos-latest, regex: hyperscan }
+          - { os: ubuntu-24.04-arm, regex: hyperscan }
           # Hyperscan v5.4.2 - unqualified call to 'std::move'
           - { os: ubuntu-latest, toolchain: clang, regex: hyperscan }
     runs-on: ${{ matrix.os }}
@@ -63,6 +65,48 @@ jobs:
         with:
           name: coverage_${{ matrix.os }}
           path: 'coverage_report.*'
+
+  cross-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ riscv64 ]
+        # Use release as debug sanitizers have issues cross-platform
+        mode: [ release ]
+        regex: [ stl, pcre2, re2, hyperscan ]
+        exclude:
+          # Unsupported architecture
+          - { arch: riscv64, regex: hyperscan }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: g++-${{ matrix.arch }}-linux-gnu
+          version: 1.0
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ubuntu-latest.cross-${{ matrix.arch }}.${{ matrix.mode }}.${{ matrix.regex }}
+          project-path: glug
+      - run: >
+          xmake config -vy
+          --plat=cross
+          --target_os=linux
+          --mode=${{ matrix.mode }}
+          --regex=${{ matrix.regex }}
+          --arch=${{ matrix.arch }}
+          --cross=${{ matrix.arch }}-linux-gnu-
+      - run: xmake build -v
+      - uses: uraimo/run-on-arch-action@v3
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ubuntu_latest
+          dockerRunArgs: --volume "${PWD}/build:/build"
+          run: /build/latest/unit_test
+
   parity-test:
     strategy:
       fail-fast: false

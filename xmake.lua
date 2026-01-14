@@ -46,6 +46,11 @@ if regex_engines[get_config('regex')] then
     add_requires(engine .. ' ' .. regex_engines[engine], config)
 end
 
+-- GCC 15.1.0 cross-toolchain complains about gtest using `<ciso646>`
+if is_cross('riscv64-linux-gnu-') then
+    add_cxxflags('-Wno-cpp')
+end
+
 -- Windows assumes all strings are ANSI code pages, garbling output
 if is_plat('windows', 'mingw') then
     add_cxxflags('-utf-8')
@@ -176,7 +181,7 @@ task('suffix')
             end
         end
 
-        append_if_not(config.get('plat'), nil)
+        append_if_not(config.get('target_os') or config.get('plat'), nil)
         append_if_not(config.get('arch'), nil)
         append_if_not(config.get('mode'), 'release')
         append_if_not(config.get('kind'), 'shared')

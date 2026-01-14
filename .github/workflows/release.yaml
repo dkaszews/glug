@@ -12,13 +12,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm ]
         kind: [ static, shared ]
         mode: [ release ]
         regex: [ stl, pcre2, re2, hyperscan ]
         exclude:
           # Unsupported ARM architecture
           - { os: macos-latest, regex: hyperscan }
+          - { os: ubuntu-24.04-arm, regex: hyperscan }
           # STL static and shared are the same thing, use "shared" to skip suffix
           - { kind: static, regex: stl }
     runs-on: ${{ matrix.os }}
@@ -55,6 +56,60 @@ jobs:
           path: artifacts/*.tar.gz
           retention-days: 1
 
+  cross:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ riscv64 ]
+        kind: [ static, shared ]
+        mode: [ release ]
+        regex: [ stl, pcre2, re2, hyperscan ]
+        exclude:
+          # Unsupported architecture
+          - { arch: riscv64, regex: hyperscan }
+          # STL static and shared are the same thing, use "shared" to skip suffix
+          - { kind: static, regex: stl }
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: g++-${{ matrix.arch }}-linux-gnu
+          version: 1.0
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: '>=3.0.1'
+          actions-cache-folder: .xmake-cache
+          package-cache: true
+          package-cache-key: ubuntu-latest.cross-${{ matrix.arch }}.${{ matrix.kind }}.${{ matrix.mode }}.${{ matrix.regex }}
+          project-path: glug
+      - run: >
+          xmake config -vy
+          --plat=cross
+          --target_os=linux
+          --kind=${{ matrix.kind }}
+          --mode=${{ matrix.mode }}
+          --regex=${{ matrix.regex }}
+          --arch=${{ matrix.arch }}
+          --cross=${{ matrix.arch }}-linux-gnu-
+          --tag=${{ github.event.inputs.version }}
+      - run: xmake build -v glug
+      - run: |
+          echo "SUFFIX=$(xmake suffix)" >> "$GITHUB_ENV"
+        shell: bash
+      # Permission loss - https://github.com/actions/upload-artifact/issues/38
+      - run: |
+          mkdir artifacts
+          mv "build/latest/glug" "artifacts/glug-${SUFFIX}"
+          tar -cvzf "artifacts/glug-${SUFFIX}.tar.gz" "artifacts/glug-${SUFFIX}"
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glug-${{ env.SUFFIX }}
+          path: artifacts/*.tar.gz
+          retention-days: 1
+
   licenses:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -71,6 +126,7 @@ jobs:
   gather:
     needs:
       - build
+      - cross
       - licenses
     runs-on: ubuntu-latest
     timeout-minutes: 10

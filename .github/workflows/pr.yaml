@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: raven-actions/actionlint@v2
 
-  issues:
+  title:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

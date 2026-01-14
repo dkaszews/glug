@@ -24,6 +24,12 @@ jobs:
             )).data;
             core.debug(JSON.stringify(pr, null, 2));
 
+            const merge_title = `${pr.title} (#${pr.number})`;
+            if (merge_title.length > 80) {
+                core.setFailed(`Merge title too long: ${merge_title}`);
+                return;
+            }
+
             if (pr.body === null) {
                 core.setFailed('No PR body');
                 return;

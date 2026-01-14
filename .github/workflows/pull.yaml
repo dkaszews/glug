@@ -19,8 +19,13 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            core.debug(JSON.stringify(context));
             const pr = context.payload.pull_request;
+            core.debug(JSON.stringify(pr, null, 2));
+
+            if (pr.body === null) {
+                core.setFailed('No PR body');
+                return;
+            }
 
             let match = null;
             const re = /\b(?:close|fixe?|resolve)[sd]?:? #(?<issue>\d+)/;

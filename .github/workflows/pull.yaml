@@ -34,6 +34,7 @@ jobs:
                 const issue = await github.rest.issues.get(
                     { ...context.repo, issue_number, per_page: 100 }
                 );
+                core.debug(JSON.stringify(issue, null, 2));
 
                 const is_bug = issue.labels.some(l => l.name == 'bug');
                 const issue_title = `${is_bug ? 'Fix ' : ''}${issue.title}`;

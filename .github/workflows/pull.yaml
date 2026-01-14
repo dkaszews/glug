@@ -31,7 +31,7 @@ jobs:
 
             let match = null;
             let count = 0;
-            const re = /\b(?:close|fixe?|resolve)[sd]?:? #(?<issue>\d+)/;
+            const re = /\b(?:close|fixe?|resolve)[sd]?:? #(?<issue>\d+)/g;
             while ((match = re.exec(pr.body.toLowerCase())) !== null) {
                 count++;
                 const issue_number = match.groups['issue'];

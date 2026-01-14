@@ -12,6 +12,35 @@ jobs:
       - uses: actions/checkout@v4
       - uses: raven-actions/actionlint@v2
 
+  issue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            core.debug(JSON.stringify(context));
+            const pr = context.payload.pull_request;
+
+            let match = null;
+            const re = /\b(?:close|fixe?|resolve)[sd]?:? #(?<issue>\d+)/;
+            while ((match = re.exec(pr.body.toLowerCase())) !== null) {
+                const issue_number = match.groups['issue'];
+                const issue = await github.rest.issues.get(
+                    { ...context.repo, issue_number, per_page: 100 }
+                );
+
+                const is_bug = issue.labels.any(l => l.name == 'bug');
+                const issue_title = `${is_bug ? 'Fix ' : ''}${issue.title}`;
+                core.info(`Issue #${issue_number} wants title: ${issue_title}`);
+
+                if (issue_title !== pr.title) {
+                    core.info('Match');
+                    return;
+                }
+            }
+            core.setFailed(`No linked issues matching PR title: ${pr.title}`);
+
   required:
     runs-on: ubuntu-latest
     timeout-minutes: 60

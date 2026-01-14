@@ -1,6 +1,4 @@
-# Important: This workflow ensures every other one runs,
-# so please make sure it still runs after you modify it!
-name: Pull
+name: PR
 on:
   pull_request:
 

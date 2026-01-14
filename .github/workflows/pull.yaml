@@ -28,8 +28,10 @@ jobs:
             }
 
             let match = null;
+            let count = 0;
             const re = /\b(?:close|fixe?|resolve)[sd]?:? #(?<issue>\d+)/;
             while ((match = re.exec(pr.body.toLowerCase())) !== null) {
+                count++;
                 const issue_number = match.groups['issue'];
                 const issue = await github.rest.issues.get(
                     { ...context.repo, issue_number, per_page: 100 }
@@ -44,7 +46,12 @@ jobs:
                     return;
                 }
             }
-            core.setFailed(`No linked issues matching PR title: ${pr.title}`);
+
+            if (count) {
+                core.setFailed(`None of ${count} linked issues match PR title: ${pr.title}`);
+            } else {
+                core.setFailed('No linked issues');
+            }
 
   required:
     runs-on: ubuntu-latest

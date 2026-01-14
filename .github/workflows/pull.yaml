@@ -17,7 +17,11 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            const pr = context.payload.pull_request;
+            let pr = context.payload.pull_request;
+            // Reruns might have stale data
+            pr = (await github.rest.pulls.get(
+                { ...context.repo, pull_number: pr.number }
+            )).data;
             core.debug(JSON.stringify(pr, null, 2));
 
             if (pr.body === null) {
@@ -31,13 +35,13 @@ jobs:
             while ((match = re.exec(pr.body.toLowerCase())) !== null) {
                 count++;
                 const issue_number = match.groups['issue'];
-                const issue = await github.rest.issues.get(
-                    { ...context.repo, issue_number, per_page: 100 }
-                );
+                const issue = (await github.rest.issues.get(
+                    { ...context.repo, issue_number }
+                )).data;
                 core.debug(JSON.stringify(issue, null, 2));
 
                 const is_bug = issue.labels.some(l => l.name == 'bug');
-                const issue_title = `${is_bug ? 'Fix ' : ''}${issue.title}`;
+                const issue_title = `${is_bug ? 'Fix: ' : ''}${issue.title}`;
                 core.info(`Issue #${issue_number} wants title: ${issue_title}`);
 
                 if (issue_title !== pr.title) {

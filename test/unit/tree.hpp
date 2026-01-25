@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #pragma once
 
 #include <cstddef>
@@ -89,8 +89,7 @@ std::ostream& operator<<(std::ostream& os, const link& link);
 
 class dir {
     public:
-    explicit dir(std::string_view name) :
-        dir{ name, {} } {}
+    explicit dir(std::string_view name);
     dir(std::string_view name, const std::vector<node>& contents);
 
     [[nodiscard]] const auto& path() const { return path_value; }
@@ -103,15 +102,11 @@ class dir {
 
     private:
     std::filesystem::path path_value{};
-    std::vector<node> contents_value{};
+    // Vector of incomplete types requires all definitions out-of-line.
+    std::vector<node> contents_value;
 };
-inline dir operator""_d(const char* name, [[maybe_unused]] size_t n) {
-    return dir{ name };
-}
-inline bool operator==(const dir& lhs, const dir& rhs) {
-    return std::tie(lhs.path(), lhs.contents())
-            == std::tie(rhs.path(), rhs.contents());
-}
+dir operator""_d(const char* name, [[maybe_unused]] size_t n);
+bool operator==(const dir& lhs, const dir& rhs);
 std::ostream& operator<<(std::ostream& os, const dir& dir);
 
 class node {

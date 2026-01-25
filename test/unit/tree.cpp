@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "tree.hpp"
 
 #include <cstddef>
@@ -88,6 +88,9 @@ std::ostream& operator<<(std::ostream& os, const link& link) {
     return os << "link{ " << link.path() << ", " << link.target() << " }";
 }
 
+dir::dir(std::string_view name) :
+    dir{ name, {} } {}
+
 dir::dir(std::string_view name, const std::vector<node>& contents) :
     path_value{ name },
     contents_value{ contents } {
@@ -113,6 +116,15 @@ void dir::materialize(const temp_fs& temp) const {
     for (const auto& child : contents()) {
         child.materialize(temp);
     }
+}
+
+dir operator""_d(const char* name, [[maybe_unused]] size_t n) {
+    return dir{ name };
+}
+
+bool operator==(const dir& lhs, const dir& rhs) {
+    return std::tie(lhs.path(), lhs.contents())
+            == std::tie(rhs.path(), rhs.contents());
 }
 
 std::ostream& operator<<(std::ostream& os, const dir& dir) {

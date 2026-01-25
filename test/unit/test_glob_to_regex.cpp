@@ -280,6 +280,7 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
+// NOLINTNEXTLINE
 TEST(regex_license, dummy) { std::ignore = glug::regex::engine::license(); }
 
 }  // namespace glug::glob::unit_test

@@ -1,5 +1,6 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filesystem.hpp"
+#include "glug/regex.hpp"
 
 #include "glug/generated/license.hpp"
 
@@ -8,44 +9,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-
-#if defined(GLUG_REGEX_PCRE2)
-
-#include "glug/generated/licenses/pcre2.hpp"
-namespace {
-void print_regex_license() {
-    std::cout << "--- pcre2 license ---\n\n";
-    std::cout << glug::generated::licenses::pcre2::data;
-}
-}  // namespace
-
-#elif defined(GLUG_REGEX_RE2)
-
-#include "glug/generated/licenses/re2.hpp"
-namespace {
-void print_regex_license() {
-    std::cout << "--- re2 license ---\n\n";
-    std::cout << glug::generated::licenses::re2::data;
-}
-}  // namespace
-
-#elif defined(GLUG_REGEX_HYPERSCAN)
-
-#include "glug/generated/licenses/hyperscan.hpp"
-namespace {
-void print_regex_license() {
-    std::cout << "--- hyperscan license ---\n\n";
-    std::cout << glug::generated::licenses::hyperscan::data;
-}
-}  // namespace
-
-#else
-
-namespace {
-void print_regex_license() {}
-}  // namespace
-
-#endif
 
 const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "asm", "*.asm,*.[sS]" },
@@ -100,7 +63,9 @@ int print_version() {
 int print_license() {
     std::cout << "--- glug license --- \n\n";
     std::cout << glug::generated::license::data << "\n";
-    print_regex_license();
+    if (const auto license = glug::regex::engine::license(); !license.empty()) {
+        std::cout << license << "\n";
+    }
     return 0;
 }
 

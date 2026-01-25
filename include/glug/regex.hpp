@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #pragma once
 
 #include <memory>
@@ -17,6 +17,8 @@ class engine {
 
     [[nodiscard]] bool match(std::string_view s) const;
     [[nodiscard]] bool operator()(std::string_view s) const { return match(s); }
+
+    static std::string_view license();
 
     private:
     std::shared_ptr<detail::impl> pimpl{};

@@ -1,6 +1,10 @@
 # Explain every exclusion here, since cannot comment in middle of block scalar
 # * google-readability-avoid-underscore-in-googletest-name:
 #   Incompatible with snake_case naming convention
+# * google-readability-todo:
+#   Forces username tagged on each TODO, not fixable before clang 22.
+# * misc-no-recursion:
+#   Recursion is a valid tool, often only tool to get the job done
 # * modernize-use-trailing-return-type:
 #   Might consider in future, limit refactor for now
 # * portability-avoid-pragma-once:
@@ -8,8 +12,6 @@
 # * readability-identifier-length:
 #   Short does not mean non-descriptive, like `string_view s` or `to = from`,
 #   coding in all those exceptions is a waste of time
-# * misc-no-recursion:
-#   Recursion is a valid tool, often only tool to get the job done
 # * readability-redundant-member-init:
 #   All members should be explicitly value-initialized for consistency,
 #   as it is not guaranteed that default initialization is sane, like primitives
@@ -33,6 +35,7 @@ Checks: >
   readability-*,
 
   -google-readability-avoid-underscore-in-googletest-name,
+  -google-readability-todo,
   -misc-no-recursion,
   -modernize-use-trailing-return-type,
   -portability-avoid-pragma-once,

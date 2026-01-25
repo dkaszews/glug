@@ -41,7 +41,7 @@ jobs:
       - run: xmake build -v
       - run: xmake project -k compile_commands
       - run: wget 'https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-21.1.6/clang-tools-extra/clang-tidy/tool/run-clang-tidy.py'
-      - run: python3 ./run-clang-tidy.py ${{ matrix.regex != 'stl' && 'src/regex.cpp' || '' }}
+      - run: python3 ./run-clang-tidy.py ${{ matrix.regex != 'stl' && 'src/regex/${{ matrix.regex }}.cpp' || '' }}
   flake8:
     runs-on: ubuntu-latest
     timeout-minutes: 30

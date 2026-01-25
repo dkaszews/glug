@@ -1,5 +1,6 @@
 // Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
 #include "glug/glob.hpp"
+#include "glug/regex.hpp"
 
 #include "parametrized.hpp"
 
@@ -278,6 +279,8 @@ INSTANTIATE_TEST_SUITE_P(
             { "[*?", "\\[\\*\\?" },
         })
 );
+
+TEST(regex_license, dummy) { std::ignore = glug::regex::engine::license(); }
 
 }  // namespace glug::glob::unit_test
 

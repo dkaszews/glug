@@ -2,25 +2,45 @@
 #include "glug/regex.hpp"
 
 #include <memory>
+#include <string>
 #include <string_view>
 
-#if defined(GLUG_REGEX_PCRE2)
+#if defined(GLUG_REGEX_STL)
+
+#include <regex>
+
+#elif defined(GLUG_REGEX_PCRE2)
+#define GLUG_REGEX_LICENSE_NAME pcre2
+
+#include "glug/generated/licenses/pcre2.hpp"
+
 #include <pcre2.h>
 
 #include <cstddef>
+
 #elif defined(GLUG_REGEX_RE2)
+#define GLUG_REGEX_LICENSE_NAME re2
+
+#include "glug/generated/licenses/re2.hpp"
+
 #include <re2/re2.h>
+
 #elif defined(GLUG_REGEX_HYPERSCAN)
+#define GLUG_REGEX_LICENSE_NAME hyperscan
+
 #include "glug/detail/backport/type_traits.hpp"
+#include "glug/generated/licenses/hyperscan.hpp"
 
 #include <hs/hs_common.h>
 #include <hs/hs_compile.h>
 #include <hs/hs_runtime.h>
 
 #include <cassert>
-#include <string>
+
 #else
-#include <regex>
+
+#error "Invalid regex engine"
+
 #endif
 
 namespace glug::regex {
@@ -192,6 +212,28 @@ engine::engine(std::string_view pattern) :
 bool engine::match(std::string_view s) const {
     return std::regex_match(s.begin(), s.end(), pimpl->re);
 }
+
+#endif
+
+// Not a fan of macros, but this is best we can do with current codegen schema
+#if defined(GLUG_REGEX_LICENSE_NAME)
+
+#define _STR(x) #x
+#define STR(x) _STR(x)
+
+std::string_view engine::license() {
+    static const auto result = []() {
+        auto result = std::string{
+            "--- " STR(GLUG_REGEX_LICENSE_NAME) " license ---\n\n"
+        };
+        result += glug::generated::licenses::GLUG_REGEX_LICENSE_NAME::data;
+        return result;
+    }();
+    return result;
+}
+#else
+
+std::string_view engine::license() { return ""; }
 
 #endif
 

@@ -18,6 +18,8 @@ class engine {
     [[nodiscard]] bool match(std::string_view s) const;
     [[nodiscard]] bool operator()(std::string_view s) const { return match(s); }
 
+    static std::string_view license();
+
     private:
     std::shared_ptr<detail::impl> pimpl{};
 };

@@ -125,7 +125,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: test/data/.cloned
-          key: ${{ runner.os }}-${{ hashFiles('tools/git.py', 'test/parity/repos.py') }}
+          key: ${{ matrix.os }}-${{ hashFiles('tools/git.py', 'test/parity/repos.py') }}
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'

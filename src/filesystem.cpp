@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <iterator>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -109,7 +109,7 @@ void explorer_impl::add_outer_filters(const fs::path& path) {
             break;
         }
     }
-    std::reverse(stack.begin(), stack.end());
+    std::ranges::reverse(stack);
 };  // GCOVR_EXCL_LINE: Unknown exceptional path
 
 void explorer_impl::populate(const fs::path& path) {
@@ -126,20 +126,19 @@ void explorer_impl::populate(const fs::path& path) {
             return entry.path().filename() == filename;
         };  // GCOVR_EXCL_LINE: Unknown exceptional path
     };
-    const bool is_root
-            = std::any_of(entries.begin(), entries.end(), is_named(".git"));
-    const bool already_rooted = std::any_of(
-            stack.begin(), stack.end(), std::mem_fn(&explorer::level::is_root)
+    const bool is_root = std::ranges::any_of(entries, is_named(".git"));
+    const bool already_rooted = std::ranges::any_of(
+            stack, std::mem_fn(&explorer::level::is_root)
     );
     if (is_root && already_rooted) {
         return;
     }
 
-    const auto gitignore = std::find_if(
-            entries.begin(), entries.end(), is_named(".gitignore")
-    );
+    const auto gitignore
+            = std::ranges::find_if(entries, is_named(".gitignore"));
     auto filter = gitignore != entries.end() ? make_filter(gitignore->path())
                                              : filter::ignore{};
+    // TODO: Replace with emplace_back and try removing gcovr exclusion
     // GCOVR_EXCL_START: Move cannot throw
     stack.push_back({ std::move(filter), std::move(entries), is_root });
     // GCOVR_EXCL_STOP
@@ -166,26 +165,22 @@ bool explorer_impl::filter_entry(const fs::directory_entry& entry) const {
         return true;
     }
 
-    for (auto it = stack.crbegin(); it != stack.crend(); ++it) {
-        const auto decision = it->filter(entry);
-        if (it->is_root || decision != filter::decision::undecided) {
+    for (const auto& level : std::ranges::reverse_view(stack)) {
+        const auto decision = level.filter(entry);
+        if (level.is_root || decision != filter::decision::undecided) {
             return decision == filter::decision::excluded;
         }
     }
     return false;
 };
 
+// TODO: Maybe can be removed?
 // NOLINTNEXTLINE(readability-function-size): Nesting counts lambda as level
 void explorer_impl::filter_and_sort() {
     auto& entries = stack.back().entries;
-    entries.erase(
-            std::remove_if(
-                    entries.begin(),
-                    entries.end(),
-                    [this](const auto& entry) { return filter_entry(entry); }
-            ),
-            entries.end()
-    );
+    std::erase_if(entries, [this](const auto& entry) {
+        return filter_entry(entry);
+    });
     if (entries.empty()) {
         stack.pop_back();
         return;
@@ -195,7 +190,7 @@ void explorer_impl::filter_and_sort() {
         return lhs.is_directory() != rhs.is_directory() ? !lhs.is_directory()
                                                         : lhs < rhs;
     };
-    std::sort(entries.begin(), entries.end(), files_first);
+    std::ranges::sort(entries, files_first);
     recurse();
 }
 
@@ -226,7 +221,7 @@ explorer::explorer(
         const std::filesystem::path& root, const explorer_options& options
 ) :
     options{ options } {
-    auto impl = explorer_impl{ stack, options };
+    auto impl = explorer_impl{ .stack = stack, .options = options };
     impl.add_outer_filters(root);
     impl.populate(root);
 }
@@ -238,7 +233,7 @@ explorer::reference explorer::operator*() const {
 explorer::pointer explorer::operator->() const { return &**this; }
 
 explorer& explorer::operator++() {
-    explorer_impl{ stack, options }.next();
+    explorer_impl{ .stack = stack, .options = options }.next();
     return *this;
 }
 

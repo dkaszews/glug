@@ -118,13 +118,10 @@ void dir::materialize(const temp_fs& temp) const {
     }
 }
 
+bool dir::operator==(const dir&) const = default;
+
 dir operator""_d(const char* name, [[maybe_unused]] size_t n) {
     return dir{ name };
-}
-
-bool operator==(const dir& lhs, const dir& rhs) {
-    return std::tie(lhs.path(), lhs.contents())
-            == std::tie(rhs.path(), rhs.contents());
 }
 
 std::ostream& operator<<(std::ostream& os, const dir& dir) {
@@ -163,10 +160,6 @@ void node::move(const std::filesystem::path& destination) {
 void node::materialize(const temp_fs& temp) const {
     const auto visitor = [&temp](auto& node) { node.materialize(temp); };
     std::visit(visitor, value);
-}
-
-bool operator==(const node& lhs, const node& rhs) {
-    return lhs.value == rhs.value;
 }
 
 std::ostream& operator<<(std::ostream& os, const node& node) {

@@ -8,6 +8,7 @@
 #include <functional>
 #include <iterator>
 #include <ostream>
+#include <ranges>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -60,13 +61,11 @@ ignore::ignore(
             anchored_pattern.append(pattern);
             pattern = anchored_pattern;
         }
-        items.push_back(
-                ignore_item{
-                    glob.is_inverted,
-                    glob.is_anchored,
-                    glob.is_directory,
-                    regex::engine{ glob::to_regex(pattern) },
-                }
+        items.emplace_back(
+                glob.is_inverted,
+                glob.is_anchored,
+                glob.is_directory,
+                regex::engine{ glob::to_regex(pattern) }
         );
     }
 }
@@ -76,13 +75,13 @@ namespace {
 auto decompose_globs(
         const std::vector<std::string_view>& globs, glob::decompose_mode mode
 ) {
+    // TODO: Can be all done as a pipeline
     auto result = std::vector<glob::decomposition>{};
     result.reserve(globs.size());
-    std::transform(
-            globs.begin(),
-            globs.end(),
-            std::back_inserter(result),
-            [mode](auto glob) { return glob::decompose(glob, mode); }
+    std::ranges::transform(
+            globs, std::back_inserter(result), [mode](auto glob) {
+                return glob::decompose(glob, mode);
+            }
     );
     return result;
 }  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
@@ -116,7 +115,9 @@ ignore::apply(const std::filesystem::directory_entry& entry) const noexcept {
                 ? false
                 : item.regex(path.string());
     };
-    return make_decision(std::find_if(items.rbegin(), items.rend(), match));
+    return make_decision(
+            std::ranges::find_if(std::ranges::reverse_view(items), match)
+    );
 }
 
 select::select(
@@ -144,12 +145,10 @@ select::select(
             pattern = anchored_pattern;
         }
         auto& items = glob.is_directory ? dirs : files;
-        items.push_back(
-                ignore_item{
-                    glob.is_inverted,
-                    glob.is_anchored,
-                    regex::engine{ glob::to_regex(pattern) },
-                }
+        items.emplace_back(
+                glob.is_inverted,
+                glob.is_anchored,
+                regex::engine{ glob::to_regex(pattern) }
         );
         if (!glob.is_inverted) {
             auto& fallback = glob.is_directory ? dirs_fallback : files_fallback;
@@ -183,7 +182,7 @@ select::apply(const std::filesystem::directory_entry& entry) const noexcept {
         const auto& path = item.is_anchored ? full : file;
         return item.regex(path.string());
     };
-    const auto it = std::find_if(items.rbegin(), items.rend(), match);
+    const auto it = std::ranges::find_if(items.rbegin(), items.rend(), match);
     if (it == items.rend()) {
         return entry.is_directory() ? dirs_fallback : files_fallback;
     }

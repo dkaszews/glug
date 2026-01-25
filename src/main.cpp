@@ -70,8 +70,8 @@ int print_license() {
 }
 
 int print_tags() {
-    const auto max_elem = std::max_element(
-            tags.begin(), tags.end(), [](const auto& lhs, const auto& rhs) {
+    const auto max_elem = std::ranges::max_element(
+            tags, [](const auto& lhs, const auto& rhs) {
                 return lhs.first.size() < rhs.first.size();
             }
     );
@@ -91,7 +91,7 @@ int main(int argc, const char** argv) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     const auto args = std::vector<std::string_view>{ argv, argv + argc };
     const auto has_option = [&args](std::string_view option) {
-        return std::find(args.begin(), args.end(), option) != args.end();
+        return std::ranges::find(args, option) != args.end();
     };
     if (has_option("-h") || has_option("--help")) {
         return print_help();

@@ -55,7 +55,12 @@ decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
         return {};
     }
 
-    return { glob, is_inverted, is_anchored, is_directory };
+    return {
+        .pattern = glob,
+        .is_inverted = is_inverted,
+        .is_anchored = is_anchored,
+        .is_directory = is_directory,
+    };
 }
 
 std::vector<std::string_view> split(std::string_view globs, char delimiter) {
@@ -283,22 +288,16 @@ typetag_database::typetag_database(
     for (const auto& [key, value] : tags) {
         const auto positive = stringify(split(value));
         const auto negative = negate(positive);
-        map[key] = { positive, negative };
+        map[key] = { .positive = positive, .negative = negative };
     }
 }  // GCOVR_EXCL_LINE: Unknown exceptional path
 
 std::vector<std::string_view> typetag_database::expand(
         const std::vector<std::string_view>& globs
 ) const noexcept {
-    constexpr auto starts_with
-            = [](std::string_view s, std::string_view prefix) {
-                  return s.size() >= prefix.size()
-                          && s.substr(0, prefix.size()) == prefix;
-              };
-
     auto result = std::vector<std::string_view>{};
     for (auto glob : globs) {
-        if (!starts_with(glob, "#") && !starts_with(glob, "-#")) {
+        if (!glob.starts_with("#") && !glob.starts_with("-#")) {
             result.push_back(glob);
             continue;
         }

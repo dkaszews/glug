@@ -1,5 +1,6 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filesystem.hpp"
+#include "glug/regex.hpp"
 
 #include "glug/generated/license.hpp"
 

@@ -6,15 +6,19 @@
 
 #if defined(GLUG_REGEX_PCRE2)
 #include <pcre2.h>
+
+#include <cstddef>
 #elif defined(GLUG_REGEX_RE2)
 #include <re2/re2.h>
 #elif defined(GLUG_REGEX_HYPERSCAN)
+#include "glug/detail/backport/type_traits.hpp"
+
+#include <hs/hs_common.h>
+#include <hs/hs_compile.h>
+#include <hs/hs_runtime.h>
+
 #include <cassert>
 #include <string>
-
-#include <hs/hs.h>
-
-#include "glug/detail/backport/type_traits.hpp"
 #else
 #include <regex>
 #endif
@@ -49,6 +53,7 @@ engine::engine(std::string_view pattern) :
 
     pimpl->code = {
         pcre2_compile_8(
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
                 reinterpret_cast<const unsigned char*>(pattern.data()),
                 pattern.size(),
                 PCRE2_UTF,
@@ -76,6 +81,7 @@ bool engine::match(std::string_view s) const {
 
     const auto matches = pcre2_match_8(
             pimpl->code.get(),
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
             reinterpret_cast<const unsigned char*>(s.data()),
             s.size(),
             0,
@@ -131,8 +137,8 @@ struct impl {
 
 engine::engine(std::string_view pattern) {
     // TODO: #15 - backport std::out_ptr
-    auto db = backport::type_identity_t<hs_database*>{};
-    auto error = backport::type_identity_t<hs_compile_error*>{};
+    auto* db = backport::type_identity_t<hs_database*>{};
+    auto* error = backport::type_identity_t<hs_compile_error*>{};
     [[maybe_unused]] auto result = hs_compile(
             ("^(" + std::string{ pattern } + ")$").c_str(),
             HS_FLAG_UTF8 | HS_FLAG_SINGLEMATCH,
@@ -143,7 +149,7 @@ engine::engine(std::string_view pattern) {
     );
     assert(result == HS_SUCCESS);
 
-    auto scratch = backport::type_identity_t<hs_scratch*>{};
+    auto* scratch = backport::type_identity_t<hs_scratch*>{};
     result = hs_alloc_scratch(db, &scratch);
     assert(result == HS_SUCCESS);
     pimpl = std::make_shared<detail::impl>(db, scratch);
@@ -158,9 +164,10 @@ bool engine::match(std::string_view s) const {
     const auto handler = [](auto, auto, auto, auto, void* found) -> int {
         return *static_cast<bool*>(found) = true;
     };
-    auto db = pimpl->db.get();
-    auto scratch = pimpl->scratch.get();
+    auto* db = pimpl->db.get();
+    auto* scratch = pimpl->scratch.get();
     const auto size = static_cast<unsigned int>(s.size());
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage): Size variable
     hs_scan(db, s.data(), size, 0, scratch, handler, &found);
     return found;
 }

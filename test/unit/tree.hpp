@@ -127,7 +127,8 @@ class node {
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
-    bool operator==(const node&) const = default;
+    // Defaulting inline causes compiler crash on Ubuntu with clang 18.1.3
+    bool operator==(const node&) const;
     friend std::ostream& operator<<(std::ostream& os, const node& node);
 
     private:

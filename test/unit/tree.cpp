@@ -162,6 +162,8 @@ void node::materialize(const temp_fs& temp) const {
     std::visit(visitor, value);
 }
 
+bool node::operator==(const node&) const = default;
+
 std::ostream& operator<<(std::ostream& os, const node& node) {
     const auto visitor = [&os](auto& node) -> auto& { return os << node; };
     return std::visit(visitor, node.value);

@@ -4,15 +4,18 @@
 
 #include "glug/generated/license.hpp"
 
+#include "glug/detail/backport/print.hpp"
+
 #include <algorithm>
-#include <print>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 
-namespace {
-
 using namespace std::string_view_literals;
+
+namespace back = glug::backport;
+
+namespace {
 
 const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "asm", "*.asm,*.[sS]" },
@@ -53,19 +56,21 @@ Examples:
 )"sv.substr(1);
 
 int print_help() {
-    std::print("{}", help);
+    back::print("{}", help);
     return 0;
 }
 
 int print_version() {
-    std::println("{}", GLUG_VERSION);
+    back::println("{}", GLUG_VERSION);
     return 0;
 }
 
 int print_license() {
-    std::println("--- glug license --- \n\n{}", glug::generated::license::data);
+    back::println(
+            "--- glug license --- \n\n{}", glug::generated::license::data
+    );
     if (const auto license = glug::regex::engine::license(); !license.empty()) {
-        std::println("{}", license);
+        back::println("{}", license);
     }
     return 0;
 }
@@ -79,14 +84,14 @@ int print_tags() {
     const auto pad = max_elem->first.size();
 
     for (const auto& [tag, globs] : tags) {
-        std::println("{:{}}  {}", tag, pad, globs);
+        back::println("{:{}}  {}", tag, pad, globs);
     }
     return 0;
 }
 
 }  // namespace
 
-// NOLINTNEXTLINE(bugprone-exception-escape): Assume `std::print` is correct
+// NOLINTNEXTLINE(bugprone-exception-escape): Assume `back::print` is correct
 int main(int argc, const char** argv) {
     using namespace std::string_view_literals;
 
@@ -120,7 +125,7 @@ int main(int argc, const char** argv) {
 
     const auto trim_dot = dir == "." ? 2 : 0;
     for (const auto& file : explorer) {
-        std::println("{}", file.path().generic_string().substr(trim_dot));
+        back::println("{}", file.path().generic_string().substr(trim_dot));
     }
     return 0;
 }

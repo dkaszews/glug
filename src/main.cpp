@@ -4,18 +4,29 @@
 
 #include "glug/generated/license.hpp"
 
-#include "glug/detail/backport/print.hpp"
-
 #include <algorithm>
+#include <format>
+#include <iostream>
+#include <iterator>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 
 using namespace std::string_view_literals;
 
-namespace back = glug::backport;
-
 namespace {
+
+template <typename... ARGS>
+void print(std::format_string<ARGS...> format, ARGS&&... args) {
+    auto out = std::ostream_iterator<char>{ std::cout };
+    std::format_to(out, format, std::forward<ARGS>(args)...);
+}
+
+template <typename... ARGS>
+void println(std::format_string<ARGS...> format, ARGS&&... args) {
+    print(format, std::forward<ARGS>(args)...);
+    std::cout << "\n";
+}
 
 const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "asm", "*.asm,*.[sS]" },
@@ -56,21 +67,19 @@ Examples:
 )"sv.substr(1);
 
 int print_help() {
-    back::print("{}", help);
+    print("{}", help);
     return 0;
 }
 
 int print_version() {
-    back::println("{}", GLUG_VERSION);
+    println("{}", GLUG_VERSION);
     return 0;
 }
 
 int print_license() {
-    back::println(
-            "--- glug license --- \n\n{}", glug::generated::license::data
-    );
+    println("--- glug license --- \n\n{}", glug::generated::license::data);
     if (const auto license = glug::regex::engine::license(); !license.empty()) {
-        back::println("{}", license);
+        println("{}", license);
     }
     return 0;
 }
@@ -84,14 +93,14 @@ int print_tags() {
     const auto pad = max_elem->first.size();
 
     for (const auto& [tag, globs] : tags) {
-        back::println("{:{}}  {}", tag, pad, globs);
+        println("{:{}}  {}", tag, pad, globs);
     }
     return 0;
 }
 
 }  // namespace
 
-// NOLINTNEXTLINE(bugprone-exception-escape): Assume `back::print` is correct
+// NOLINTNEXTLINE(bugprone-exception-escape): Assume `print` is correct
 int main(int argc, const char** argv) {
     using namespace std::string_view_literals;
 
@@ -125,7 +134,7 @@ int main(int argc, const char** argv) {
 
     const auto trim_dot = dir == "." ? 2 : 0;
     for (const auto& file : explorer) {
-        back::println("{}", file.path().generic_string().substr(trim_dot));
+        println("{}", file.path().generic_string().substr(trim_dot));
     }
     return 0;
 }

@@ -10,9 +10,10 @@ template <typename... ARGS>
 void print(
         std::FILE* stream, std::format_string<ARGS...> format, ARGS&&... args
 ) {
-    fprintf(stream,
-            "%s",
-            std::format(format, std::forward<ARGS>(args)...).c_str());
+
+    std::fputs(
+            std::format(format, std::forward<ARGS>(args)...).c_str(), stream
+    );
 }
 
 template <typename... ARGS>
@@ -24,9 +25,8 @@ template <typename... ARGS>
 void println(
         std::FILE* stream, std::format_string<ARGS...> format, ARGS&&... args
 ) {
-    fprintf(stream,
-            "%s\n",
-            std::format(format, std::forward<ARGS>(args)...).c_str());
+    print(stream, format, std::forward<ARGS>(args)...);
+    std::fputs("\n", stream);
 }
 
 template <typename... ARGS>

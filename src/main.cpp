@@ -5,10 +5,14 @@
 #include "glug/generated/license.hpp"
 
 #include <algorithm>
-#include <iostream>
+#include <print>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
+namespace {
+
+using namespace std::string_view_literals;
 
 const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "asm", "*.asm,*.[sS]" },
@@ -27,9 +31,7 @@ const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "vim", "*.vim" },
 };
 
-namespace {
-
-constexpr auto help = std::string_view{ R"(
+constexpr auto help = R"(
 usage: glug [options] [root] [filter]
 
 Search files respecting .gitignore and given filter.
@@ -48,23 +50,22 @@ Examples:
   glug . '*.cpp'               # Search all '*.cpp' files
   glug include '-generated/*'  # Omit files in generated directory
   glug test '#cpp,-#hpp'       # Search all cpp-related files except headers
-)" };
+)"sv.substr(1);
 
 int print_help() {
-    std::cout << help.substr(1);
+    std::print("{}", help);
     return 0;
 }
 
 int print_version() {
-    std::cout << GLUG_VERSION << "\n";
+    std::println("{}", GLUG_VERSION);
     return 0;
 }
 
 int print_license() {
-    std::cout << "--- glug license --- \n\n";
-    std::cout << glug::generated::license::data << "\n";
+    std::println("--- glug license --- \n\n{}", glug::generated::license::data);
     if (const auto license = glug::regex::engine::license(); !license.empty()) {
-        std::cout << license << "\n";
+        std::println("{}", license);
     }
     return 0;
 }
@@ -75,16 +76,17 @@ int print_tags() {
                 return lhs.first.size() < rhs.first.size();
             }
     );
-    const auto pad = max_elem->first.size() + 2;
+    const auto pad = max_elem->first.size();
 
     for (const auto& [tag, globs] : tags) {
-        std::cout << tag << std::string(pad - tag.size(), ' ') << globs << "\n";
+        std::println("{:{}}  {}", tag, pad, globs);
     }
     return 0;
 }
 
 }  // namespace
 
+// NOLINTNEXTLINE(bugprone-exception-escape): Assume `std::print` is correct
 int main(int argc, const char** argv) {
     using namespace std::string_view_literals;
 
@@ -118,7 +120,7 @@ int main(int argc, const char** argv) {
 
     const auto trim_dot = dir == "." ? 2 : 0;
     for (const auto& file : explorer) {
-        std::cout << file.path().generic_string().substr(trim_dot) << "\n";
+        std::println("{}", file.path().generic_string().substr(trim_dot));
     }
     return 0;
 }

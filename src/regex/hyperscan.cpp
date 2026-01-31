@@ -74,7 +74,7 @@ bool engine::match(std::string_view s) const {
             handler,
             &found
     );
-    assert(result == HS_SUCCESS);
+    assert(result == HS_SUCCESS || result == HS_SCAN_TERMINATED);
     return found;
 }
 

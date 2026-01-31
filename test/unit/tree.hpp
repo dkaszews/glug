@@ -51,7 +51,7 @@ class file {
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
-    bool operator==(const file&) const = default;
+    bool operator==(const file&) const noexcept = default;
 
     private:
     std::filesystem::path path_value{};
@@ -75,7 +75,7 @@ class link {
     // Might throw `std::filesystem::filesystem_error` on Windows
     void materialize(const temp_fs& temp) const;
 
-    bool operator==(const link&) const = default;
+    bool operator==(const link&) const noexcept = default;
 
     private:
     std::filesystem::path path_value{};
@@ -128,7 +128,7 @@ class node {
     void materialize(const temp_fs& temp) const;
 
     // Defaulting inline causes compiler crash on Ubuntu with clang 18.1.3
-    bool operator==(const node&) const;
+    bool operator==(const node&) const;  // variant== not noexcept
     friend std::ostream& operator<<(std::ostream& os, const node& node);
 
     private:

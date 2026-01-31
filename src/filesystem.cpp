@@ -246,12 +246,17 @@ explorer explorer::operator++(int) {
     return copy;
 }  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
 
-bool operator==(const explorer& lhs, const explorer& rhs) noexcept {
-    return lhs.stack == rhs.stack;
+bool explorer::operator==(const explorer& other) const noexcept {
+    // Omit options, as filters are not comparable
+    return stack == other.stack;
 }
 
-bool operator!=(const explorer& lhs, const explorer& rhs) noexcept {
-    return !(lhs == rhs);
+bool explorer::level::operator==(const level& other) const noexcept {
+    // Don't compare filters as they are transient cache.
+    // Identical entries must have encountered the same filters,
+    // which could be found again from a set of entry parents.
+    // `is_root` is also ignored as more of a filter property.
+    return entries == other.entries;
 }
 
 }  // namespace glug::filesystem

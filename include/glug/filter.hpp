@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <span>
 #include <string_view>
 #include <vector>
 
@@ -46,16 +47,16 @@ class ignore {
     public:
     ignore() noexcept = default;
 
-    explicit ignore(const std::vector<glob::decomposition>& globs) :
+    explicit ignore(std::span<const glob::decomposition> globs) :
         ignore{ globs, "" } {}
 
-    explicit ignore(const std::vector<std::string_view>& globs) noexcept :
+    explicit ignore(std::span<const std::string_view> globs) noexcept :
         ignore{ globs, "" } {}
 
-    ignore(const std::vector<glob::decomposition>& globs,
+    ignore(std::span<const glob::decomposition> globs,
            const std::filesystem::path& anchor);
 
-    ignore(const std::vector<std::string_view>& globs,
+    ignore(std::span<const std::string_view> globs,
            const std::filesystem::path& anchor);
 
     /**
@@ -90,19 +91,19 @@ class select {
     public:
     select() noexcept = default;
 
-    explicit select(const std::vector<glob::decomposition>& globs) :
+    explicit select(std::span<const glob::decomposition> globs) :
         select{ globs, "" } {}
 
-    explicit select(const std::vector<std::string_view>& globs) :
+    explicit select(std::span<const std::string_view> globs) :
         select{ globs, "" } {}
 
     explicit select(std::string_view globs) :
         select{ globs, "" } {}
 
-    select(const std::vector<glob::decomposition>& globs,
+    select(std::span<const glob::decomposition> globs,
            const std::filesystem::path& anchor);
 
-    select(const std::vector<std::string_view>& globs,
+    select(std::span<const std::string_view> globs,
            const std::filesystem::path& anchor);
 
     select(std::string_view globs, const std::filesystem::path& anchor);

@@ -56,8 +56,7 @@ class explorer {
     explorer& operator++();
     explorer operator++(int);
 
-    friend bool operator==(const explorer& lhs, const explorer& rhs) noexcept;
-    friend bool operator!=(const explorer& lhs, const explorer& rhs) noexcept;
+    bool operator==(const explorer& other) const noexcept;
 
     private:
     friend class explorer_impl;
@@ -68,13 +67,7 @@ class explorer {
         std::deque<std::filesystem::directory_entry> entries{};
         bool is_root{};
 
-        friend bool operator==(const level& lhs, const level& rhs) {
-            // Don't compare filters as they are transient cache.
-            // Identical entries must have encountered the same filters,
-            // which could be found again from a set of entry parents.
-            // `is_root` is also ignored as more of a filter property.
-            return lhs.entries == rhs.entries;
-        }
+        bool operator==(const level& other) const noexcept;
     };
 
     std::vector<level> stack{};

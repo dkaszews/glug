@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -115,7 +116,7 @@ class typetag_database {
      * Non-tag values and unknown tags are left as-is.
      */
     std::vector<std::string_view>
-    expand(const std::vector<std::string_view>& globs) const noexcept;
+    expand(std::span<const std::string_view> globs) const noexcept;
 
     std::vector<std::string_view>
     expand(std::string_view globs) const noexcept {

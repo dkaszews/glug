@@ -3,7 +3,7 @@ set_version('3.0.1')
 
 add_rules('mode.release', 'mode.releasedbg', 'mode.debug',  'mode.coverage')
 set_allowedmodes('release', 'releasedbg', 'debug', 'coverage')
-set_languages('c++17')
+set_languages('c++20')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
 local regex_engines = {

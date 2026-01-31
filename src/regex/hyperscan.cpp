@@ -2,7 +2,6 @@
 #if defined(GLUG_REGEX_HYPERSCAN)
 
 #include "glug/generated/licenses/hyperscan.hpp"
-#include "glug/detail/backport/type_traits.hpp"
 #include "glug/regex.hpp"
 
 #include <hs/hs_common.h>
@@ -13,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 namespace glug::regex {
 
@@ -38,8 +38,8 @@ struct impl {
 
 engine::engine(std::string_view pattern) {
     // TODO: #15 - backport std::out_ptr
-    auto* db = backport::type_identity_t<hs_database*>{};
-    auto* error = backport::type_identity_t<hs_compile_error*>{};
+    auto* db = std::type_identity_t<hs_database*>{};
+    auto* error = std::type_identity_t<hs_compile_error*>{};
     [[maybe_unused]] auto result = hs_compile(
             ("^(" + std::string{ pattern } + ")$").c_str(),
             HS_FLAG_UTF8 | HS_FLAG_SINGLEMATCH,
@@ -50,7 +50,7 @@ engine::engine(std::string_view pattern) {
     );
     assert(result == HS_SUCCESS);
 
-    auto* scratch = backport::type_identity_t<hs_scratch*>{};
+    auto* scratch = std::type_identity_t<hs_scratch*>{};
     result = hs_alloc_scratch(db, &scratch);
     assert(result == HS_SUCCESS);
     pimpl = std::make_shared<detail::impl>(db, scratch);
@@ -65,11 +65,16 @@ bool engine::match(std::string_view s) const {
     const auto handler = [](auto, auto, auto, auto, void* found) -> int {
         return *static_cast<bool*>(found) = true;
     };
-    auto* db = pimpl->db.get();
-    auto* scratch = pimpl->scratch.get();
-    const auto size = static_cast<unsigned int>(s.size());
-    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage): Size variable
-    hs_scan(db, s.data(), size, 0, scratch, handler, &found);
+    [[maybe_unused]] auto result = hs_scan(
+            pimpl->db.get(),
+            s.data(),
+            static_cast<unsigned int>(s.size()),
+            0,
+            pimpl->scratch.get(),
+            handler,
+            &found
+    );
+    assert(result == HS_SUCCESS || result == HS_SCAN_TERMINATED);
     return found;
 }
 

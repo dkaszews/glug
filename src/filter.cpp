@@ -1,6 +1,7 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filter.hpp"
 
+#include "glug/backport/ranges.hpp"
 #include "glug/glob.hpp"
 
 #include <algorithm>
@@ -8,6 +9,8 @@
 #include <functional>
 #include <iterator>
 #include <ostream>
+#include <ranges>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -42,14 +45,12 @@ decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
 }  // namespace
 
 ignore::ignore(
-        const std::vector<glob::decomposition>& globs,
+        std::span<const glob::decomposition> globs,
         const std::filesystem::path& anchor
 ) {
     // PERF: Lazy
-    // GCOVR_EXCL_START - Unknown exception paths
     const auto anchor_prefix
             = glob::glob_escape(fix_path_separator(anchor).string()) + "/";
-    // GCOVR_EXCL_STOP
 
     auto anchored_pattern = std::string{};
     items.reserve(globs.size());
@@ -60,13 +61,11 @@ ignore::ignore(
             anchored_pattern.append(pattern);
             pattern = anchored_pattern;
         }
-        items.push_back(
-                ignore_item{
-                    glob.is_inverted,
-                    glob.is_anchored,
-                    glob.is_directory,
-                    regex::engine{ glob::to_regex(pattern) },
-                }
+        items.emplace_back(
+                glob.is_inverted,
+                glob.is_anchored,
+                glob.is_directory,
+                regex::engine{ glob::to_regex(pattern) }
         );
     }
 }
@@ -74,23 +73,18 @@ ignore::ignore(
 namespace {
 
 auto decompose_globs(
-        const std::vector<std::string_view>& globs, glob::decompose_mode mode
+        std::span<const std::string_view> globs, glob::decompose_mode mode
 ) {
-    auto result = std::vector<glob::decomposition>{};
-    result.reserve(globs.size());
-    std::transform(
-            globs.begin(),
-            globs.end(),
-            std::back_inserter(result),
-            [mode](auto glob) { return glob::decompose(glob, mode); }
-    );
-    return result;
-}  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
+    return globs | std::ranges::views::transform([mode](auto glob) {
+               return glob::decompose(glob, mode);
+           })
+            | backport::ranges::to<std::vector>();
+}
 
 }  // namespace
 
 ignore::ignore(
-        const std::vector<std::string_view>& globs,
+        std::span<const std::string_view> globs,
         const std::filesystem::path& anchor
 ) :
     ignore{
@@ -116,11 +110,13 @@ ignore::apply(const std::filesystem::directory_entry& entry) const noexcept {
                 ? false
                 : item.regex(path.string());
     };
-    return make_decision(std::find_if(items.rbegin(), items.rend(), match));
+    return make_decision(
+            std::ranges::find_if(std::ranges::reverse_view(items), match)
+    );
 }
 
 select::select(
-        const std::vector<glob::decomposition>& globs,
+        std::span<const glob::decomposition> globs,
         const std::filesystem::path& anchor
 ) {
     const auto anchor_prefix
@@ -144,12 +140,10 @@ select::select(
             pattern = anchored_pattern;
         }
         auto& items = glob.is_directory ? dirs : files;
-        items.push_back(
-                ignore_item{
-                    glob.is_inverted,
-                    glob.is_anchored,
-                    regex::engine{ glob::to_regex(pattern) },
-                }
+        items.emplace_back(
+                glob.is_inverted,
+                glob.is_anchored,
+                regex::engine{ glob::to_regex(pattern) }
         );
         if (!glob.is_inverted) {
             auto& fallback = glob.is_directory ? dirs_fallback : files_fallback;
@@ -159,7 +153,7 @@ select::select(
 }
 
 select::select(
-        const std::vector<std::string_view>& globs,
+        std::span<const std::string_view> globs,
         const std::filesystem::path& anchor
 ) :
     select{
@@ -183,7 +177,7 @@ select::apply(const std::filesystem::directory_entry& entry) const noexcept {
         const auto& path = item.is_anchored ? full : file;
         return item.regex(path.string());
     };
-    const auto it = std::find_if(items.rbegin(), items.rend(), match);
+    const auto it = std::ranges::find_if(items.rbegin(), items.rend(), match);
     if (it == items.rend()) {
         return entry.is_directory() ? dirs_fallback : files_fallback;
     }

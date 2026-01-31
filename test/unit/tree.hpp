@@ -1,4 +1,4 @@
-// Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+// Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #pragma once
 
 #include <cstddef>
@@ -51,16 +51,14 @@ class file {
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
+    bool operator==(const file&) const noexcept = default;
+
     private:
     std::filesystem::path path_value{};
     std::string contents_value{};
 };
 inline file operator""_f(const char* name, [[maybe_unused]] size_t n) {
     return file{ name };
-}
-inline bool operator==(const file& lhs, const file& rhs) {
-    return std::tie(lhs.path(), lhs.contents())
-            == std::tie(rhs.path(), rhs.contents());
 }
 std::ostream& operator<<(std::ostream& os, const file& file);
 
@@ -77,20 +75,17 @@ class link {
     // Might throw `std::filesystem::filesystem_error` on Windows
     void materialize(const temp_fs& temp) const;
 
+    bool operator==(const link&) const noexcept = default;
+
     private:
     std::filesystem::path path_value{};
     std::filesystem::path target_value{};
 };
-inline bool operator==(const link& lhs, const link& rhs) {
-    return std::tie(lhs.path(), lhs.target())
-            == std::tie(rhs.path(), rhs.target());
-}
 std::ostream& operator<<(std::ostream& os, const link& link);
 
 class dir {
     public:
-    explicit dir(std::string_view name) :
-        dir{ name, {} } {}
+    explicit dir(std::string_view name);
     dir(std::string_view name, const std::vector<node>& contents);
 
     [[nodiscard]] const auto& path() const { return path_value; }
@@ -101,17 +96,14 @@ class dir {
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
+    bool operator==(const dir& other) const;
+
     private:
     std::filesystem::path path_value{};
-    std::vector<node> contents_value{};
+    // Vector of incomplete types requires all definitions out-of-line.
+    std::vector<node> contents_value;
 };
-inline dir operator""_d(const char* name, [[maybe_unused]] size_t n) {
-    return dir{ name };
-}
-inline bool operator==(const dir& lhs, const dir& rhs) {
-    return std::tie(lhs.path(), lhs.contents())
-            == std::tie(rhs.path(), rhs.contents());
-}
+dir operator""_d(const char* name, [[maybe_unused]] size_t n);
 std::ostream& operator<<(std::ostream& os, const dir& dir);
 
 class node {
@@ -135,7 +127,8 @@ class node {
     void move(const std::filesystem::path& destination);
     void materialize(const temp_fs& temp) const;
 
-    friend bool operator==(const node& lhs, const node& rhs);
+    // Defaulting inline causes compiler crash on Ubuntu with clang 18.1.3
+    bool operator==(const node&) const;  // variant== not noexcept
     friend std::ostream& operator<<(std::ostream& os, const node& node);
 
     private:

@@ -1,13 +1,14 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filesystem.hpp"
 
+#include "glug/backport/ranges.hpp"
+
 #include "tree.hpp"
 
-#include <algorithm>
 #include <filesystem>
-#include <iterator>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string_view>
 #include <tuple>
 #include <vector>
@@ -81,17 +82,14 @@ TEST_P(explorer_test, test) {
     const auto options = explorer_options{
         filter::select{ select.value_or(""), resolved_target },
     };
-    auto exp = explorer{ resolved_target, options };
-    auto relative = std::vector<std::filesystem::path>{};
-    std::transform(
-            exp,
-            exp.end(),
-            std::back_inserter(relative),
-            [&temp](const auto& entry) {
-                return std::filesystem::relative(entry, temp);
-            }
-    );
-    EXPECT_THAT(relative, testing::ElementsAreArray(expected));
+    const auto relative = [&temp](const auto& entry) {
+        return std::filesystem::relative(entry, temp);
+    };
+    const auto actual = explorer{ resolved_target, options }
+            | std::ranges::views::transform(relative)
+            | backport::ranges::to<std::vector>();
+
+    EXPECT_THAT(actual, testing::ElementsAreArray(expected));
 }
 
 static const auto explorer_cases = std::vector<explorer_param>{

@@ -1,6 +1,7 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filter.hpp"
 
+#include "glug/backport/ranges.hpp"
 #include "glug/glob.hpp"
 
 #include <algorithm>
@@ -75,15 +76,10 @@ namespace {
 auto decompose_globs(
         const std::vector<std::string_view>& globs, glob::decompose_mode mode
 ) {
-    // TODO: Can be all done as a pipeline
-    auto result = std::vector<glob::decomposition>{};
-    result.reserve(globs.size());
-    std::ranges::transform(
-            globs, std::back_inserter(result), [mode](auto glob) {
-                return glob::decompose(glob, mode);
-            }
-    );
-    return result;
+    return globs | std::ranges::views::transform([mode](auto glob) {
+               return glob::decompose(glob, mode);
+           })
+            | backport::ranges::to<std::vector>();
 }  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
 
 }  // namespace

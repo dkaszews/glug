@@ -49,10 +49,8 @@ ignore::ignore(
         const std::filesystem::path& anchor
 ) {
     // PERF: Lazy
-    // GCOVR_EXCL_START - Unknown exception paths
     const auto anchor_prefix
             = glob::glob_escape(fix_path_separator(anchor).string()) + "/";
-    // GCOVR_EXCL_STOP
 
     auto anchored_pattern = std::string{};
     items.reserve(globs.size());
@@ -81,7 +79,7 @@ auto decompose_globs(
                return glob::decompose(glob, mode);
            })
             | backport::ranges::to<std::vector>();
-}  // GCOVR_EXCL_LINE: Unknown branch, probably missing nothrow RVO
+}
 
 }  // namespace
 

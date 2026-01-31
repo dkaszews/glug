@@ -114,7 +114,7 @@ void explorer_impl::add_outer_filters(const fs::path& path) {
         }
     }
     std::ranges::reverse(stack);
-};  // GCOVR_EXCL_LINE: Unknown exceptional path
+};
 
 void explorer_impl::populate(const fs::path& path) {
     auto entries = std::deque<fs::directory_entry>{
@@ -126,9 +126,9 @@ void explorer_impl::populate(const fs::path& path) {
     }
 
     const auto is_named = [](const auto& filename) {
-        return [filename](const auto& entry) {
+        return [&filename](const auto& entry) {
             return entry.path().filename() == filename;
-        };  // GCOVR_EXCL_LINE: Unknown exceptional path
+        };
     };
     const bool is_root = std::ranges::any_of(entries, is_named(".git"));
     const bool already_rooted = std::ranges::any_of(
@@ -142,11 +142,9 @@ void explorer_impl::populate(const fs::path& path) {
             = std::ranges::find_if(entries, is_named(".gitignore"));
     auto filter = gitignore != entries.end() ? make_filter(gitignore->path())
                                              : filter::ignore{};
-    // GCOVR_EXCL_START: Move cannot throw
     stack.emplace_back(std::move(filter), std::move(entries), is_root);
-    // GCOVR_EXCL_STOP
     filter_and_sort();
-}  // GCOVR_EXCL_LINE: Unknown exceptional branch
+}
 
 bool explorer_impl::filter_entry(const fs::directory_entry& entry) const {
     // GCOVR_EXCL_START: Special file types not testable on all OS

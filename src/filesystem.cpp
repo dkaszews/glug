@@ -58,7 +58,7 @@ auto read_lines(const fs::path& path) {
     auto lines = std::vector<std::string>{};
     auto line = std::string{};
     while (getline(stream, line)) {
-        lines.push_back(std::move(line));
+        lines.emplace_back(std::move(line));
     }
     return lines;
 }
@@ -104,7 +104,11 @@ void explorer_impl::add_outer_filters(const fs::path& path) {
         }
 
         auto filter = has_gitignore ? make_filter(gitignore) : filter::ignore{};
-        stack.push_back({ std::move(filter), {}, is_root });
+        stack.emplace_back(
+                std::move(filter),
+                std::deque<std::filesystem::directory_entry>{},
+                is_root
+        );
         if (is_root) {
             break;
         }
@@ -138,9 +142,8 @@ void explorer_impl::populate(const fs::path& path) {
             = std::ranges::find_if(entries, is_named(".gitignore"));
     auto filter = gitignore != entries.end() ? make_filter(gitignore->path())
                                              : filter::ignore{};
-    // TODO: Replace with emplace_back and try removing gcovr exclusion
     // GCOVR_EXCL_START: Move cannot throw
-    stack.push_back({ std::move(filter), std::move(entries), is_root });
+    stack.emplace_back(std::move(filter), std::move(entries), is_root);
     // GCOVR_EXCL_STOP
     filter_and_sort();
 }  // GCOVR_EXCL_LINE: Unknown exceptional branch

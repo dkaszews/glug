@@ -10,6 +10,7 @@
 #include <iterator>
 #include <ostream>
 #include <ranges>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -44,7 +45,7 @@ decltype(auto) fix_path_separator(const std::filesystem::path& path) noexcept {
 }  // namespace
 
 ignore::ignore(
-        const std::vector<glob::decomposition>& globs,
+        std::span<const glob::decomposition> globs,
         const std::filesystem::path& anchor
 ) {
     // PERF: Lazy
@@ -74,7 +75,7 @@ ignore::ignore(
 namespace {
 
 auto decompose_globs(
-        const std::vector<std::string_view>& globs, glob::decompose_mode mode
+        std::span<const std::string_view> globs, glob::decompose_mode mode
 ) {
     return globs | std::ranges::views::transform([mode](auto glob) {
                return glob::decompose(glob, mode);
@@ -85,7 +86,7 @@ auto decompose_globs(
 }  // namespace
 
 ignore::ignore(
-        const std::vector<std::string_view>& globs,
+        std::span<const std::string_view> globs,
         const std::filesystem::path& anchor
 ) :
     ignore{
@@ -117,7 +118,7 @@ ignore::apply(const std::filesystem::directory_entry& entry) const noexcept {
 }
 
 select::select(
-        const std::vector<glob::decomposition>& globs,
+        std::span<const glob::decomposition> globs,
         const std::filesystem::path& anchor
 ) {
     const auto anchor_prefix
@@ -154,7 +155,7 @@ select::select(
 }
 
 select::select(
-        const std::vector<std::string_view>& globs,
+        std::span<const std::string_view> globs,
         const std::filesystem::path& anchor
 ) :
     select{

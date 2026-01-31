@@ -1,8 +1,12 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/glob.hpp"
 
+#include "glug/backport/ranges.hpp"
+
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -12,15 +16,6 @@
 using namespace std::string_literals;
 
 namespace glug::glob {
-
-namespace {
-
-constexpr bool has_suffix(std::string_view s, std::string_view suffix) {
-    return s.size() >= suffix.size()
-            && s.substr(s.size() - suffix.size()) == suffix;
-};
-
-}  // namespace
 
 decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
     if (glob.empty()) {
@@ -35,7 +30,7 @@ decomposition decompose(std::string_view glob, decompose_mode mode) noexcept {
     glob.remove_prefix(static_cast<size_t>(glob.front() == '\\'));
     glob.remove_prefix(static_cast<size_t>(is_inverted));
 
-    while (has_suffix(glob, " ") && !has_suffix(glob, "\\ ")) {
+    while (glob.ends_with(" ") && !glob.ends_with("\\ ")) {
         glob.remove_suffix(1);
     }
 
@@ -88,14 +83,14 @@ std::vector<std::string_view> split(std::string_view globs, char delimiter) {
         }
 
         if (current_size != 0) {
-            result.push_back(globs.substr(current_offset, current_size));
+            result.emplace_back(globs.substr(current_offset, current_size));
         }
 
         current_offset += current_size + 1;
         current_size = 0;
     }
     if (current_size != 0) {
-        result.push_back(globs.substr(current_offset, current_size));
+        result.emplace_back(globs.substr(current_offset, current_size));
     }
 
     return result;
@@ -271,34 +266,27 @@ std::string glob_escape(std::string_view s) noexcept {
 typetag_database::typetag_database(
         const std::unordered_map<std::string_view, std::string_view>& tags
 ) {
-    const auto stringify = [](const auto& views) {
-        auto result = std::vector<std::string>{ views.begin(), views.end() };
-        return result;
-    };
-
-    const auto negate = [](const auto& positive) noexcept {
-        auto negative = positive;
-        for (auto& value : negative) {
-            value = std::string{ "-" }.append(value);
-        }
-        return negative;
+    const auto negate = [](const auto& value) noexcept {
+        return std::string{ "-" }.append(value);
     };
 
     map.reserve(tags.size());
     for (const auto& [key, value] : tags) {
-        const auto positive = stringify(split(value));
-        const auto negative = negate(positive);
+        const auto positive = split(value)
+                | backport::ranges::to<std::vector<std::string>>();
+        const auto negative = positive | std::ranges::views::transform(negate)
+                | backport::ranges::to<std::vector>();
         map[key] = { .positive = positive, .negative = negative };
     }
 }  // GCOVR_EXCL_LINE: Unknown exceptional path
 
 std::vector<std::string_view> typetag_database::expand(
-        const std::vector<std::string_view>& globs
+        std::span<const std::string_view> globs
 ) const noexcept {
     auto result = std::vector<std::string_view>{};
     for (auto glob : globs) {
         if (!glob.starts_with("#") && !glob.starts_with("-#")) {
-            result.push_back(glob);
+            result.emplace_back(glob);
             continue;
         }
 
@@ -306,7 +294,7 @@ std::vector<std::string_view> typetag_database::expand(
         const auto tag = glob.substr(static_cast<size_t>(inverted) + 1);
         const auto it = map.find(tag);
         if (it == map.end()) {
-            result.push_back(glob);
+            result.emplace_back(glob);
             continue;
         }
 

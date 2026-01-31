@@ -16,8 +16,7 @@ namespace glug::regex {
 namespace detail {
 
 struct impl {
-    // NOLINTNEXTLINE: Desired implicit wrapper
-    impl(std::string_view pattern) :
+    explicit impl(std::string_view pattern) :
         regex{ pattern } {}
 
     re2::RE2 regex;

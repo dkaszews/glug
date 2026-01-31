@@ -175,8 +175,6 @@ bool explorer_impl::filter_entry(const fs::directory_entry& entry) const {
     return false;
 };
 
-// TODO: Maybe can be removed?
-// NOLINTNEXTLINE(readability-function-size): Nesting counts lambda as level
 void explorer_impl::filter_and_sort() {
     auto& entries = stack.back().entries;
     std::erase_if(entries, [this](const auto& entry) {

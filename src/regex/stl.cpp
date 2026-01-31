@@ -12,8 +12,7 @@ namespace glug::regex {
 namespace detail {
 
 struct impl {
-    // NOLINTNEXTLINE(google-explicit-constructor): Desired implicit
-    impl(std::string_view s) :
+    explicit impl(std::string_view s) :
         re{ s.data(), s.size() } {}
 
     std::regex re{};

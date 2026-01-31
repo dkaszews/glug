@@ -65,11 +65,16 @@ bool engine::match(std::string_view s) const {
     const auto handler = [](auto, auto, auto, auto, void* found) -> int {
         return *static_cast<bool*>(found) = true;
     };
-    auto* db = pimpl->db.get();
-    auto* scratch = pimpl->scratch.get();
-    const auto size = static_cast<unsigned int>(s.size());
-    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage): Size variable
-    hs_scan(db, s.data(), size, 0, scratch, handler, &found);
+    [[maybe_unused]] auto result = hs_scan(
+            pimpl->db.get(),
+            s.data(),
+            static_cast<unsigned int>(s.size()),
+            0,
+            pimpl->scratch.get(),
+            handler,
+            &found
+    );
+    assert(result == HS_SUCCESS);
     return found;
 }
 

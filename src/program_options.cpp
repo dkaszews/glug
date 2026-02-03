@@ -88,6 +88,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
     try {
         app.parse(std::move(vargs));
     } catch (const CLI::CallForHelp& e) {
+        std::ignore = e;
         return { .flags = { .help = true } };
     } catch (const CLI::RequiredError& e) {
         throw require_error{ e.what() };
@@ -157,5 +158,4 @@ std::ostream& operator<<(std::ostream& os, const program_options& options) {
 }
 
 }  // namespace glug::program
-
 

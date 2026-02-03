@@ -3,16 +3,34 @@
 
 #include "glug/backport/ranges.hpp"
 
+#include <memory>
 #include <optional>
+#include <ostream>
 #include <ranges>
+#include <span>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include <CLI/CLI.hpp>
 
 namespace glug::program {
 
 namespace {
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& container) {
+    bool first = true;
+    os << "[ ";
+    for (const auto& value : container) {
+        if (!std::exchange(first, false)) {
+            os << ", ";
+        }
+        os << value;
+    }
+    return os << " ]";
+}
 
 // Heavy use of references makes `CLI::App` non-moveable
 struct impl {
@@ -21,6 +39,7 @@ struct impl {
     std::optional<std::string> positional{};
 };
 
+// NOLINTNEXTLINE(readability-function-size): Exceeds size due to help strings
 auto make_impl() {
     // TODO: App description
     auto result = std::make_unique<impl>();
@@ -97,7 +116,9 @@ program_options program_options::parse(std::span<const std::string_view> args) {
     }
 
     const auto emplace_front = [](auto& container, auto&& value) {
-        container.emplace(container.begin(), std::move(value));
+        container.emplace(
+                container.begin(), std::forward<decltype(value)>(value)
+        );
     };
     if (positional) {
         if (!options.flags.list && options.patterns.empty()) {
@@ -110,7 +131,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
     // `CLI::OptionGroup` does not work with positionals, needs manual check
     if (!options.flags.list && options.patterns.empty()) {
         throw require_error{
-            "Exactly 1 option from [PATTERN,--regexp,--no-regexpr] is required"
+            "Exactly 1 option from [PATTERN,--regexp,--no-regexp] is required"
         };
     }
 
@@ -118,19 +139,6 @@ program_options program_options::parse(std::span<const std::string_view> args) {
 }
 
 std::string program_options::get_help() { return make_impl()->app.help(); }
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& container) {
-    bool first = true;
-    os << "[ ";
-    for (const auto& value : container) {
-        if (!std::exchange(first, false)) {
-            os << ", ";
-        }
-        os << value;
-    }
-    return os << " ]";
-}
 
 std::ostream& operator<<(std::ostream& os, const program_flags& flags) {
     auto set_flags = std::vector<std::string>{};

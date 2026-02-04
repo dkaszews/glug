@@ -1,6 +1,7 @@
 // Provided as part of glug under MIT license, (c) 2026 Dominik Kaszewski
 #include "glug/program_options.hpp"
 
+#include <format>
 #include <ostream>
 #include <string_view>
 #include <utility>
@@ -10,11 +11,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace glug::program::unit_test {
+namespace glug::program {
 
 namespace {
 
-// TODO: Remove
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& container) {
     bool first = true;
@@ -29,6 +29,35 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& container) {
 }
 
 }  // namespace
+
+std::ostream& operator<<(std::ostream& os, const program_options& options) {
+    os << "{ ";
+    const auto stream_vector = [&](const auto& v, const std::string& name) {
+        if (!v.empty()) {
+            os << "." << name << " = " << v << ", ";
+        }
+    };
+    const auto stream_flag = [&](bool flag, const std::string& name) {
+        if (flag) {
+            os << "." << name << " = true, ";
+        }
+    };
+
+    stream_vector(options.patterns, "patterns");
+    stream_vector(options.paths, "paths");
+    stream_vector(options.filters, "filters");
+    stream_flag(options.list, "list");
+    stream_flag(options.help, "help");
+    stream_flag(options.version, "version");
+    stream_flag(options.license, "license");
+
+    os << "}";
+    return os;
+}
+
+}  // namespace glug::program
+
+namespace glug::program::unit_test {
 
 struct no_error {};
 
@@ -81,10 +110,6 @@ static const auto program_options_cases = std::vector<program_options_param>{
         },
     },
     {
-        { "--help" },
-        { .flags = { .help = true } },
-    },
-    {
         { "a" },
         { .patterns = { "a" } },
     },
@@ -126,16 +151,32 @@ static const auto program_options_cases = std::vector<program_options_param>{
     },
     {
         { "-E" },
-        { .flags = { .list = true } },
+        { .list = true },
     },
     {
         { "-E", "a", "b", "c" },
-        { .paths = { "a", "b", "c" }, .flags = { .list = true } },
+        { .paths = { "a", "b", "c" }, .list = true },
     },
     {
         { "-Eex" },
         {},
         exclude_error{ "--regexp excludes --no-regexp" },
+    },
+    {
+        { "-f", "#cpp", "a", "b", "c" },
+        { .patterns = { "a" }, .paths = { "b", "c" }, .filters = { "#cpp" } },
+    },
+    {
+        { "--help" },
+        { .help = true },
+    },
+    {
+        { "--version" },
+        { .version = true },
+    },
+    {
+        { "--license" },
+        { .license = true },
     },
 };
 

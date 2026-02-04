@@ -19,19 +19,6 @@ namespace glug::program {
 
 namespace {
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& container) {
-    bool first = true;
-    os << "[ ";
-    for (const auto& value : container) {
-        if (!std::exchange(first, false)) {
-            os << ", ";
-        }
-        os << value;
-    }
-    return os << " ]";
-}
-
 // Heavy use of references makes `CLI::App` non-moveable
 struct impl {
     CLI::App app{};
@@ -41,7 +28,6 @@ struct impl {
 
 // NOLINTNEXTLINE(readability-function-size): Exceeds size due to help strings
 auto make_impl() {
-    // TODO: App description
     auto result = std::make_unique<impl>();
     auto& [app, options, positional] = *result;
     app.description(
@@ -71,7 +57,7 @@ auto make_impl() {
             ->allow_extra_args(false);
     app.add_flag(
                "-E,--no-regexp,--list",
-               options.flags.list,
+               options.list,
                "Print all files that would be searched."
     )
             ->excludes("--regexp");
@@ -84,15 +70,14 @@ auto make_impl() {
             ->type_size(1)
             ->allow_extra_args(false);
 
-    app.set_help_flag("--help", "")->group("HELP");
-    // TODO: Maybe combine under "about"?
-    app.add_flag("--help-filter", options.flags.help_filter, "")->group("HELP");
-    app.add_flag("--help-tags", options.flags.help_tags, "")->group("HELP");
-    app.add_flag("--version", options.flags.version)->group("HELP");
-    app.add_flag("--license", options.flags.license)->group("HELP");
+    // Don't want special throwing behavior
+    app.set_help_flag("", "");
+    app.add_flag("--help", options.help)->group("HELP");
+    app.add_flag("--version", options.version)->group("HELP");
+    app.add_flag("--license", options.license)->group("HELP");
 
     return result;
-}
+}  // GCOVR_EXCL_LINE
 
 }  // namespace
 
@@ -106,13 +91,12 @@ program_options program_options::parse(std::span<const std::string_view> args) {
 
     try {
         app.parse(std::move(vargs));
-    } catch (const CLI::CallForHelp& e) {
-        std::ignore = e;
-        return { .flags = { .help = true } };
-    } catch (const CLI::RequiredError& e) {
-        throw require_error{ e.what() };
-    } catch (const CLI::ExcludesError& e) {
+    } catch (const CLI::ExcludesError& e) {  // GCOVR_EXCL_LINE
         throw exclude_error{ e.what() };
+    }
+
+    if (options.help || options.version || options.license) {
+        return options;
     }
 
     const auto emplace_front = [](auto& container, auto&& value) {
@@ -121,7 +105,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
         );
     };
     if (positional) {
-        if (!options.flags.list && options.patterns.empty()) {
+        if (!options.list && options.patterns.empty()) {
             emplace_front(options.patterns, std::move(*positional));
         } else {
             emplace_front(options.paths, std::move(*positional));
@@ -129,7 +113,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
     }
 
     // `CLI::OptionGroup` does not work with positionals, needs manual check
-    if (!options.flags.list && options.patterns.empty()) {
+    if (!options.list && options.patterns.empty()) {
         throw require_error{
             "Exactly 1 option from [PATTERN,--regexp,--no-regexp] is required"
         };
@@ -139,31 +123,6 @@ program_options program_options::parse(std::span<const std::string_view> args) {
 }
 
 std::string program_options::get_help() { return make_impl()->app.help(); }
-
-std::ostream& operator<<(std::ostream& os, const program_flags& flags) {
-    auto set_flags = std::vector<std::string>{};
-    const auto add_flags = [&](bool flag, const std::string& name) {
-        if (flag) {
-            set_flags.emplace_back("." + name + " = true");
-        }
-    };
-    add_flags(flags.list, "list");
-    add_flags(flags.version, "version");
-    add_flags(flags.license, "license");
-    add_flags(flags.help, "help");
-    add_flags(flags.help_filter, "help_filter");
-    add_flags(flags.help_tags, "help_tags");
-    return os << "flags{ " << set_flags << " }";
-}
-
-std::ostream& operator<<(std::ostream& os, const program_options& options) {
-    os << "program_options";
-    os << "{ .patterns = " << options.patterns;
-    os << ", .paths = " << options.paths;
-    os << ", .filters = " << options.filters;
-    os << ", .flags = " << options.flags;
-    return os << " }";
-}
 
 }  // namespace glug::program
 

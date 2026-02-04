@@ -26,32 +26,23 @@ class require_error : public parse_error {
     using parse_error::parse_error;
 };
 
-// TODO: Separate per group?
-struct program_flags {
-    bool list{};
-    bool version{};
-    bool license{};
-    bool help{};
-    bool help_filter{};
-    bool help_tags{};
-
-    bool operator==(const program_flags&) const noexcept = default;
-};
-// TODO: Replace with `std::format`
-std::ostream& operator<<(std::ostream& os, const program_flags& flags);
-
 struct program_options {
     std::vector<std::string> patterns{};
     std::vector<std::filesystem::path> paths{};
     std::vector<std::string> filters{};
-    program_flags flags{};
+
+    bool list{};
+    bool help{};
+    bool version{};
+    bool license{};
 
     static program_options parse(std::span<const std::string_view> args);
     static std::string get_help();
 
+    // GCOVR_EXCL_START
     bool operator==(const program_options&) const noexcept = default;
+    // GCOVR_EXCL_STOP
 };
-std::ostream& operator<<(std::ostream& os, const program_options& options);
 
 }  // namespace glug::program
 

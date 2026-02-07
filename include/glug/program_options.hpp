@@ -32,9 +32,19 @@ struct program_options {
     std::vector<std::string> filters{};
 
     bool list{};
-    bool help{};
-    bool version{};
-    bool license{};
+
+    struct help_flags {
+        bool show_help{};
+        bool show_version{};
+        bool show_license{};
+        bool show_tags{};
+
+        explicit operator bool() const { return *this != decltype(*this){}; }
+
+        // GCOVR_EXCL_START
+        bool operator==(const help_flags&) const noexcept = default;
+        // GCOVR_EXCL_STOP
+    } help{};
 
     static program_options parse(std::span<const std::string_view> args);
     static std::string get_help();

@@ -70,9 +70,26 @@ auto make_impl() {
 
     // Don't want special throwing behavior
     app.set_help_flag("", "");
-    app.add_flag("--help", options.help)->group("HELP");
-    app.add_flag("--version", options.version)->group("HELP");
-    app.add_flag("--license", options.license)->group("HELP");
+    app.add_flag(
+               "--help",
+               options.help.show_help,
+               "Print this help message and exit"
+    )
+            ->group("HELP");
+    app.add_flag(
+               "--help-tags",
+               options.help.show_tags,
+               "Print builtin tag expansions"
+    )
+            ->group("HELP");
+    app.add_flag("--version", options.help.show_version, "Print glug version")
+            ->group("HELP");
+    app.add_flag(
+               "--license",
+               options.help.show_license,
+               "Print license of glug and third-party libraries"
+    )
+            ->group("HELP");
 
     return result;
 }  // GCOVR_EXCL_LINE
@@ -91,9 +108,11 @@ program_options program_options::parse(std::span<const std::string_view> args) {
         app.parse(std::move(vargs));
     } catch (const CLI::ExcludesError& e) {  // GCOVR_EXCL_LINE
         throw exclude_error{ e.what() };
+    } catch (const CLI::ExtrasError& e) {  // GCOVR_EXCL_LINE
+        throw parse_error{ e.what() };
     }
 
-    if (options.help || options.version || options.license) {
+    if (options.help) {
         return options;
     }
 

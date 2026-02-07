@@ -30,9 +30,10 @@ std::ostream& operator<<(std::ostream& os, const program_options& options) {
     stream_vector(options.paths, "paths");
     stream_vector(options.filters, "filters");
     stream_flag(options.list, "list");
-    stream_flag(options.help, "help");
-    stream_flag(options.version, "version");
-    stream_flag(options.license, "license");
+    stream_flag(options.help.show_help, "help.show_help");
+    stream_flag(options.help.show_tags, "help.show_tags");
+    stream_flag(options.help.show_version, "help.show_version");
+    stream_flag(options.help.show_license, "help.show_license");
 
     os << "}";
     return os;
@@ -48,7 +49,7 @@ struct program_options_param {
     std::vector<std::string_view> args{};
     // Putting into vector would require positive cases to spell out typename
     program_options expected{};
-    std::variant<no_error, require_error, exclude_error> error{};
+    std::variant<no_error, parse_error, require_error, exclude_error> error{};
 
     friend std::ostream&
     operator<<(std::ostream& os, const program_options_param& param) {
@@ -150,15 +151,24 @@ static const auto program_options_cases = std::vector<program_options_param>{
     },
     {
         { "--help" },
-        { .help = true },
+        { .help = { .show_help = true } },
+    },
+    {
+        { "--help-tags" },
+        { .help = { .show_tags = true } },
     },
     {
         { "--version" },
-        { .version = true },
+        { .help = { .show_version = true } },
     },
     {
         { "--license" },
-        { .license = true },
+        { .help = { .show_license = true } },
+    },
+    {
+        { "--invalid" },
+        {},
+        parse_error{ "The following argument was not expected: --invalid" },
     },
 };
 
@@ -166,6 +176,13 @@ static const auto program_options_cases = std::vector<program_options_param>{
 INSTANTIATE_TEST_SUITE_P(
         test, program_options_test, testing::ValuesIn(program_options_cases)
 );
+
+// NOLINTNEXTLINE
+TEST_F(program_options_test, help) {
+    using testing::HasSubstr;
+    const auto help = program_options::get_help();
+    EXPECT_THAT(help, HasSubstr("Usage: [OPTIONS] [PATTERN] [PATH...]"));
+}
 
 }  // namespace glug::program::unit_test
 

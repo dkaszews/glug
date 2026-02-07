@@ -32,7 +32,8 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
     path = f'{clone.cwd}/{subdir}'
     if not os.path.isfile(glug):
         glug += '.exe'
-    return set(subprocess.check_output([glug], cwd=path).decode().splitlines())
+    args = [glug, '-E']
+    return set(subprocess.check_output(args, cwd=path).decode().splitlines())
 
 
 @pytest.mark.parametrize(

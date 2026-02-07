@@ -1,13 +1,16 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #include "glug/filesystem.hpp"
+#include "glug/program_options.hpp"
 #include "glug/regex.hpp"
 
 #include "glug/generated/license.hpp"
+#include "glug/generated/licenses/cli11.hpp"
 
 #include <algorithm>
 #include <format>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -17,15 +20,29 @@ using namespace std::string_view_literals;
 namespace {
 
 template <typename... ARGS>
-void print(std::format_string<ARGS...> format, ARGS&&... args) {
-    auto out = std::ostream_iterator<char>{ std::cout };
+void print(
+        std::ostream& os, std::format_string<ARGS...> format, ARGS&&... args
+) {
+    auto out = std::ostream_iterator<char>{ os };
     std::format_to(out, format, std::forward<ARGS>(args)...);
 }
 
 template <typename... ARGS>
+void println(
+        std::ostream& os, std::format_string<ARGS...> format, ARGS&&... args
+) {
+    print(os, format, std::forward<ARGS>(args)...);
+    os << "\n";
+}
+
+template <typename... ARGS>
+void print(std::format_string<ARGS...> format, ARGS&&... args) {
+    print(std::cout, format, std::forward<ARGS>(args)...);
+}
+
+template <typename... ARGS>
 void println(std::format_string<ARGS...> format, ARGS&&... args) {
-    print(format, std::forward<ARGS>(args)...);
-    std::cout << "\n";
+    println(std::cout, format, std::forward<ARGS>(args)...);
 }
 
 const auto tags = std::unordered_map<std::string_view, std::string_view>{
@@ -45,46 +62,16 @@ const auto tags = std::unordered_map<std::string_view, std::string_view>{
     { "vim", "*.vim" },
 };
 
-constexpr auto help = R"(
-usage: glug [options] [root] [filter]
-
-Search files respecting .gitignore and given filter.
-
-Positional arguments:
-  root         Search root, defaults to current directory
-  filter       Comma-separated list of allowed globs and tags, defaults to all
-
-Options:
-  -h, --help   show this help message and exit
-  --version    print glug version
-  --license    print license of glug and third-party libraries, if any
-  --help-tags  print builtin tag expansions
-
-Examples:
-  glug . '*.cpp'               # Search all '*.cpp' files
-  glug include '-generated/*'  # Omit files in generated directory
-  glug test '#cpp,-#hpp'       # Search all cpp-related files except headers
-)"sv.substr(1);
-
-int print_help() {
-    print("{}", help);
-    return 0;
-}
-
-int print_version() {
-    println("{}", GLUG_VERSION);
-    return 0;
-}
-
-int print_license() {
+void print_license() {
     println("--- glug license --- \n\n{}", glug::generated::license::data);
+    println("--- CLI11 license --- \n\n{}",
+            glug::generated::licenses::cli11::data);
     if (const auto license = glug::regex::engine::license(); !license.empty()) {
         println("{}", license);
     }
-    return 0;
 }
 
-int print_tags() {
+void print_tags() {
     const auto max_elem = std::ranges::max_element(
             tags, [](const auto& lhs, const auto& rhs) {
                 return lhs.first.size() < rhs.first.size();
@@ -92,50 +79,72 @@ int print_tags() {
     );
     const auto pad = max_elem->first.size();
 
-    for (const auto& [tag, globs] : tags) {
+    for (const auto& [tag, globs] : std::map(tags.begin(), tags.end())) {
         println("{:{}}  {}", tag, pad, globs);
     }
-    return 0;
+}
+
+void print_help(const glug::program::program_options::help_flags& help) {
+    if (help.show_help) {
+        print("{}", glug::program::program_options::get_help());
+    } else if (help.show_tags) {
+        print_tags();
+    } else if (help.show_version) {
+        println("{}", GLUG_VERSION);
+    } else if (help.show_license) {
+        print_license();
+    }
 }
 
 }  // namespace
 
 // NOLINTNEXTLINE(bugprone-exception-escape): Assume `print` is correct
 int main(int argc, const char** argv) {
-    using namespace std::string_view_literals;
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    const auto args = std::vector<std::string_view>{ argv, argv + argc };
-    const auto has_option = [&args](std::string_view option) {
-        return std::ranges::find(args, option) != args.end();
-    };
-    if (has_option("-h") || has_option("--help")) {
-        return print_help();
+    const auto args = std::vector<std::string_view>{ argv + 1, argv + argc };
+    auto options = glug::program::program_options{};
+    try {
+        options = glug::program::program_options::parse(args);
+    } catch (const std::exception& e) {
+        println(std::cerr, "{}\nSee --help", e.what());
+        return 1;
     }
 
-    if (has_option("--version")) {
-        return print_version();
+    if (options.help) {
+        print_help(options.help);
+        return 0;
     }
 
-    if (has_option("--license")) {
-        return print_license();
+    if (!options.list) {
+        // TODO:
+        println(std::cerr, "--regexp not implemented, --no-regexp required");
+        return 1;
     }
 
-    if (has_option("--help-tags")) {
-        return print_tags();
+    if (options.filters.size() > 1) {
+        // TODO:
+        println(std::cerr, "Repeated --filter not implemented");
+        return 1;
     }
 
-    const auto dir = args.size() > 1 ? args[1] : "."sv;
-    const auto select = args.size() > 2 ? args[2] : ""sv;
+    if (options.paths.empty()) {
+        options.paths.emplace_back(".");
+    }
+
     const auto db = glug::glob::typetag_database{ tags };
-    const auto explorer = glug::filesystem::explorer{
-        dir, { glug::filter::select{ db.expand(select), dir } }
-    };
+    for (const auto& path : options.paths) {
+        const auto select
+                = !options.filters.empty() ? options.filters.front() : "";
+        const auto explorer = glug::filesystem::explorer{
+            path, { glug::filter::select{ db.expand(select), path } }
+        };
 
-    const auto trim_dot = dir == "." ? 2 : 0;
-    for (const auto& file : explorer) {
-        println("{}", file.path().generic_string().substr(trim_dot));
+        const auto trim_dot = path == "." ? 2 : 0;
+        for (const auto& file : explorer) {
+            println("{}", file.path().generic_string().substr(trim_dot));
+        }
     }
+
     return 0;
 }
 

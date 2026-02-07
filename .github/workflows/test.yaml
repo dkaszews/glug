@@ -33,8 +33,7 @@ jobs:
           # Hyperscan v5.4.2 - unqualified call to 'std::move'
           - { os: ubuntu-latest, toolchain: clang, regex: hyperscan }
     runs-on: ${{ matrix.os }}
-    # Hyperscan takes long time to compile
-    timeout-minutes: ${{ matrix.regex == 'hyperscan' && 30 || 10 }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: xmake-io/github-action-setup-xmake@v1
@@ -113,7 +112,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       # Has to be run before cache restore, otherwise Windows fails on long paths and/or symlinks

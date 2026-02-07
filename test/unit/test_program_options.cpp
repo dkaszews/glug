@@ -1,10 +1,9 @@
 // Provided as part of glug under MIT license, (c) 2026 Dominik Kaszewski
 #include "glug/program_options.hpp"
 
-#include <format>
 #include <ostream>
+#include <string>
 #include <string_view>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -13,28 +12,12 @@
 
 namespace glug::program {
 
-namespace {
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& container) {
-    bool first = true;
-    os << "[ ";
-    for (const auto& value : container) {
-        if (!std::exchange(first, false)) {
-            os << ", ";
-        }
-        os << value;
-    }
-    return os << " ]";
-}
-
-}  // namespace
-
+// NOLINTNEXTLINE(misc-use-internal-linkage): Would break ADL
 std::ostream& operator<<(std::ostream& os, const program_options& options) {
     os << "{ ";
     const auto stream_vector = [&](const auto& v, const std::string& name) {
         if (!v.empty()) {
-            os << "." << name << " = " << v << ", ";
+            os << "." << name << " = " << testing::PrintToString(v) << ", ";
         }
     };
     const auto stream_flag = [&](bool flag, const std::string& name) {
@@ -69,8 +52,7 @@ struct program_options_param {
 
     friend std::ostream&
     operator<<(std::ostream& os, const program_options_param& param) {
-        os << param.args;
-        return os;
+        return os << testing::PrintToString(param.args);
     }
 };
 
@@ -84,7 +66,7 @@ TEST_P(program_options_test, test) {
     const auto parse = [&]() { actual = program_options::parse(args); };
 
     // NOLINTNEXTLINE: Some FP about null vtable in all the way in `std::visit`
-    if (error.index() == 0) {
+    if (std::get_if<no_error>(&error)) {
         // NOLINTNEXTLINE
         EXPECT_NO_THROW(parse());
         EXPECT_EQ(actual, expected);
@@ -184,10 +166,6 @@ static const auto program_options_cases = std::vector<program_options_param>{
 INSTANTIATE_TEST_SUITE_P(
         test, program_options_test, testing::ValuesIn(program_options_cases)
 );
-
-// TODO: Remove or replace with a golden standard
-// NOLINTNEXTLINE
-TEST_F(program_options_test, help) { std::cout << program_options::get_help(); }
 
 }  // namespace glug::program::unit_test
 

@@ -5,7 +5,6 @@
 
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <ranges>
 #include <span>
 #include <string>
@@ -39,7 +38,6 @@ auto make_impl() {
 
     app.add_option("PATTERN", positional, "Search for lines matching PATTERN.")
             ->option_text(" ");
-    // TODO: Validate CLI::ExistingPath
     app.add_option(
                "PATH",
                options.paths,
@@ -99,12 +97,13 @@ program_options program_options::parse(std::span<const std::string_view> args) {
         return options;
     }
 
-    const auto emplace_front = [](auto& container, auto&& value) {
-        container.emplace(
-                container.begin(), std::forward<decltype(value)>(value)
-        );
-    };
     if (positional) {
+        const auto emplace_front = [](auto& container, auto&& value) {
+            container.emplace(
+                    container.begin(), std::forward<decltype(value)>(value)
+            );
+        };
+
         if (!options.list && options.patterns.empty()) {
             emplace_front(options.patterns, std::move(*positional));
         } else {

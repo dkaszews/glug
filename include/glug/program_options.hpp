@@ -2,6 +2,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <ostream>
 #include <span>
 #include <stdexcept>
@@ -29,15 +30,17 @@ class require_error : public parse_error {
 struct program_options {
     std::vector<std::string> patterns{};
     std::vector<std::filesystem::path> paths{};
-    std::vector<std::string> filters{};
+    std::optional<std::string> filters{};
 
     bool list{};
 
     struct help_flags {
+        // GCOVR_EXCL_START - Ubuntu bug, doubled initializers
         bool show_help{};
         bool show_version{};
         bool show_license{};
         bool show_tags{};
+        // GCOVR_EXCL_STOP
 
         explicit operator bool() const { return *this != decltype(*this){}; }
 

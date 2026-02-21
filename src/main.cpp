@@ -7,6 +7,7 @@
 #include "glug/generated/licenses/cli11.hpp"
 
 #include <algorithm>
+#include <exception>
 #include <format>
 #include <iostream>
 #include <iterator>
@@ -121,23 +122,18 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
-    if (options.filters.size() > 1) {
-        // TODO:
-        println(std::cerr, "Repeated --filter not implemented");
-        return 1;
-    }
-
     if (options.paths.empty()) {
         options.paths.emplace_back(".");
     }
 
     const auto db = glug::glob::typetag_database{ tags };
     for (const auto& path : options.paths) {
-        const auto select
-                = !options.filters.empty() ? options.filters.front() : "";
-        const auto explorer = glug::filesystem::explorer{
-            path, { glug::filter::select{ db.expand(select), path } }
+        const auto select = glug::filter::select{
+            db.expand(options.filters.value_or("")),
+            path,
         };
+        const auto explorer
+                = glug::filesystem::explorer{ path, { .select = select } };
 
         const auto trim_dot = path == "." ? 2 : 0;
         for (const auto& file : explorer) {

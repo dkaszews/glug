@@ -106,9 +106,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
 
     try {
         app.parse(std::move(vargs));
-    } catch (const CLI::ExcludesError& e) {  // GCOVR_EXCL_LINE
-        throw exclude_error{ e.what() };
-    } catch (const CLI::ExtrasError& e) {  // GCOVR_EXCL_LINE
+    } catch (const CLI::Error& e) {  // GCOVR_EXCL_LINE
         throw parse_error{ e.what() };
     }
 
@@ -132,7 +130,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
 
     // `CLI::OptionGroup` does not work with positionals, needs manual check
     if (!options.list && options.patterns.empty()) {
-        throw require_error{
+        throw parse_error{
             "Exactly 1 option from [PATTERN,--regexp,--no-regexp] is required"
         };
     }

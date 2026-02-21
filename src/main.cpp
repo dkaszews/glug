@@ -1,6 +1,6 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
+#include "glug/cli.hpp"
 #include "glug/filesystem.hpp"
-#include "glug/program_options.hpp"
 #include "glug/regex.hpp"
 
 #include "glug/generated/license.hpp"
@@ -85,9 +85,9 @@ void print_tags() {
     }
 }
 
-void print_help(const glug::program::program_options::help_flags& help) {
+void print_help(const glug::cli::cli_options::help_flags& help) {
     if (help.show_help) {
-        print("{}", glug::program::program_options::get_help());
+        print("{}", glug::cli::cli_options::get_help());
     } else if (help.show_tags) {
         print_tags();
     } else if (help.show_version) {
@@ -97,29 +97,18 @@ void print_help(const glug::program::program_options::help_flags& help) {
     }
 }
 
-}  // namespace
-
-// NOLINTNEXTLINE(bugprone-exception-escape): Assume `print` is correct
-int main(int argc, const char** argv) {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    const auto args = std::vector<std::string_view>{ argv + 1, argv + argc };
-    auto options = glug::program::program_options{};
-    try {
-        options = glug::program::program_options::parse(args);
-    } catch (const std::exception& e) {
-        println(std::cerr, "{}\nSee --help", e.what());
-        return 1;
-    }
-
+void main_impl(std::vector<std::string_view> args) {
+    auto options = glug::cli::cli_options::parse(args);
     if (options.help) {
         print_help(options.help);
-        return 0;
+        return;
     }
 
     if (!options.list) {
-        // TODO:
-        println(std::cerr, "--regexp not implemented, --no-regexp required");
-        return 1;
+        // TODO: #21 - Grep file contents
+        throw std::invalid_argument{
+            "--regexp not implemented, --no-regexp required"
+        };
     }
 
     if (options.paths.empty()) {
@@ -140,7 +129,21 @@ int main(int argc, const char** argv) {
             println("{}", file.path().generic_string().substr(trim_dot));
         }
     }
+}
 
-    return 0;
+}  // namespace
+
+// NOLINTNEXTLINE(bugprone-exception-escape): Assume `print` is correct
+int main(int argc, const char** argv) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    const auto args = std::vector<std::string_view>{ argv + 1, argv + argc };
+    try {
+        main_impl(args);
+        return 0;
+    } catch (const std::exception& e) {
+        println(std::cerr, "{}", e.what());
+        println(std::cerr, "See --help for usage");
+        return 1;
+    }
 }
 

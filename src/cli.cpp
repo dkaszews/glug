@@ -1,5 +1,5 @@
 // Provided as part of glug under MIT license, (c) 2026 Dominik Kaszewski
-#include "glug/program_options.hpp"
+#include "glug/cli.hpp"
 
 #include "glug/backport/ranges.hpp"
 
@@ -14,14 +14,14 @@
 
 #include <CLI/CLI.hpp>
 
-namespace glug::program {
+namespace glug::cli {
 
 namespace {
 
 // Heavy use of references makes `CLI::App` non-moveable
 struct impl {
     CLI::App app{};
-    program_options options{};
+    cli_options options{};
     std::optional<std::string> positional{};
 };
 
@@ -96,7 +96,7 @@ auto make_impl() {
 
 }  // namespace
 
-program_options program_options::parse(std::span<const std::string_view> args) {
+cli_options cli_options::parse(std::span<const std::string_view> args) {
     auto impl = make_impl();
     auto& [app, options, positional] = *impl;
 
@@ -107,7 +107,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
     try {
         app.parse(std::move(vargs));
     } catch (const CLI::Error& e) {  // GCOVR_EXCL_LINE
-        throw parse_error{ e.what() };
+        throw cli_error{ e.what() };
     }
 
     if (options.help) {
@@ -130,7 +130,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
 
     // `CLI::OptionGroup` does not work with positionals, needs manual check
     if (!options.list && options.patterns.empty()) {
-        throw parse_error{
+        throw cli_error{
             "Exactly 1 option from [PATTERN,--regexp,--no-regexp] is required"
         };
     }
@@ -138,7 +138,7 @@ program_options program_options::parse(std::span<const std::string_view> args) {
     return options;
 }
 
-std::string program_options::get_help() { return make_impl()->app.help(); }
+std::string cli_options::get_help() { return make_impl()->app.help(); }
 
-}  // namespace glug::program
+}  // namespace glug::cli
 

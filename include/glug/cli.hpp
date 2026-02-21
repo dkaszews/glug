@@ -10,24 +10,14 @@
 #include <string_view>
 #include <vector>
 
-namespace glug::program {
+namespace glug::cli {
 
-class parse_error : public std::invalid_argument {
+class cli_error : public std::invalid_argument {
     public:
     using std::invalid_argument::invalid_argument;
 };
 
-class exclude_error : public parse_error {
-    public:
-    using parse_error::parse_error;
-};
-
-class require_error : public parse_error {
-    public:
-    using parse_error::parse_error;
-};
-
-struct program_options {
+struct cli_options {
     std::vector<std::string> patterns{};
     std::vector<std::filesystem::path> paths{};
     std::optional<std::string> filters{};
@@ -49,13 +39,13 @@ struct program_options {
         // GCOVR_EXCL_STOP
     } help{};
 
-    static program_options parse(std::span<const std::string_view> args);
+    static cli_options parse(std::span<const std::string_view> args);
     static std::string get_help();
 
     // GCOVR_EXCL_START
-    bool operator==(const program_options&) const noexcept = default;
+    bool operator==(const cli_options&) const noexcept = default;
     // GCOVR_EXCL_STOP
 };
 
-}  // namespace glug::program
+}  // namespace glug::cli
 

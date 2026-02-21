@@ -1,5 +1,5 @@
 // Provided as part of glug under MIT license, (c) 2026 Dominik Kaszewski
-#include "glug/program_options.hpp"
+#include "glug/cli.hpp"
 
 #include <optional>
 #include <ostream>
@@ -10,10 +10,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace glug::program {
+namespace glug::cli {
 
 // NOLINTNEXTLINE(misc-use-internal-linkage): Would break ADL
-std::ostream& operator<<(std::ostream& os, const program_options& options) {
+std::ostream& operator<<(std::ostream& os, const cli_options& options) {
     os << "{ ";
     const auto stream_vector = [&](const auto& v, const std::string& name) {
         if (!v.empty()) {
@@ -44,32 +44,31 @@ std::ostream& operator<<(std::ostream& os, const program_options& options) {
     return os;
 }
 
-}  // namespace glug::program
+}  // namespace glug::cli
 
-namespace glug::program::unit_test {
+namespace glug::cli::unit_test {
 
-struct program_options_param {
+struct cli_options_param {
     std::vector<std::string_view> args{};
-    program_options expected{};
-    std::optional<parse_error> error{};
+    cli_options expected{};
+    std::optional<cli_error> error{};
 
     friend std::ostream&
-    operator<<(std::ostream& os, const program_options_param& param) {
+    operator<<(std::ostream& os, const cli_options_param& param) {
         return os << testing::PrintToString(param.args);
     }
 };
 
-class program_options_test :
-    public testing::TestWithParam<program_options_param> {};
+class cli_options_test : public testing::TestWithParam<cli_options_param> {};
 
 // NOLINTNEXTLINE
-TEST_P(program_options_test, test) {
+TEST_P(cli_options_test, test) {
     const auto& [args, expected, error] = GetParam();
-    auto actual = program_options{};
-    const auto parse = [&]() { actual = program_options::parse(args); };
+    auto actual = cli_options{};
+    const auto parse = [&]() { actual = cli_options::parse(args); };
 
     if (error.has_value()) {
-        EXPECT_THAT(parse, testing::ThrowsMessage<parse_error>(error->what()));
+        EXPECT_THAT(parse, testing::ThrowsMessage<cli_error>(error->what()));
         return;
     }
 
@@ -78,11 +77,11 @@ TEST_P(program_options_test, test) {
     EXPECT_EQ(actual, expected);
 }
 
-static const auto program_options_cases = std::vector<program_options_param>{
+static const auto cli_options_cases = std::vector<cli_options_param>{
     {
         {},
         {},
-        parse_error{
+        cli_error{
             "Exactly 1 option from [PATTERN,--regexp,--no-regexp] is "
             "required",
         },
@@ -138,7 +137,7 @@ static const auto program_options_cases = std::vector<program_options_param>{
     {
         { "-Eex" },
         {},
-        parse_error{ "--regexp excludes --no-regexp" },
+        cli_error{ "--regexp excludes --no-regexp" },
     },
     {
         { "-f", "#cpp", "a", "b", "c" },
@@ -147,7 +146,7 @@ static const auto program_options_cases = std::vector<program_options_param>{
     {
         { "-f" },
         {},
-        parse_error{ "--filter: 1 required TEXT missing" },
+        cli_error{ "--filter: 1 required TEXT missing" },
     },
     {
         { "--help" },
@@ -168,21 +167,21 @@ static const auto program_options_cases = std::vector<program_options_param>{
     {
         { "--invalid" },
         {},
-        parse_error{ "The following argument was not expected: --invalid" },
+        cli_error{ "The following argument was not expected: --invalid" },
     },
 };
 
 // NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
-        test, program_options_test, testing::ValuesIn(program_options_cases)
+        test, cli_options_test, testing::ValuesIn(cli_options_cases)
 );
 
 // NOLINTNEXTLINE
-TEST_F(program_options_test, help) {
+TEST_F(cli_options_test, help) {
     using testing::HasSubstr;
-    const auto help = program_options::get_help();
+    const auto help = cli_options::get_help();
     EXPECT_THAT(help, HasSubstr("Usage: [OPTIONS] [PATTERN] [PATH...]"));
 }
 
-}  // namespace glug::program::unit_test
+}  // namespace glug::cli::unit_test
 

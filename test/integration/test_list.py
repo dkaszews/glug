@@ -76,7 +76,7 @@ def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
     ],
     ids=str
 )
-def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
+def test_list_repo(repo: repos.Repo, subdir: str) -> None:
     data_dir = f'{PROJECT_ROOT}/test/data/.cloned'
     os.makedirs(data_dir, exist_ok=True)
 
@@ -97,11 +97,11 @@ def test_listing_repo(repo: repos.Repo, subdir: str) -> None:
         'include',
         'include/glug',
         'test',
-        'test/parity',
+        'test/integration',
         'test/unit',
     ],
     ids=str
 )
-def test_listing_self(subdir: str) -> None:
+def test_list_self(subdir: str) -> None:
     clone = git.Clone(PROJECT_ROOT)
     assert list_glug(clone, subdir) == list_git(clone, subdir)

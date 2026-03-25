@@ -132,15 +132,15 @@ target('unit_test')
     after_build(copy_latest)
 target_end()
 
-target('parity_test')
+target('integration_test')
     set_kind('phony')
     add_tests('default')
     add_deps('glug')
     on_test(function (target, opt)
         if import('core.base.option').get('verbose') then
-            os.execv('pytest', { 'test/parity', '-v' })
+            os.execv('pytest', { 'test/integration', '-v' })
         else
-            os.execv('pytest', { 'test/parity' }, { stdout = os.tmpfile() })
+            os.execv('pytest', { 'test/integration' }, { stdout = os.tmpfile() })
         end
         return true
     end)

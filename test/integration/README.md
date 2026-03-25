@@ -1,11 +1,11 @@
-# Parity tests
+# Integration tests
+
+## Parity tests
 
 Parity tests are designed to check functionality which is expected to result in comparable if not exactly the same output to other tools running on large established codebases.
 This is somewhat orthogonal to unit tests, which are testing single functions or classes (units) against an artificial set of inputs and have explicit and exact expected outputs, while parity tests aim to find edge cases in real-world scenarios that the unit tests did not consider.
 
-## Examples
-
-`glug::filesystem::explorer` is documented to provide exact same output as `git ls-files`.
+For example, `glug::filesystem::explorer` is documented to provide exact same output as `git ls-files`.
 This has an asterix in cases where an ignored file is tracked by the repo due to being committed before `.gitignore` has been updated, or has been committed with `git add --force`.
 Since there is no way for `glug` to determine whether a file is actually tracked, such files have to be filtered out from the `git ls-files` output instead.
 
@@ -17,6 +17,6 @@ Result is a repository which looks normal according to `find` or `git ls-files`,
 
 ## Running
 
-Simply run `pytest -v test/parity` or `xmake test -v parity_test/default`, the latter of which also makes sure that the `glug` executable is up-to-date.
+Simply run `pytest -v test/integration` or `xmake test -v integration_test/default`, the latter of which also makes sure that the `glug` executable is up-to-date.
 It is recommended to use optimized binaries by default (`xmake config --mode=release` or `releasedbg`) as the debug ones can be order of magnitude slower (minutes vs seconds).
 

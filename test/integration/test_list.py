@@ -145,6 +145,6 @@ def test_list_self(subdir: str) -> None:
     ],
     ids=str
 )
-def test_list_filter(subdir: str, filter: str, expected: str[str]) -> None:
+def test_list_filter(subdir: str, filter: str, expected: set[str]) -> None:
     clone = git.Clone(PROJECT_ROOT)
     assert list_glug(clone, subdir, filter=filter) == expected

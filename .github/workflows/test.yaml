@@ -33,8 +33,7 @@ jobs:
           # Hyperscan v5.4.2 - unqualified call to 'std::move'
           - { os: ubuntu-latest, toolchain: clang, regex: hyperscan }
     runs-on: ${{ matrix.os }}
-    # Hyperscan takes long time to compile
-    timeout-minutes: ${{ matrix.regex == 'hyperscan' && 30 || 10 }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: xmake-io/github-action-setup-xmake@v1
@@ -107,13 +106,13 @@ jobs:
           dockerRunArgs: --volume "${PWD}/build:/build"
           run: /build/latest/unit_test
 
-  parity-test:
+  integration-test:
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       # Has to be run before cache restore, otherwise Windows fails on long paths and/or symlinks
@@ -125,7 +124,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: test/data/.cloned
-          key: ${{ matrix.os }}-${{ hashFiles('tools/git.py', 'test/parity/repos.py') }}
+          key: ${{ matrix.os }}-${{ hashFiles('tools/git.py', 'test/integration/repos.py') }}
       - uses: xmake-io/github-action-setup-xmake@v1
         with:
           xmake-version: '>=3.0.1'
@@ -145,6 +144,6 @@ jobs:
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v OEMCP -d 65001 -f
           reg add HKLM\SYSTEM\CurrentControlSet\Control\Nls\CodePage -v MACCP -d 65001 -f
       - run: xmake config -vy --mode=release
-      - run: xmake build -v parity_test
-      - run: xmake test -v parity_test/default
+      - run: xmake build -v integration_test
+      - run: xmake test -v integration_test/default
 

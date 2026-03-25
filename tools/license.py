@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Provided as part of glug under MIT license, (c) 2025 Dominik Kaszewski
+# Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 """Checks source files for up-to-date license header."""
 
 import os
@@ -61,7 +61,7 @@ class LicenseChecker:
     def fix(self) -> None:
         """Prepend expected license to file or replace existing one."""
         lines = self._lines[:]
-        has_shebang = lines[0].startswith('#!')
+        has_shebang = bool(lines) and lines[0].startswith('#!')
         if self.license_line is not None:
             lines[has_shebang] = self.expected_license()
         else:

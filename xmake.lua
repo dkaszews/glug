@@ -6,6 +6,8 @@ set_allowedmodes('release', 'releasedbg', 'debug', 'coverage')
 set_languages('c++20')
 set_warnings('all', 'extra', 'pedantic', 'error')
 
+add_requires('gtest 1.16.0')
+add_requires('cli11 2.6.1')
 local regex_engines = {
     re2 = '>= 2025.08.12',
     pcre2 = '>= 10.44',
@@ -23,6 +25,13 @@ option('regex')
     end)
 option_end()
 
+-- `add_requires` not available in `after_check`
+if regex_engines[get_config('regex')] then
+    local engine = get_config('regex')
+    local config = { configs = { shared = is_kind('shared') } }
+    add_requires(engine .. ' ' .. regex_engines[engine], config)
+end
+
 -- Naming it `--version` interferes with package versions
 option('tag')
     set_description('Binary version tag')
@@ -38,13 +47,6 @@ option('tag')
         option:add('defines', 'GLUG_VERSION="' .. version .. '"')
     end)
 option_end()
-
-add_requires('gtest >= 1.16.0')
-if regex_engines[get_config('regex')] then
-    local engine = get_config('regex')
-    local config = { configs = { shared = is_kind('shared') } }
-    add_requires(engine .. ' ' .. regex_engines[engine], config)
-end
 
 -- GCC 15.1.0 cross-toolchain complains about gtest using `<ciso646>`
 if is_cross('riscv64-linux-gnu-') then
@@ -113,7 +115,7 @@ target('glug')
     set_kind('binary')
     add_files('src/**.cpp')
     add_includedirs('include')
-    add_packages(get_config('regex'))
+    add_packages('cli11', get_config('regex'))
     add_options('regex', 'tag')
     before_build(generate_licenses)
     after_build(copy_latest)
@@ -125,20 +127,20 @@ target('unit_test')
     add_files('src/**.cpp|main.cpp', 'test/unit/**.cpp')
     add_includedirs('include', 'test')
     add_defines('UNIT_TEST=1')
-    add_packages('gtest', get_config('regex'))
+    add_packages('cli11', 'gtest', get_config('regex'))
     add_options('regex', 'tag')
     after_build(copy_latest)
 target_end()
 
-target('parity_test')
+target('integration_test')
     set_kind('phony')
     add_tests('default')
     add_deps('glug')
     on_test(function (target, opt)
         if import('core.base.option').get('verbose') then
-            os.execv('pytest', { 'test/parity', '-v' })
+            os.execv('pytest', { 'test/integration', '-v' })
         else
-            os.execv('pytest', { 'test/parity' }, { stdout = os.tmpfile() })
+            os.execv('pytest', { 'test/integration' }, { stdout = os.tmpfile() })
         end
         return true
     end)

@@ -11,8 +11,37 @@ It also strives for high quality of development, targetting 100% test coverage a
 
 ## Usage
 
-Currently, the provided binaries are for testing and demonstration purposes, showcasing the `.gitignore` implementation by recursively listing files in target directory.
-`grep`-like in-file search is to be implemented by the next [0.2.0 release](https://github.com/dkaszews/glug/milestone/2).
+<details>
+
+<summary>`glug --help`</summary>
+
+```shell
+Searches paths for lines matching given patterns. Paths that are directories are 
+recursively enumerated, using any encountered .gitignore files as filter. 
+
+
+Usage: [OPTIONS] [PATTERN] [PATH...]
+
+
+POSITIONALS:
+  PATTERN                     Search for lines matching PATTERN. 
+  PATH                        Search files in given PATH, defaults to current directory.
+
+OPTIONS:
+  -e,     --regexp PATTERN    Search for lines matching PATTERN. Can be used to specify
+                              multiple patterns, or ones starting with a dash.
+  -E,     --no-regexp, --list Excludes: --regexp
+                              Print all files that would be searched.
+  -f,     --filter FILTER     Only search in files that match given filter.
+
+HELP:
+          --help              Print this help message and exit
+          --help-tags         Print builtin tag expansions
+          --version           Print glug version
+          --license           Print license of glug and third-party libraries
+```
+
+</details>
 
 Similarly to `ack` and `ag`, `glug` implements convenient shorthands for searching just in files related to given programming language.
 Whereas those two spell it using separate options like `ag --cpp` or `ack --cpp --nohpp`, `glug` instead expands any glob prefixed with unescaped `#` into a set of globs stored in its database.

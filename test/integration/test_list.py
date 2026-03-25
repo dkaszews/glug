@@ -27,12 +27,19 @@ def list_git(clone: git.Clone, subdir: str | None = None) -> set[str]:
     }
 
 
-def list_glug(clone: git.Clone, subdir: str | None = None) -> set[str]:
-    glug = f'{PROJECT_ROOT}/build/latest/glug'
+def list_glug(
+    clone: git.Clone,
+    subdir: str | None = None,
+    filter: str | None = None
+) -> set[str]:
+    args = [f'{PROJECT_ROOT}/build/latest/glug', '-E']
+    if not os.path.isfile(args[0]):
+        args[0] += '.exe'
+
+    if filter is not None:
+        args += ['-f', filter]
+
     path = f'{clone.cwd}/{subdir}'
-    if not os.path.isfile(glug):
-        glug += '.exe'
-    args = [glug, '-E']
     return set(subprocess.check_output(args, cwd=path).decode().splitlines())
 
 
@@ -105,3 +112,39 @@ def test_list_repo(repo: repos.Repo, subdir: str) -> None:
 def test_list_self(subdir: str) -> None:
     clone = git.Clone(PROJECT_ROOT)
     assert list_glug(clone, subdir) == list_git(clone, subdir)
+
+
+@pytest.mark.parametrize(
+    'subdir,filter,expected',
+    [
+        (
+            'test/data/hello_cpp',
+            '*.hpp',
+            {
+                'include/hello_cpp/hello.hpp',
+            },
+        ),
+        (
+            'test/data/hello_cpp',
+            '*.cpp',
+            {
+                'src/hello.cpp',
+                'src/main.cpp',
+                'test/main.cpp',
+                'test/test_hello.cpp',
+            },
+        ),
+        (
+            'test/data/hello_cpp',
+            '*.cpp,-test/',
+            {
+                'src/hello.cpp',
+                'src/main.cpp',
+            },
+        ),
+    ],
+    ids=str
+)
+def test_list_filter(subdir: str, filter: str, expected: str[str]) -> None:
+    clone = git.Clone(PROJECT_ROOT)
+    assert list_glug(clone, subdir, filter=filter) == expected

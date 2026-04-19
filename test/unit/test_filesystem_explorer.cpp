@@ -41,7 +41,6 @@ struct explorer_param {
 
 class explorer_test : public testing::TestWithParam<explorer_param> {};
 
-// NOLINTNEXTLINE
 TEST_F(explorer_test, iterators) {
     auto tree = "iterators"_d / "README.md"_f;
     const auto temp = temp_fs{};
@@ -54,7 +53,6 @@ TEST_F(explorer_test, iterators) {
     EXPECT_NE(exp.end(), exp);
 }
 
-// NOLINTNEXTLINE
 TEST_F(explorer_test, dereference) {
     auto tree = dir{ "deref", { "LICENSE.txt"_f, "README.md"_f } };
     const auto temp = temp_fs{};
@@ -68,7 +66,6 @@ TEST_F(explorer_test, dereference) {
     EXPECT_EQ(exp->path(), prefix / "deref/README.md");
 }
 
-// NOLINTNEXTLINE
 TEST_P(explorer_test, test) {
     const auto& [tree, expected, target, select] = GetParam();
     const auto temp = temp_fs{};
@@ -471,7 +468,6 @@ static const auto explorer_cases = std::vector<explorer_param>{
     },
 };
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         explorer_test,
         explorer_test,
@@ -557,7 +553,6 @@ const auto select_cases = std::vector<explorer_param>({
     },
 });
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         select_test,
         explorer_test,

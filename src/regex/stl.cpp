@@ -9,19 +9,15 @@
 
 namespace glug::regex {
 
-namespace detail {
-
-struct impl {
+struct engine::impl {
     explicit impl(std::string_view s) :
         re{ s.data(), s.size() } {}
 
     std::regex re{};
 };
 
-}  // namespace detail
-
 engine::engine(std::string_view pattern) :
-    pimpl{ std::make_shared<detail::impl>(pattern) } {}
+    pimpl{ std::make_shared<engine::impl>(pattern) } {}
 
 bool engine::match(std::string_view s) const {
     return std::regex_match(s.begin(), s.end(), pimpl->re);

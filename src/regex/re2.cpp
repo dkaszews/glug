@@ -13,19 +13,15 @@
 
 namespace glug::regex {
 
-namespace detail {
-
-struct impl {
+struct engine::impl {
     explicit impl(std::string_view pattern) :
         regex{ pattern } {}
 
     re2::RE2 regex;
 };
 
-}  // namespace detail
-
 engine::engine(std::string_view pattern) :
-    pimpl{ std::make_shared<detail::impl>(pattern) } {}
+    pimpl{ std::make_shared<impl>(pattern) } {}
 
 bool engine::match(std::string_view s) const {
     return pimpl && re2::RE2::FullMatch(s, pimpl->regex);

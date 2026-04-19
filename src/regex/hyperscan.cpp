@@ -18,9 +18,7 @@
 
 namespace glug::regex {
 
-namespace detail {
-
-struct impl {
+struct engine::impl {
     struct database_deleter {
         void operator()(hs_database* p) const { hs_free_database(p); }
     };
@@ -32,9 +30,8 @@ struct impl {
     std::unique_ptr<hs_scratch, scratch_deleter> scratch{};
 };
 
-}  // namespace detail
-
-engine::engine(std::string_view pattern) {
+engine::engine(std::string_view pattern) :
+    pimpl{ std::make_shared<impl>() } {
     {
         auto error = std::unique_ptr<hs_compile_error>();
         [[maybe_unused]] const auto result = hs_compile(

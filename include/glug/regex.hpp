@@ -6,10 +6,6 @@
 
 namespace glug::regex {
 
-namespace detail {
-struct impl;
-}
-
 class engine {
     public:
     engine() = default;
@@ -21,7 +17,8 @@ class engine {
     static std::string_view license();
 
     private:
-    std::shared_ptr<detail::impl> pimpl{};
+    struct impl;
+    std::shared_ptr<impl> pimpl{};
 };
 
 };  // namespace glug::regex

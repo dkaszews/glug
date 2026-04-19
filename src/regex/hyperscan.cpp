@@ -1,8 +1,10 @@
 // Provided as part of glug under MIT license, (c) 2025-2026 Dominik Kaszewski
 #if defined(GLUG_REGEX_HYPERSCAN)
 
-#include "glug/generated/licenses/hyperscan.hpp"
 #include "glug/regex.hpp"
+
+#include "glug/backport/memory.hpp"
+#include "glug/generated/licenses/hyperscan.hpp"
 
 #include <hs/hs_common.h>
 #include <hs/hs_compile.h>
@@ -12,13 +14,10 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
 namespace glug::regex {
 
-namespace detail {
-
-struct impl {
+struct engine::impl {
     struct database_deleter {
         void operator()(hs_database* p) const { hs_free_database(p); }
     };
@@ -26,34 +25,31 @@ struct impl {
         void operator()(hs_scratch* p) const { hs_free_scratch(p); }
     };
 
-    impl(hs_database* db, hs_scratch* scratch) :
-        db{ db, {} },
-        scratch{ scratch, {} } {}
-
     std::unique_ptr<hs_database, database_deleter> db{};
     std::unique_ptr<hs_scratch, scratch_deleter> scratch{};
 };
 
-}  // namespace detail
+engine::engine(std::string_view pattern) :
+    pimpl{ std::make_shared<impl>() } {
+    {
+        auto error = std::unique_ptr<hs_compile_error>();
+        [[maybe_unused]] const auto result = hs_compile(
+                ("^(" + std::string{ pattern } + ")$").c_str(),
+                HS_FLAG_UTF8 | HS_FLAG_SINGLEMATCH,
+                HS_MODE_BLOCK,
+                nullptr,
+                backport::out_ptr(pimpl->db),
+                backport::out_ptr(error)
+        );
+        assert(result == HS_SUCCESS);
+    }
 
-engine::engine(std::string_view pattern) {
-    // TODO: #15 - backport std::out_ptr
-    auto* db = std::type_identity_t<hs_database*>{};
-    auto* error = std::type_identity_t<hs_compile_error*>{};
-    [[maybe_unused]] auto result = hs_compile(
-            ("^(" + std::string{ pattern } + ")$").c_str(),
-            HS_FLAG_UTF8 | HS_FLAG_SINGLEMATCH,
-            HS_MODE_BLOCK,
-            nullptr,
-            &db,
-            &error
-    );
-    assert(result == HS_SUCCESS);
-
-    auto* scratch = std::type_identity_t<hs_scratch*>{};
-    result = hs_alloc_scratch(db, &scratch);
-    assert(result == HS_SUCCESS);
-    pimpl = std::make_shared<detail::impl>(db, scratch);
+    {
+        [[maybe_unused]] const auto result = hs_alloc_scratch(
+                pimpl->db.get(), backport::out_ptr(pimpl->scratch)
+        );
+        assert(result == HS_SUCCESS);
+    }
 }
 
 bool engine::match(std::string_view s) const {

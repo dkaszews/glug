@@ -14,9 +14,7 @@
 
 namespace glug::regex {
 
-namespace detail {
-
-struct impl {
+struct engine::impl {
     struct code_deleter {
         void operator()(pcre2_code_8* p) const { pcre2_code_free_8(p); };
     };
@@ -30,10 +28,8 @@ struct impl {
     std::unique_ptr<pcre2_match_data_8, scratch_deleter> scratch{};
 };
 
-}  // namespace detail
-
 engine::engine(std::string_view pattern) :
-    pimpl{ std::make_shared<detail::impl>() } {
+    pimpl{ std::make_shared<impl>() } {
 
     auto error_code = int{};
     auto error_offset = size_t{};

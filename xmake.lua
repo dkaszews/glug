@@ -149,7 +149,7 @@ target_end()
 task('coverage')
     on_run(function (target)
         os.rm('build/**/*.gcda')
-        os.execv('xmake', { 'build', '-v', 'unit_test/default' })
+        os.execv('xmake', { 'build', '-v', 'unit_test' })
         os.execv('xmake', { 'test', '-v', 'unit_test/default' })
         os.execv('gcovr', {
             '--txt',

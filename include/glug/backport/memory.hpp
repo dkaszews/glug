@@ -18,14 +18,12 @@ class out_ptr_t {
     }
 
     ~out_ptr_t() {
-        // auto reset = [this](auto&& args) {
-        //     smart.reset(p, std::forward<A>(args)...);
-        // };
-        // if (p) {
-        //     std::apply(reset, args);
-        // }
+        const auto reset = [this](A... args) {
+            smart = S{ p, std::forward<A>(args)... };
+        };
+
         if (p) {
-            smart.reset(p);
+            std::apply(reset, std::move(args));
         }
     }
 

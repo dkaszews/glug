@@ -28,9 +28,13 @@ class out_ptr_t {
     }
 
     out_ptr_t(const out_ptr_t&) = delete;
+    out_ptr_t(out_ptr_t&&) = delete;
     out_ptr_t& operator=(const out_ptr_t&) = delete;
+    out_ptr_t& operator=(out_ptr_t&&) = delete;
 
+    // NOLINTNEXTLINE(google-explicit-constructor): implicit by design
     operator P*() const noexcept { return pp; }
+    // NOLINTNEXTLINE(google-explicit-constructor): implicit by design
     operator void**() const noexcept { return pp; }
 
     private:
@@ -43,11 +47,11 @@ class out_ptr_t {
 template <typename P = void, typename S, typename... A>
 auto out_ptr(S& smart_pointer, A&&... args) {
     if constexpr (!std::is_void_v<P>) {
-        using T = P;
-        return out_ptr_t<S, T, A&&...>(smart_pointer, std::forward<A>(args)...);
+        return out_ptr_t<S, P, A&&...>(smart_pointer, std::forward<A>(args)...);
     } else if constexpr (requires { typename S::pointer; }) {
-        using T = typename S::pointer;
-        return out_ptr_t<S, T, A&&...>(smart_pointer, std::forward<A>(args)...);
+        return out_ptr_t<S, typename S::pointer, A&&...>(
+                smart_pointer, std::forward<A>(args)...
+        );
     }
 }
 

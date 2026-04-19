@@ -4,10 +4,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <tuple>
+
 namespace glug::backport::test {
 
 struct int_factory {
+    // NOLINTNEXTLINE
     MOCK_METHOD(bool, create, (int**));
+    // NOLINTNEXTLINE
     MOCK_METHOD(void, destroy, (int*));
 };
 
@@ -18,20 +23,25 @@ struct deleter {
     void operator()(int* p) const { instance->destroy(p); }
 };
 
+// NOLINTNEXTLINE
 TEST(out_ptr_test, created) {
     auto mock = testing::StrictMock<int_factory>{};
     auto smart = std::unique_ptr<int, deleter>{};
 
+    static constexpr int value = 123;
     EXPECT_CALL(mock, create).WillOnce([](int** p) {
-        *p = new int{ 10 };
+        *p = std::make_unique<int>(value).release();
         return true;
     });
     EXPECT_TRUE(mock.create(glug::backport::out_ptr(smart, deleter{ &mock })));
     EXPECT_TRUE(smart);
-    EXPECT_EQ(*smart, 10);
-    EXPECT_CALL(mock, destroy).WillOnce([](int* p) { delete p; });
+    EXPECT_EQ(*smart, value);
+    EXPECT_CALL(mock, destroy).WillOnce([](int* p) {
+        std::unique_ptr<int>{ p };
+    });
 }
 
+// NOLINTNEXTLINE
 TEST(out_ptr_test, skipped) {
     auto mock = testing::StrictMock<int_factory>{};
     auto smart = std::unique_ptr<int, deleter>{};

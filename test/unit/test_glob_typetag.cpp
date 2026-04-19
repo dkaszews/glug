@@ -25,7 +25,6 @@ struct typetag_param {
 
 class typetag_test : public testing::TestWithParam<typetag_param> {};
 
-// NOLINTNEXTLINE
 TEST_P(typetag_test, test) {
     const auto db = typetag_database{
         { "cpp", "*.cpp,*.cxx,*.hpp,*.hxx" },
@@ -55,13 +54,11 @@ const auto typetag_cases = std::vector<typetag_param>{
     { "#unknown", { "#unknown" } }
 };
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         typetag_test, typetag_test, values_in<typetag_param>(typetag_cases)
 );
 
 // Cases use `split` which removes empty ones, still a risk in vector overload
-// NOLINTNEXTLINE
 TEST_F(typetag_test, empty_glob) {
     using v = std::vector<std::string_view>;
     EXPECT_EQ(typetag_database{}.expand(v{ "" }), v{ "" });

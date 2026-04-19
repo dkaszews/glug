@@ -10,9 +10,7 @@
 namespace glug::backport::test {
 
 struct int_factory {
-    // NOLINTNEXTLINE
     MOCK_METHOD(bool, create, (int**));
-    // NOLINTNEXTLINE
     MOCK_METHOD(void, destroy, (int*));
 };
 
@@ -20,28 +18,25 @@ struct int_factory {
 // use lambdas as the tests' coverage would split between the instantiations.
 struct deleter {
     int_factory* instance{};
-    void operator()(int* p) const { instance->destroy(p); }
+    // NOLINTNEXTLINE(bugprone-exception-escape): Only throws for default action
+    void operator()(int* p) const noexcept { instance->destroy(p); }
 };
 
-// NOLINTNEXTLINE
 TEST(out_ptr_test, created) {
     auto mock = testing::StrictMock<int_factory>{};
     auto smart = std::unique_ptr<int, deleter>{};
 
-    static constexpr int value = 123;
-    EXPECT_CALL(mock, create).WillOnce([](int** p) {
-        *p = std::make_unique<int>(value).release();
+    int value = 3;
+    EXPECT_CALL(mock, create).WillOnce([&value](int** p) {
+        *p = &value;
         return true;
     });
     EXPECT_TRUE(mock.create(glug::backport::out_ptr(smart, deleter{ &mock })));
     EXPECT_TRUE(smart);
     EXPECT_EQ(*smart, value);
-    EXPECT_CALL(mock, destroy).WillOnce([](int* p) {
-        std::unique_ptr<int>{ p };
-    });
+    EXPECT_CALL(mock, destroy);
 }
 
-// NOLINTNEXTLINE
 TEST(out_ptr_test, skipped) {
     auto mock = testing::StrictMock<int_factory>{};
     auto smart = std::unique_ptr<int, deleter>{};

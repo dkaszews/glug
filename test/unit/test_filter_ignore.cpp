@@ -33,7 +33,6 @@ struct ignore_param {
 
 class ignore_test : public testing::TestWithParam<ignore_param> {};
 
-// NOLINTNEXTLINE
 TEST_P(ignore_test, test) {
     const auto& [globs, cases, anchor] = GetParam();
 
@@ -144,10 +143,8 @@ static const auto ignore_cases = std::vector<ignore_param>{
     },
 };
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(test, ignore_test, testing::ValuesIn(ignore_cases));
 
-// NOLINTNEXTLINE
 TEST(decision, to_string) {
     static constexpr auto str
             = [](auto x) { return (std::stringstream{} << x).str(); };

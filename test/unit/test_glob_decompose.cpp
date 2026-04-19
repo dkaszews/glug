@@ -19,35 +19,30 @@ struct decompose_param {
 
 class decompose_test : public testing::TestWithParam<decompose_param> {};
 
-// NOLINTNEXTLINE
 TEST_P(decompose_test, pattern) {
     const auto& [glob, expected, mode] = GetParam();
     EXPECT_EQ(decompose(glob, mode).pattern, expected.pattern);
     EXPECT_EQ(decompose(glob + " ", mode).pattern, expected.pattern);
 }
 
-// NOLINTNEXTLINE
 TEST_P(decompose_test, is_inverted) {
     const auto& [glob, expected, mode] = GetParam();
     EXPECT_EQ(decompose(glob, mode).is_inverted, expected.is_inverted);
     EXPECT_EQ(decompose(glob + " ", mode).is_inverted, expected.is_inverted);
 }
 
-// NOLINTNEXTLINE
 TEST_P(decompose_test, is_anchored) {
     const auto& [glob, expected, mode] = GetParam();
     EXPECT_EQ(decompose(glob, mode).is_anchored, expected.is_anchored);
     EXPECT_EQ(decompose(glob + " ", mode).is_anchored, expected.is_anchored);
 }
 
-// NOLINTNEXTLINE
 TEST_P(decompose_test, is_directory) {
     const auto& [glob, expected, mode] = GetParam();
     EXPECT_EQ(decompose(glob, mode).is_directory, expected.is_directory);
     EXPECT_EQ(decompose(glob + " ", mode).is_directory, expected.is_directory);
 }
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         empty,
         decompose_test,
@@ -65,7 +60,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         simple,
         decompose_test,
@@ -80,7 +74,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         trailing_whitespace,
         decompose_test,
@@ -93,7 +86,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative,
         decompose_test,
@@ -104,7 +96,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         anchored,
         decompose_test,
@@ -117,7 +108,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative_anchored,
         decompose_test,
@@ -128,7 +118,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         directory,
         decompose_test,
@@ -140,7 +129,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative_directory,
         decompose_test,
@@ -150,7 +138,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         anchored_directory,
         decompose_test,
@@ -161,7 +148,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         negative_anchored_directory,
         decompose_test,
@@ -172,7 +158,6 @@ INSTANTIATE_TEST_SUITE_P(
         })
 );
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         select_mode,
         decompose_test,
@@ -197,13 +182,11 @@ struct split_param {
 
 class split_test : public testing::TestWithParam<split_param> {};
 
-// NOLINTNEXTLINE
 TEST_P(split_test, test) {
     const auto actual = split(GetParam().input, GetParam().delimiter);
     EXPECT_EQ(actual, GetParam().expected);
 }
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         split_test,
         split_test,

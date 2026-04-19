@@ -30,7 +30,6 @@ struct select_param {
 
 class select_test : public testing::TestWithParam<select_param> {};
 
-// NOLINTNEXTLINE
 TEST_P(select_test, test) {
     const auto& param = GetParam();
     auto actual = param.cases;
@@ -124,7 +123,6 @@ static const auto select_cases = std::vector<select_param>{
     },
 };
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(test, select_test, testing::ValuesIn(select_cases));
 
 }  // namespace glug::filter::unit_test

@@ -2,6 +2,9 @@
 set_version('3.0.1')
 
 add_rules('mode.release', 'mode.releasedbg', 'mode.debug',  'mode.coverage')
+-- Keep `-isystem` in `compile_commands` to recognize library as foreign code
+add_rules('plugin.compile_commands.autoupdate', { lsp = 'clangd' })
+
 set_allowedmodes('release', 'releasedbg', 'debug', 'coverage')
 set_languages('c++20')
 set_warnings('all', 'extra', 'pedantic', 'error')

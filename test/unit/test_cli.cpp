@@ -61,7 +61,6 @@ struct cli_options_param {
 
 class cli_options_test : public testing::TestWithParam<cli_options_param> {};
 
-// NOLINTNEXTLINE
 TEST_P(cli_options_test, test) {
     const auto& [args, expected, error] = GetParam();
     auto actual = cli_options{};
@@ -72,7 +71,6 @@ TEST_P(cli_options_test, test) {
         return;
     }
 
-    // NOLINTNEXTLINE
     EXPECT_NO_THROW(parse());
     EXPECT_EQ(actual, expected);
 }
@@ -171,12 +169,10 @@ static const auto cli_options_cases = std::vector<cli_options_param>{
     },
 };
 
-// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(
         test, cli_options_test, testing::ValuesIn(cli_options_cases)
 );
 
-// NOLINTNEXTLINE
 TEST_F(cli_options_test, help) {
     using testing::HasSubstr;
     const auto help = cli_options::get_help();

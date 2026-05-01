@@ -10,6 +10,7 @@ fail due to rate limiting.
 import os
 import re
 import sys
+from dataclasses import dataclass
 
 from git import Clone
 
@@ -19,14 +20,27 @@ import github
 REPO = 'dkaszews/glug'
 
 
-def get_allowed_comments() -> set[str]:
+def get_allowed_comments() -> dict[int, str]:
     """Get list of open issues for repo with their titles."""
     token = os.environ.get('GH_TOKEN', None)
     auth = github.Auth.Token(token) if token else None
     return {
-        f'TODO: #{issue.number} - {issue.title}'
+        issue.number: f'TODO: #{issue.number} - {issue.title}'
         for issue in github.Github(auth=auth).get_repo(REPO).get_issues()
     }
+
+
+@dataclass(frozen=True)
+class TodoComment:
+    """Represents potential TODO comment with path and line number."""
+
+    path: str
+    line: int
+    text: str
+
+    def __str__(self) -> str:
+        """Convert to string."""
+        return f'{self.path}:{self.line}: {self.text}'
 
 
 # TODO: Common code between all tools
@@ -44,8 +58,7 @@ class TodoChecker:
             self._lines = file.read().splitlines()
 
         self.comments = [
-            # TODO: dataclass
-            (path, i, match.groups()[0])
+            TodoComment(path, i, match.groups()[0])
             for (i, line) in enumerate(self._lines)
             if (match := self.REGEX.search(line))
         ]
@@ -63,27 +76,31 @@ def main(path: str, fix: bool = False) -> bool:
         targets = [path]
 
     allowed_comments = get_allowed_comments()
+    allowed_set = set(allowed_comments.values())
     comments = [
-        (path, line, comment)
+        comment
         for target in targets
-        for (path, line, comment) in TodoChecker(target).comments
+        for comment in TodoChecker(target).comments
     ]
     invalid = [
         comment
         for comment in comments
-        if comment[2] not in allowed_comments
+        if comment.text not in allowed_set
     ]
     if not invalid:
         print(f'Checked {len(targets)} files, {len(comments)}, all ok')
         return True
 
     out = sys.stderr
-    print('Allowed TODO comments based on open issues:', file=out)
-    print('\n'.join(allowed_comments), file=out)
-    print(file=out)
+    for comment in invalid:
+        print(f'Invalid comment: {comment}', file=out)
 
-    for (path, line, comment) in invalid:
-        print(f'Invalid comment: {path}:{line}: {comment}', file=out)
+    allowed_sorted = [
+        allowed_comments[key]
+        for key in sorted(allowed_comments.keys())
+    ]
+    print('\nAllowed TODO comments based on open issues:', file=out)
+    print('\n'.join(allowed_sorted), file=out)
 
     return False
 

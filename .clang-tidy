@@ -2,7 +2,7 @@
 # * google-readability-avoid-underscore-in-googletest-name:
 #   Incompatible with snake_case naming convention
 # * google-readability-todo:
-#   Forces username tagged on each TODO, not fixable before clang 22.
+#   Custom script enforcing all files, not just C/C++ source code.
 # * misc-no-recursion:
 #   Recursion is a valid tool, often only tool to get the job done
 # * modernize-use-trailing-return-type:

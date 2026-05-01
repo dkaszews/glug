@@ -1,4 +1,5 @@
 fasteners == 0.20
+pygithub == 2.9.1
 
 pytest == 8.4.2
 

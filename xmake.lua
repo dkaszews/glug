@@ -149,6 +149,18 @@ target('integration_test')
     end)
 target_end()
 
+task('docs')
+    on_run(function(target)
+        if import('lib.detect').find_tool('doxygen-awesome-css') then
+            os.execv('doxygen-awesome-css', { '--install', 'build/docs/html' })
+        else
+            print('doxygen-awesome-css not found, falling back to default CSS')
+        end
+        os.execv('doxygen', { '.doxyfile' })
+    end)
+    set_menu {}
+task_end()
+
 task('coverage')
     on_run(function (target)
         os.rm('build/**/*.gcda')

@@ -152,7 +152,7 @@ target_end()
 task('docs')
     on_run(function(target)
         if import('lib.detect').find_tool('doxygen-awesome-css') then
-            os.execv('doxygen-awesome-css', { '--install', 'build/docs/html' })
+            os.execv('doxygen-awesome-css', { '--install', 'build/css' })
         else
             print('doxygen-awesome-css not found, falling back to default CSS')
         end

@@ -9,6 +9,9 @@ STRIP_FROM_INC_PATH = include/glug
 STRIP_FROM_PATH = include/glug
 USE_MDFILE_AS_MAINPAGE = README.md
 
+# Should be superseeded by builtin command proposed in doxygen
+ALIASES += "nodoc=&nbsp;"
+
 BUILTIN_STL_SUPPORT = yes
 CASE_SENSE_NAMES = yes
 HIDE_FRIEND_COMPOUNDS = yes
@@ -18,9 +21,6 @@ MULTILINE_CPP_IS_BRIEF = yes
 PYTHON_DOCSTRING = no
 QT_AUTOBRIEF = yes
 STRIP_CODE_COMMENTS = no
-
-# Should be superseeded by builtin command proposed in doxygen
-ALIASES = "nodoc=&nbsp;"
 
 WARNINGS = yes
 WARN_AS_ERROR = fail_on_warnings

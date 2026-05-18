@@ -5,7 +5,7 @@
 #include <string_view>
 
 /**
- * Regular expression utilities.
+ * Classes related to regular expressions.
  */
 namespace glug::regex {
 
@@ -25,7 +25,7 @@ class engine {
     /**
      * Construct regex matcher from given regex.
      *
-     * @param pattern regular expression
+     * @param pattern Regular expression
      * @throws std::exception if pattern is not a valid regex.
      *
      * @todo: Add custom exception class.
@@ -36,20 +36,22 @@ class engine {
     /**
      * Check given string against the matcher.
      *
-     * @param s string for matching against the regex.
+     * @param s String for matching against the regex.
      * @return True if entire string matches, false otherwise.
      */
     [[nodiscard]] bool match(std::string_view s) const;
 
-    /**
-     * Alias for `engine::match(std::string_view)`.
-     *
-     * @param s string for matching against the regex.
-     * @return True if entire string matches, false otherwise.
-     *
-     * @see engine::match(std::string_view)
-     */
+    /// @copydoc match()
     [[nodiscard]] bool operator()(std::string_view s) const { return match(s); }
+
+    /**
+     * Instances of `engine` are not comparable.
+     *
+     * This is because their internal compiled is generally not comparable, as
+     * implementing comparison would be either expensive or require otherwise
+     * wasteful tracking of the original pattern.
+     */
+    bool operator==(const engine&) = delete;
 
     // TODO: #90 - Generate version header
     /// @cond

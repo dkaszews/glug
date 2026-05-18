@@ -14,14 +14,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: doxygen
+          packages: doxygen graphviz
           version: 1.0
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 3.13
-          cache: pip
-      - run: pip install -r requirements.txt
-      - run: doxygen-awesome-css --install build/css
+      - run: mkdir -p build/css
+      - run: wget https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/refs/heads/main/doxygen-awesome.css -O build/css/doxygen-awesome.css
       - run: doxygen .doxyfile
       - uses: actions/upload-artifact@v4
         with:

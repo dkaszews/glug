@@ -151,10 +151,15 @@ target_end()
 
 task('docs')
     on_run(function(target)
-        if import('lib.detect').find_tool('doxygen-awesome-css') then
-            os.execv('doxygen-awesome-css', { '--install', 'build/css' })
+        css_file = 'doxygen-awesome.css'
+        css_out = 'build/css/' .. css_file
+        if not os.isfile(css_out) then
+            url = (
+                'https://raw.githubusercontent.com/'
+                .. 'jothepro/doxygen-awesome-css/refs/heads/main/'
+            )
+            import('net.http').download(url .. css_file, css_out)
         else
-            print('doxygen-awesome-css not found, falling back to default CSS')
         end
         os.execv('doxygen', { '.doxyfile' })
     end)

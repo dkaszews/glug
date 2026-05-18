@@ -167,6 +167,7 @@ class typetag_database {
             std::unordered_map<std::string_view, std::string_view>{ tags }
         } {}
 
+    // TODO: #100: Unknown tags should throw exceptions
     /**
      * Expand known tags into multiple globs.
      *
@@ -174,16 +175,12 @@ class typetag_database {
      *
      * @param globs Sequence of globs and tags.
      * @return Sequence of globs only, all tags expanded.
-     *
-     * @todo Unknown tags should throw.
      */
     std::vector<std::string_view>
     expand(std::span<const std::string_view> globs) const noexcept;
 
     /**
      * @copydoc expand()
-     *
-     * @todo Remove this overload.
      */
     std::vector<std::string_view>
     expand(std::string_view globs) const noexcept {

@@ -15,21 +15,18 @@ namespace glug::regex {
  */
 class engine {
     public:
+    // TODO: #99: Customize and test exceptions
     /*
      * Default-construct a regex matcher, which does not match anything.
-     *
-     * @todo: UT if this is true, might actually be UB.
      */
     engine() = default;
 
+    // TODO: #99: Customize and test exceptions
     /**
      * Construct regex matcher from given regex.
      *
      * @param pattern Regular expression
      * @throws std::exception if pattern is not a valid regex.
-     *
-     * @todo: Add custom exception class.
-     * @todo: UT exceptions.
      */
     explicit engine(std::string_view pattern);
 

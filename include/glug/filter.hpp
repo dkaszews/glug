@@ -44,7 +44,7 @@ enum class decision : uint8_t {
  *
  * @param os Output stream.
  * @param value Enum value.
- * @return Stringigied enum value.
+ * @return Stringified enum value.
  */
 std::ostream& operator<<(std::ostream& os, decision value) noexcept;
 

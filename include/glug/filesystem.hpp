@@ -56,25 +56,23 @@ class explorer {
      */
     explorer() noexcept = default;
 
+    // TODO: #99: Customize and test exceptions
     /**
      * Construct explorer for given filesystem root directory.
      *
      * @param root Directory to begin search in.
      * @throws std::filesystem_error if directory does not exist.
-     *
-     * @todo UT exception.
      */
     explicit explorer(const std::filesystem::path& root) :
         explorer(root, {}) {}
 
+    // TODO: #99: Customize and test exceptions
     /**
      * Construct explorer with additional options.
      *
      * @param root Directory to begin search in.
      * @param options Explorer_options that modify search behavior.
      * @throws std::filesystem_error if directory does not exist.
-     *
-     * @todo UT exception.
      */
     explorer(
             const std::filesystem::path& root, const explorer_options& options

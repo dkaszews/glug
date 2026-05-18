@@ -12,6 +12,7 @@ USE_MDFILE_AS_MAINPAGE = README.md
 # Should be superseeded by builtin command proposed in doxygen
 ALIASES += "nodoc=&nbsp;"
 
+ALWAYS_DETAILED_SEC = yes
 BUILTIN_STL_SUPPORT = yes
 CASE_SENSE_NAMES = yes
 HIDE_FRIEND_COMPOUNDS = yes

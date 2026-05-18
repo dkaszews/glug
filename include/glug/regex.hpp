@@ -41,7 +41,9 @@ class engine {
      */
     [[nodiscard]] bool match(std::string_view s) const;
 
-    /// @copydoc match()
+    /**
+     * @copydoc match()
+     */
     [[nodiscard]] bool operator()(std::string_view s) const { return match(s); }
 
     /**
@@ -54,9 +56,9 @@ class engine {
     bool operator==(const engine&) = delete;
 
     // TODO: #90 - Generate version header
-    /// @cond
+    /** @cond */
     static std::string_view license();
-    /// @endcond
+    /** @endcond */
 
     private:
     struct impl;

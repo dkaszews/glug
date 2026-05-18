@@ -36,15 +36,15 @@ class explorer {
     struct level;
 
     public:
-    /// @nodoc
+    /** @nodoc */
     using value_type = std::filesystem::directory_entry;
-    /// @nodoc
+    /** @nodoc */
     using difference_type = std::ptrdiff_t;
-    /// @nodoc
+    /** @nodoc */
     using pointer = const value_type*;
-    /// @nodoc
+    /** @nodoc */
     using reference = const value_type&;
-    /// @nodoc
+    /** @nodoc */
     using iterator_category = std::forward_iterator_tag;
 
     /**
@@ -104,7 +104,9 @@ class explorer {
      */
     [[nodiscard]] reference operator*() const;
 
-    /// @copydoc operator*()
+    /**
+     * @copydoc operator*()
+     */
     [[nodiscard]] pointer operator->() const;
 
     /**

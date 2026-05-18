@@ -8,6 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * Classes and functions related to glob patterns.
+ */
 namespace glug::glob {
 
 /**

@@ -11,6 +11,9 @@
 #include <string_view>
 #include <vector>
 
+/**
+ * Filtering options applicable to searching files.
+ */
 namespace glug::filter {
 
 /**
@@ -36,6 +39,13 @@ enum class decision : uint8_t {
     included,
 };
 
+/**
+ * Converts enum to string.
+ *
+ * @param os Output stream.
+ * @param value Enum value.
+ * @return Stringigied enum value.
+ */
 std::ostream& operator<<(std::ostream& os, decision value) noexcept;
 
 /**
@@ -45,27 +55,57 @@ std::ostream& operator<<(std::ostream& os, decision value) noexcept;
  */
 class ignore {
     public:
+    /**
+     * Default-constructs empty filter, always returning `decision::undecided`.
+     */
     ignore() noexcept = default;
 
+    /**
+     * Constructs filter from sequence of globs.
+     *
+     * The anchor is left as empty, which makes any anchored patterns behave as
+     * absolute paths, from the root of the filesystem.
+     *
+     * @param globs Sequence of globs.
+     */
     explicit ignore(std::span<const glob::decomposition> globs) :
         ignore{ globs, "" } {}
 
-    explicit ignore(std::span<const std::string_view> globs) noexcept :
+    /**
+     * @copydoc ignore(std::span<const glob::decomposition> globs)
+     */
+    explicit ignore(std::span<const std::string_view> globs) :
         ignore{ globs, "" } {}
 
+    /**
+     * Constructs filter from sequence of globs.
+     *
+     * @param globs Sequence of globs.
+     * @param anchor Relative point for anchored globs.
+     */
     ignore(std::span<const glob::decomposition> globs,
            const std::filesystem::path& anchor);
 
+    /**
+     * @copydoc ignore(std::span<const glob::decomposition>, const std::filesystem::path&)
+     */
     ignore(std::span<const std::string_view> globs,
            const std::filesystem::path& anchor);
 
     /**
-     * Check a file or directory against the list of globs.
-     * @see decision
+     * Check an entry against the list of globs.
+     *
+     * @param entry File or directory.
+     * @return `decision::excluded` if last matching glob is not inverted,
+     * `decision::included` if it is, `decision::undecided` if none match.
+     * @see `decision`
      */
     [[nodiscard]] decision
     apply(const std::filesystem::directory_entry& entry) const noexcept;
 
+    /**
+     * @copydoc apply()
+     */
     [[nodiscard]] decision
     operator()(const std::filesystem::directory_entry& entry) const noexcept {
         return apply(entry);
@@ -85,27 +125,64 @@ class ignore {
 /**
  * Allows for additional filtering of files and directories.
  *
- * @see glug::glob::decompose_mode::select_mode
+ * @see glug::glob::decompose_mode::select
  */
 class select {
     public:
+    /**
+     * Default-constructs empty filter, always returning `decision::undecided`.
+     */
     select() noexcept = default;
 
+    /**
+     * Constructs filter from sequence of globs.
+     *
+     * The anchor is left as empty, which makes any anchored patterns behave as
+     * absolute paths, from the root of the filesystem.
+     *
+     * @param globs Sequence of globs.
+     */
     explicit select(std::span<const glob::decomposition> globs) :
         select{ globs, "" } {}
 
+    /**
+     * @copydoc select(std::span<const glob::decomposition> globs)
+     */
     explicit select(std::span<const std::string_view> globs) :
         select{ globs, "" } {}
 
+    /**
+     * @copydoc select(std::span<const glob::decomposition> globs)
+     *
+     * Treats globs as comma-separated list.
+     *
+     * @see glug::glob::split()
+     */
     explicit select(std::string_view globs) :
         select{ globs, "" } {}
 
+    /**
+     * Constructs filter from sequence of globs.
+     *
+     * @param globs Sequence of globs.
+     * @param anchor Relative point for anchored globs.
+     */
     select(std::span<const glob::decomposition> globs,
            const std::filesystem::path& anchor);
 
+    /**
+     * @copydoc select(std::span<const glob::decomposition> globs, const std::filesystem::path&)
+     */
     select(std::span<const std::string_view> globs,
            const std::filesystem::path& anchor);
 
+    /**
+     * @copydoc select(std::span<const glob::decomposition> globs, const std::filesystem::path&)
+     *
+     * Treats globs as comma-separated list.
+     *
+     * @see glug::glob::split()
+     */
     select(std::string_view globs, const std::filesystem::path& anchor);
 
     /**
@@ -113,16 +190,18 @@ class select {
      *
      * Files and directories are treated as separate types, with no overlap.
      *
-     * If last matching glob is negative, returns `decision::ignored`.
-     * Else, if last matching glob is positive, returns `decision::included`.
-     * Else, if at least one positive glob exists, returns `decision::ignored`.
-     * Else, returns `decision::undecided`.
-     *
-     * @see decision
+     * @param entry File or directory.
+     * @return `decision::excluded` if last matching glob is not inverted,
+     * `decision::included` if it is. If none match, but at least one positive
+     * glob exists, returns `decision::excluded`, else `decision::undecided`.
+     * @see `decision`
      */
     [[nodiscard]] decision
     apply(const std::filesystem::directory_entry& entry) const noexcept;
 
+    /**
+     * @copydoc apply
+     */
     [[nodiscard]] decision
     operator()(const std::filesystem::directory_entry& entry) const noexcept {
         return apply(entry);

@@ -12,8 +12,14 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: mkdir -p build/css
-      - run: wget https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/refs/heads/main/doxygen-awesome.css -O build/css/doxygen-awesome.css
+      - run: mkdir -p build/css build/docs
+      - uses: actions/cache@v4
+        id: doxygen-awesome-css-cache
+        with:
+          path: build/css
+          key: doxygen-awesome-css-v2.4.2
+      - run: wget https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/refs/tags/v2.4.2/doxygen-awesome.css -O build/css/doxygen-awesome.css
+        if: steps.doxygen-awesome-css-cache.outputs.cache-hit != 'true'
       - uses: mattnotmitt/doxygen-action@edge
         with:
           doxyfile-path: .doxyfile

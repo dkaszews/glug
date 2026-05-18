@@ -18,6 +18,8 @@ jobs:
           version: 1.0
       - run: mkdir -p build/css
       - run: wget https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/refs/heads/main/doxygen-awesome.css -O build/css/doxygen-awesome.css
+      - run: dot -V /dev/null
+      - run: doxygen -v
       - run: doxygen .doxyfile
       - uses: actions/upload-artifact@v4
         with:

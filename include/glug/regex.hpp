@@ -52,7 +52,7 @@ class engine {
     [[nodiscard]] bool operator()(std::string_view s) const { return match(s); }
 
     // TODO: #90 - Generate version header
-    /// @cond 0
+    /// @cond
     static std::string_view license();
     /// @endcond
 

@@ -12,5 +12,6 @@ callgrind.out.*
 !.gitignore
 !.clang-format
 !.clang-tidy
+!.doxyfile
 !.vimspector.json
 

@@ -149,6 +149,23 @@ target('integration_test')
     end)
 target_end()
 
+task('docs')
+    on_run(function(target)
+        css_file = 'doxygen-awesome.css'
+        css_out = 'build/css/' .. css_file
+        if not os.isfile(css_out) then
+            url = (
+                'https://raw.githubusercontent.com/'
+                .. 'jothepro/doxygen-awesome-css/refs/heads/main/'
+            )
+            import('net.http').download(url .. css_file, css_out)
+        else
+        end
+        os.execv('doxygen', { '.doxyfile' })
+    end)
+    set_menu {}
+task_end()
+
 task('coverage')
     on_run(function (target)
         os.rm('build/**/*.gcda')

@@ -1,0 +1,43 @@
+PROJECT_NAME = "glug"
+INPUT = include README.md LICENSE.md
+RECURSIVE = yes
+EXCLUDE = include/glug/cli.hpp include/glug/backport include/glug/generated
+EXCLUDE_PATTERNS =
+EXCLUDE_SYMBOLS =
+OUTPUT_DIRECTORY = build/docs
+STRIP_FROM_INC_PATH = include/glug
+STRIP_FROM_PATH = include/glug
+USE_MDFILE_AS_MAINPAGE = README.md
+
+# Should be superseeded by builtin command proposed in doxygen
+ALIASES += "nodoc=&nbsp;"
+
+ALWAYS_DETAILED_SEC = yes
+BUILTIN_STL_SUPPORT = yes
+CASE_SENSE_NAMES = yes
+HIDE_FRIEND_COMPOUNDS = yes
+INLINE_INFO = no
+JAVADOC_AUTOBRIEF = yes
+MULTILINE_CPP_IS_BRIEF = yes
+PYTHON_DOCSTRING = no
+QT_AUTOBRIEF = yes
+STRIP_CODE_COMMENTS = no
+
+WARNINGS = yes
+WARN_AS_ERROR = fail_on_warnings
+WARN_IF_DOC_ERROR = yes
+WARN_IF_INCOMPLETE_DOC = yes
+WARN_IF_UNDOCUMENTED = yes
+WARN_IF_UNDOC_ENUM_VAL = yes
+WARN_LAYOUT_FILE = yes
+WARN_NO_PARAMDOC = yes
+
+REFERENCED_BY_RELATION = yes
+REFERENCES_LINK_SOURCE = yes
+REFERENCES_RELATION = yes
+
+GENERATE_LATEX = no
+
+GENERATE_HTML = yes
+HTML_EXTRA_STYLESHEET = build/css/doxygen-awesome.css
+

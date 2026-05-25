@@ -8,31 +8,62 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * Classes and functions related to glob patterns.
+ */
 namespace glug::glob {
 
 /**
- * Decomposition of glob line into constituent parts
+ * Decomposition of glob with encoded metadata into constituent parts.
+ *
  * @see decompose
  */
 struct decomposition {
+    /**
+     * Glob pattern, to be applied directly or converted into regex.
+     */
     std::string_view pattern{};
+    /**
+     * Any matched paths should be treated opposite to normal.
+     *
+     * @see glug::filter::decision
+     */
     bool is_inverted{};
+    /**
+     * Glob should match entirety of path as relative to given anchor.
+     *
+     * If not anchored, then it matches only against path basename (leaf).
+     */
     bool is_anchored{};
+    /**
+     * Pattern should be applied only to directories and not files.
+     *
+     * If false, whether it applies to both directories and files, or files
+     * only, depends on `decompose_mode`.
+     *
+     * @see decompose_mode
+     */
     bool is_directory{};
 };
 
 /**
  * Determines which mode should be used for decomposing patterns.
+ *
  * @see decompose
  */
 enum class decompose_mode : std::uint8_t {
     /**
      * Use exact gitignore rules.
+     *
+     * @see glug::filter::ignore
      */
     ignore,
     /**
+     * Modified rules for quick selection of desired files.
+     *
      * Similar to gitignore rules, but uses '-' instead of '!' for negation
      * and patterns without trailing '/' are not applied to directories.
+     *
      * @see glug::filter::select
      */
     select,
@@ -60,6 +91,9 @@ enum class decompose_mode : std::uint8_t {
  * not ending in '/' are applied to both files and directories. In select mode,
  * they are applied only to files.
  *
+ * @param glob_line String with glob and encoded metadata.
+ * @param mode Decomposition mode, modifying
+ * @return Struct with raw glob and decoded flags.
  * @see decompose_mode
  */
 [[nodiscard]] decomposition decompose(
@@ -67,8 +101,13 @@ enum class decompose_mode : std::uint8_t {
 ) noexcept;
 
 /**
- * Splits input across unescaped occurences of given delimiter, omitting empty
- * results.
+ * Splits input across occurences of given delimiter.
+ *
+ * Delimiter can be escaped with a backslash. Empty results are omitted.
+ *
+ * @param globs Delimiter-separated strings.
+ * @param delimiter Character to split across.
+ * @return Sequence of globs.
  */
 [[nodiscard]] std::vector<std::string_view>
 split(std::string_view globs, char delimiter = ',');
@@ -83,11 +122,17 @@ split(std::string_view globs, char delimiter = ',');
  * "[...]" or "[!...]". Path separators are escaped from positive sets using
  * range splitting instead of negative lookahead, to allow use in even simplest
  * regex engines.
+ *
+ * @param glob Glob pattern.
+ * @return Equivalent regex pattern.
  */
 [[nodiscard]] std::string to_regex(std::string_view glob) noexcept;
 
 /**
- * Escapes a string literal into a glob expression matching only the literal.
+ * Escapes glob into literal.
+ *
+ * @param s String to escape.
+ * @return Glob pattern which matches input literally.
  */
 [[nodiscard]] std::string glob_escape(std::string_view s) noexcept;
 
@@ -96,12 +141,24 @@ split(std::string_view globs, char delimiter = ',');
  */
 class typetag_database {
     public:
+    /**
+     * Default-constructs empty database with no tags.
+     */
     typetag_database() noexcept = default;
 
+    /**
+     * Constructs database mapping given tags into globs.
+     *
+     * @param tags Map from single tag into comma-separated globs.
+     * @see split().
+     */
     explicit typetag_database(
             const std::unordered_map<std::string_view, std::string_view>& tags
     );
 
+    /**
+     * @copydoc typetag_database(const std::unordered_map<std::string_view, std::string_view>&)
+     */
     typetag_database(
             std::initializer_list<
                     std::pair<const std::string_view, std::string_view>> tags
@@ -110,14 +167,21 @@ class typetag_database {
             std::unordered_map<std::string_view, std::string_view>{ tags }
         } {}
 
+    // TODO: #100: Unknown tags should throw exceptions
     /**
      * Expand known tags into multiple globs.
      *
      * Non-tag values and unknown tags are left as-is.
+     *
+     * @param globs Sequence of globs and tags.
+     * @return Sequence of globs only, all tags expanded.
      */
     std::vector<std::string_view>
     expand(std::span<const std::string_view> globs) const noexcept;
 
+    /**
+     * @copydoc expand()
+     */
     std::vector<std::string_view>
     expand(std::string_view globs) const noexcept {
         return expand(split(globs));

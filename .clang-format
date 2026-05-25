@@ -11,6 +11,7 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 ColumnLimit: 80
+CommentPragmas: '^@.+'
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ContinuationIndentWidth: 8
 Cpp11BracedListStyle: false
